@@ -3,6 +3,16 @@ import { prisma } from '@/lib/prisma';
 import { redirect, notFound } from 'next/navigation';
 import { ExamRunner, type ClientQuestion } from '@/components/exams/exam-runner';
 
+// Type definition for Prisma question result
+interface PrismaQuestion {
+  id: string;
+  text: string;
+  type: 'MCQ' | 'TRUE_FALSE';
+  options: any;
+  correctAnswer: string;
+  points: number;
+}
+
 export default async function StartExamPage({
   params,
 }: {
@@ -45,7 +55,7 @@ export default async function StartExamPage({
     notFound();
   }
 
-  const clientQuestions: ClientQuestion[] = exam.questions.map((q: any) => ({
+  const clientQuestions: ClientQuestion[] = exam.questions.map((q: PrismaQuestion) => ({
     id: q.id,
     text: q.text,
     type: q.type,

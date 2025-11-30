@@ -7,6 +7,32 @@ import { Card, CardContent } from '@/components/ui/card';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { Search, Folder, GraduationCap, Clock, CheckCircle2, Target, Percent } from 'lucide-react';
 
+// Type definitions for dashboard data
+interface DashboardSubject {
+  id: string;
+  title: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  _count: { exams: number };
+}
+
+interface DashboardExam {
+  id: string;
+  title: string;
+  durationMinutes: number;
+  passingScore: number;
+  subject: { title: string };
+  _count: { questions: number };
+  createdAt: Date;
+}
+
+interface Submission {
+  score: number;
+  passed: boolean;
+  answers: any;
+}
+
 export default async function Home() {
   const user = await currentUser();
 
@@ -45,14 +71,14 @@ export default async function Home() {
   });
 
   const completedExams = submissions.length;
-  const passedExams = submissions.filter((s: any) => s.passed).length;
+  const passedExams = submissions.filter((s: Submission) => s.passed).length;
   const averageScore =
     completedExams > 0
-      ? Math.round(submissions.reduce((sum: any, s: any) => sum + s.score, 0) / completedExams)
+      ? Math.round(submissions.reduce((sum: number, s: Submission) => sum + s.score, 0) / completedExams)
       : 0;
   const successRate = completedExams > 0 ? Math.round((passedExams / completedExams) * 100) : 0;
 
-  const totalQuestionsAnswered = submissions.reduce((sum: any, s: any) => {
+  const totalQuestionsAnswered = submissions.reduce((sum: number, s: Submission) => {
     if (!s.answers || typeof s.answers !== 'object') return sum;
     try {
       const obj = s.answers as Record<string, unknown>;
@@ -203,7 +229,7 @@ export default async function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {subjects.map((subject: any) => (
+            {subjects.map((subject: DashboardSubject) => (
               <Link key={subject.id} href={`/subjects/${subject.id}`}>
                 <Card className="bg-white border border-slate-100 shadow-sm rounded-xl flex flex-col items-center justify-center py-6 hover:shadow-md transition-shadow cursor-pointer">
                   <CardContent className="flex flex-col items-center justify-center gap-3 p-0">
@@ -243,7 +269,7 @@ export default async function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {recentExams.map((exam) => (
+            {recentExams.map((exam: DashboardExam) => (
               <Link key={exam.id} href={`/exams/${exam.id}/start`}>
                 <Card className="bg-white border border-slate-100 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer">
                   <CardContent className="p-4 space-y-3">
