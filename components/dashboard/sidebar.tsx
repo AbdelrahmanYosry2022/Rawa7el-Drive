@@ -21,7 +21,7 @@ type NavItem = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 
-const mainNav: NavItem[] = [
+const studentMainNav: NavItem[] = [
   {
     title: 'لوحة التحكم',
     href: '/',
@@ -29,7 +29,7 @@ const mainNav: NavItem[] = [
   },
 ];
 
-const pinnedNav: NavItem[] = [
+const studentPinnedNav: NavItem[] = [
   {
     title: 'دوراتي',
     href: '/dashboard/courses',
@@ -42,7 +42,7 @@ const pinnedNav: NavItem[] = [
   },
 ];
 
-const folderNav: NavItem[] = [
+const studentFolderNav: NavItem[] = [
   {
     title: 'المستوى التمهيدي',
     href: '/dashboard/levels/intro',
@@ -67,6 +67,28 @@ const folderNav: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const isTeacher = pathname.startsWith('/teacher');
+
+  const teacherMainNav: NavItem[] = [
+    {
+      title: 'لوحة الإدارة',
+      href: '/teacher',
+      icon: LayoutDashboard,
+    },
+  ];
+
+  const teacherManageNav: NavItem[] = [
+    {
+      title: 'إدارة المواد',
+      href: '/teacher/subjects',
+      icon: FolderKanban,
+    },
+    {
+      title: 'المستخدمون',
+      href: '/teacher/users',
+      icon: User,
+    },
+  ];
 
   const renderNavGroup = (label: string, items: NavItem[], smallLabel?: boolean) => (
     <div className="space-y-1">
@@ -120,17 +142,22 @@ export function Sidebar() {
         </div>
         <div className="px-2 py-1 rounded-full bg-indigo-50 text-[10px] font-semibold text-indigo-600 flex items-center gap-1">
           <Bookmark className="w-3 h-3" />
-          للطلاب
+          {isTeacher ? 'للمشرف' : 'للطلاب'}
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 py-4 px-3 space-y-6 overflow-y-auto">
-        {renderNavGroup('الرئيسية', mainNav)}
+        {renderNavGroup('الرئيسية', isTeacher ? teacherMainNav : studentMainNav)}
 
-        {renderNavGroup('مُثبَّت', pinnedNav, true)}
-
-        {renderNavGroup('المجلدات', folderNav, true)}
+        {isTeacher ? (
+          renderNavGroup('الإدارة', teacherManageNav, true)
+        ) : (
+          <>
+            {renderNavGroup('مُثبَّت', studentPinnedNav, true)}
+            {renderNavGroup('المجلدات', studentFolderNav, true)}
+          </>
+        )}
 
         <div className="space-y-1 pt-2">
           <p className="px-4 text-[10px] font-semibold tracking-[0.2em] text-slate-400">الحساب</p>
@@ -145,6 +172,22 @@ export function Sidebar() {
 
       {/* Bottom Actions */}
       <div className="p-4 border-t border-slate-100 space-y-2">
+        {isTeacher ? (
+          <Link href="/">
+            <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+              <LayoutDashboard className="w-5 h-5" />
+              العودة لواجهة الطالب
+            </button>
+          </Link>
+        ) : (
+          <Link href="/teacher">
+            <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+              <LayoutDashboard className="w-5 h-5" />
+              الذهاب إلى لوحة الإدارة
+            </button>
+          </Link>
+        )}
+
         <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors">
           <Settings className="w-5 h-5 text-slate-400" />
           الإعدادات

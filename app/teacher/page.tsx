@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
-export default function TeacherDashboard() {
+export default function TeacherHome() {
   redirect('/teacher/subjects');
 }
