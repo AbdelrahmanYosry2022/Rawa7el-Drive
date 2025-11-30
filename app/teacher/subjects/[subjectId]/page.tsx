@@ -46,7 +46,7 @@ export default async function TeacherSubjectDetailPage({
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="space-y-2 text-right flex-1">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-4">
             <BackButton />
             <div className="flex items-center gap-3 justify-start flex-1">
               <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
