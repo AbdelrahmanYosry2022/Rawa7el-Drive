@@ -158,78 +158,130 @@ export async function updateExam(examId: string, data: UpdateExamInput) {
   revalidatePath(`/teacher/exams/${examId}`);
 }
 
-// Bulk import questions from JSON
-export async function addQuestionsBulk(examId: string, questionsJson: string) {
+export type AddQuestionsBulkResult = {
+  success: boolean;
+  count?: number;
+  error?: string;
+};
+
+export async function addQuestionsBulk(
+  examId: string,
+  questionsJson: string,
+): Promise<AddQuestionsBulkResult> {
   await requireAdmin();
 
   if (!examId) {
     throw new Error('Exam id is required');
   }
 
+  let parsed: unknown;
+
   try {
-    const questions = JSON.parse(questionsJson);
+    parsed = JSON.parse(questionsJson);
+  } catch {
+    return { success: false, error: 'Invalid JSON format' };
+  }
 
-    if (!Array.isArray(questions)) {
-      throw new Error('Invalid format: Expected an array of questions');
+  if (!Array.isArray(parsed)) {
+    return { success: false, error: 'Invalid format: Expected an array of questions' };
+  }
+
+  const inputs: {
+    text: string;
+    type: 'MCQ' | 'TRUE_FALSE';
+    options: string[] | null;
+    correctAnswer: string;
+    points: number;
+  }[] = [];
+
+  for (const raw of parsed as any[]) {
+    const text = String(raw.text ?? '').trim();
+    const type = raw.type as 'MCQ' | 'TRUE_FALSE';
+    let correctAnswer = String(raw.correctAnswer ?? '');
+    let points = Number(raw.points);
+
+    if (!Number.isFinite(points) || points <= 0) {
+      points = 10;
     }
 
-    if (questions.length === 0) {
-      throw new Error('No questions found in the JSON');
+    if (!text || !correctAnswer || (type !== 'MCQ' && type !== 'TRUE_FALSE')) {
+      return {
+        success: false,
+        error: 'Each question must include text, valid type (MCQ or TRUE_FALSE), and correctAnswer',
+      };
     }
 
-    // Validate and create questions in a transaction
-    const createdQuestions = await prisma.$transaction(
-      questions.map((q: any) => {
-        // Validate required fields
-        if (!q.text || typeof q.text !== 'string') {
-          throw new Error('Each question must have a "text" field');
-        }
-        if (!q.type || (q.type !== 'MCQ' && q.type !== 'TRUE_FALSE')) {
-          throw new Error('Each question must have a valid "type" (MCQ or TRUE_FALSE)');
-        }
-        if (!q.correctAnswer) {
-          throw new Error('Each question must have a "correctAnswer" field');
-        }
+    let optionsJson: string[] | null = null;
 
-        const points = Number.isFinite(q.points) && q.points > 0 ? q.points : 10;
-        let optionsJson: string[] = [];
+    if (type === 'MCQ') {
+      const rawOptions = Array.isArray(raw.options) ? raw.options : [];
+      const opts = rawOptions
+        .map((o: unknown) => String(o ?? '').trim())
+        .filter((o: string) => Boolean(o));
 
-        if (q.type === 'MCQ') {
-          if (!Array.isArray(q.options) || q.options.length < 2) {
-            throw new Error('MCQ questions must have at least 2 options');
-          }
-          optionsJson = q.options.map((o: any) => String(o).trim()).filter(Boolean);
-          if (!optionsJson.includes(q.correctAnswer)) {
-            throw new Error(`Correct answer "${q.correctAnswer}" must be one of the options`);
-          }
-        } else {
-          // TRUE_FALSE
-          optionsJson = ['صحيح', 'خطأ'];
-          if (!optionsJson.includes(q.correctAnswer)) {
-            throw new Error('TRUE_FALSE correct answer must be either "صحيح" or "خطأ"');
-          }
-        }
+      if (opts.length < 2) {
+        return { success: false, error: 'Each MCQ question must have at least two options' };
+      }
 
-        return prisma.question.create({
+      if (!opts.includes(correctAnswer)) {
+        return {
+          success: false,
+          error: 'For MCQ questions, correctAnswer must be one of the options',
+        };
+      }
+
+      optionsJson = opts;
+    } else {
+      // TRUE_FALSE
+      optionsJson = ['صحيح', 'خطأ'];
+      
+      // Normalize "صح" to "صحيح" for compatibility
+      let normalizedAnswer = correctAnswer;
+      if (correctAnswer === 'صح') {
+        normalizedAnswer = 'صحيح';
+      }
+      
+      if (!optionsJson.includes(normalizedAnswer)) {
+        return {
+          success: false,
+          error: 'For TRUE_FALSE questions, correctAnswer must be either "صحيح" (or "صح") or "خطأ"',
+        };
+      }
+      
+      // Use normalized answer
+      correctAnswer = normalizedAnswer;
+    }
+
+    inputs.push({
+      text,
+      type,
+      options: optionsJson,
+      correctAnswer,
+      points,
+    });
+  }
+
+  try {
+    await prisma.$transaction(
+      inputs.map((q) =>
+        prisma.question.create({
           data: {
             examId,
-            text: q.text.trim(),
+            text: q.text,
             type: q.type,
-            options: optionsJson,
+            options: q.options ?? undefined,
             correctAnswer: q.correctAnswer,
-            points,
+            points: q.points,
           },
-        });
-      })
+        }),
+      ),
     );
 
     revalidatePath(`/teacher/exams/${examId}`);
-    return { success: true, count: createdQuestions.length };
-  } catch (error: any) {
-    console.error('Bulk import error:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Failed to import questions. Check JSON format.' 
-    };
+
+    return { success: true, count: inputs.length };
+  } catch (error) {
+    console.error('addQuestionsBulk error', error);
+    return { success: false, error: 'Failed to import questions. Check JSON format.' };
   }
 }

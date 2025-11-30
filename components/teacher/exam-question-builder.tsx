@@ -1,13 +1,17 @@
 'use client';
 
 import { useState, useTransition, FormEvent } from 'react';
-import { addQuestion, deleteQuestion } from '@/app/actions/teacher/exams';
+import {
+  addQuestion,
+  deleteQuestion,
+  addQuestionsBulk,
+  type AddQuestionsBulkResult,
+} from '@/app/actions/teacher/exams';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { BulkImportDialog } from '@/components/teacher/bulk-import-dialog';
 
 export type ClientQuestion = {
   id: string;
@@ -32,6 +36,9 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
   const [mcqOptions, setMcqOptions] = useState<string[]>(['', '', '', '']);
   const [correctAnswer, setCorrectAnswer] = useState('');
   const [isPending, startTransition] = useTransition();
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importJson, setImportJson] = useState('');
+  const [isImportPending, startImportTransition] = useTransition();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -82,17 +89,49 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
 
   const trueFalseOptions = ['صحيح', 'خطأ'];
 
+  const handleOpenImport = () => {
+    setIsImportOpen(true);
+  };
+
+  const handleCloseImport = () => {
+    if (isImportPending) return;
+    setIsImportOpen(false);
+  };
+
+  const handleImportSubmit = () => {
+    if (!importJson.trim()) {
+      alert('الرجاء لصق JSON قبل الاستيراد.');
+      return;
+    }
+
+    startImportTransition(async () => {
+      try {
+        const result: AddQuestionsBulkResult = await addQuestionsBulk(examId, importJson);
+
+        if (result.success) {
+          const count = result.count ?? 0;
+          alert(`تم استيراد ${count} سؤالًا بنجاح.`);
+          setImportJson('');
+          setIsImportOpen(false);
+          router.refresh();
+        } else {
+          alert(result.error || 'فشل استيراد الأسئلة. تحقق من صيغة JSON.');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('حدث خطأ أثناء استيراد الأسئلة.');
+      }
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
       {/* Left: question form */}
       <Card className="bg-white border border-slate-100 shadow-sm">
         <CardContent className="p-5 space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1 text-right flex-1">
-              <h3 className="text-sm font-semibold text-slate-900">إضافة سؤال جديد</h3>
-              <p className="text-xs text-slate-500">قم بإضافة نص السؤال ونوعه والإجابة الصحيحة.</p>
-            </div>
-            <BulkImportDialog examId={examId} onSuccess={() => router.refresh()} />
+          <div className="space-y-1 text-right">
+            <h3 className="text-sm font-semibold text-slate-900">إضافة سؤال جديد</h3>
+            <p className="text-xs text-slate-500">قم بإضافة نص السؤال ونوعه والإجابة الصحيحة.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 text-right">
@@ -210,7 +249,16 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
               </div>
             )}
 
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-between items-center pt-2 gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="text-xs border-slate-200 text-slate-700 hover:bg-slate-50"
+                onClick={handleOpenImport}
+                disabled={isPending || isImportPending}
+              >
+                {isImportPending ? 'جاري الاستيراد...' : 'استيراد JSON'}
+              </Button>
               <Button
                 type="submit"
                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -267,6 +315,77 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
           )}
         </CardContent>
       </Card>
+      {isImportOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-2xl rounded-xl bg-white shadow-lg p-6 space-y-4">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-sm font-semibold text-slate-900">استيراد أسئلة من JSON</h3>
+              <button
+                type="button"
+                onClick={handleCloseImport}
+                className="text-slate-400 hover:text-slate-600 text-lg leading-none"
+                aria-label="إغلاق نافذة الاستيراد"
+              >
+                ×
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 text-right">
+              الصق هنا مصفوفة JSON تحتوي على الأسئلة، ثم اضغط "استيراد الأسئلة".
+            </p>
+
+            <textarea
+              className="w-full min-h-[180px] rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              value={importJson}
+              onChange={(e) => setImportJson(e.target.value)}
+              placeholder='[
+  {
+    "text": "Question text?",
+    "type": "MCQ",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctAnswer": "Option A",
+    "points": 10
+  }
+]'
+            />
+
+            <div className="rounded-md bg-slate-50 border border-slate-100 p-3">
+              <p className="text-[11px] text-slate-500 mb-1 text-right">مثال على الصيغة المتوقعة:</p>
+              <pre className="text-[10px] text-left whitespace-pre overflow-x-auto bg-indigo-50 text-indigo-900 rounded-md p-2 rtl:text-right border border-indigo-100">
+{`[
+  {
+    "text": "Question text?",
+    "type": "MCQ",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctAnswer": "Option A",
+    "points": 10
+  }
+]`}
+              </pre>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="text-xs border-slate-200 text-slate-700 hover:bg-slate-50"
+                onClick={handleCloseImport}
+                disabled={isImportPending}
+              >
+                إلغاء
+              </Button>
+              <Button
+                type="button"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs"
+                onClick={handleImportSubmit}
+                disabled={isImportPending}
+              >
+                {isImportPending ? 'جاري الاستيراد...' : 'استيراد الأسئلة'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
