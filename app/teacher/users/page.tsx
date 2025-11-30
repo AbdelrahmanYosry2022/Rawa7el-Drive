@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/button';
 import { DeleteUserButton } from '@/components/teacher/delete-user-button';
 import { Users } from 'lucide-react';
 
+// Type definition for user
+interface AppUser {
+  id: string;
+  email: string;
+  role: 'ADMIN' | 'STUDENT';
+  createdAt: Date;
+}
+
 async function handleUpdateRole(formData: FormData) {
   'use server';
 
@@ -56,7 +64,7 @@ export default async function TeacherUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => {
+                {users.map((user: AppUser) => {
                   const isAdmin = user.role === 'ADMIN';
                   const isSelf = user.id === currentUserId;
                   const joinedAt = new Date(user.createdAt).toLocaleDateString('ar-EG');

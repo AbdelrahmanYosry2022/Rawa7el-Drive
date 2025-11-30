@@ -9,6 +9,15 @@ import { CreateExamModal } from '@/components/teacher/create-exam-modal';
 import { EditExamModal } from '@/components/teacher/edit-exam-modal';
 import { BackButton } from '@/components/teacher/back-button';
 
+// Type definition for exam
+interface SubjectExam {
+  id: string;
+  title: string;
+  durationMinutes: number;
+  passingScore: number;
+  _count: { questions: number };
+}
+
 async function handleDeleteExam(formData: FormData) {
   'use server';
 
@@ -85,7 +94,7 @@ export default async function TeacherSubjectDetailPage({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {subject.exams.map((exam) => (
+            {subject.exams.map((exam: SubjectExam) => (
               <Card
                 key={exam.id}
                 className="bg-white border border-slate-100 shadow-sm rounded-xl hover:border-indigo-200 hover:shadow-md transition-all duration-150"

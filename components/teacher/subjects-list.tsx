@@ -41,7 +41,7 @@ export function SubjectsList({ subjects }: SubjectsListProps) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      {subjects.map((subject) => (
+      {subjects.map((subject: TeacherSubjectItem) => (
         <Card
           key={subject.id}
           className="bg-white border border-slate-100 shadow-sm rounded-xl hover:border-indigo-200 hover:shadow-md transition-all duration-150"

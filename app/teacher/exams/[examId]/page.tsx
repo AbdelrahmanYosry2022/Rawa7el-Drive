@@ -7,6 +7,26 @@ import { BackButton } from '@/components/teacher/back-button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
+// Type definitions
+interface ExamQuestion {
+  id: string;
+  text: string;
+  type: 'MCQ' | 'TRUE_FALSE';
+  options: any;
+  correctAnswer: string;
+  points: number;
+}
+
+interface ExamSubmission {
+  id: string;
+  score: number;
+  passed: boolean;
+  createdAt: Date;
+  user: {
+    email: string;
+  } | null;
+}
+
 export default async function TeacherExamEditorPage({
   params,
 }: {
@@ -32,7 +52,7 @@ export default async function TeacherExamEditorPage({
     notFound();
   }
 
-  const clientQuestions: ClientQuestion[] = exam.questions.map((q) => ({
+  const clientQuestions: ClientQuestion[] = exam.questions.map((q: ExamQuestion) => ({
     id: q.id,
     text: q.text,
     type: q.type,
@@ -119,7 +139,7 @@ export default async function TeacherExamEditorPage({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {exam.submissions.map((submission) => {
+                    {exam.submissions.map((submission: ExamSubmission) => {
                       const date = new Date(submission.createdAt);
                       const formattedDate = date.toLocaleDateString('ar-EG');
                       const score = submission.score ?? 0;

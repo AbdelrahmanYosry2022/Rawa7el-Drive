@@ -80,7 +80,7 @@ export async function addQuestion(examId: string, data: AddQuestionInput) {
   let optionsJson: string[] | null = null;
 
   if (data.type === 'MCQ') {
-    const opts = (data.options || []).map((o) => o.trim()).filter(Boolean);
+    const opts = (data.options || []).map((o: string) => o.trim()).filter(Boolean);
     if (opts.length < 2) throw new Error('At least two options are required');
     if (!opts.includes(data.correctAnswer)) {
       throw new Error('Correct answer must be one of the options');
