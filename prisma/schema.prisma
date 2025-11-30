@@ -15,12 +15,6 @@ enum Role {
   STUDENT
 }
 
-enum MediaType {
-  VIDEO
-  AUDIO
-  PDF
-}
-
 enum QuestionType {
   MCQ
   TRUE_FALSE
@@ -34,42 +28,33 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  submissions ExamSubmission[]
+  submissions Submission[]
 }
 
-model Course {
+model Subject {
   id          String   @id @default(cuid())
   title       String
   description String?
+  icon        String?  // Icon name or emoji
+  color       String?  // Hex color code for UI
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  lessons Lesson[]
-  exams   Exam[]
-}
-
-model Lesson {
-  id          String    @id @default(cuid())
-  title       String
-  driveFileId String
-  mediaType   MediaType
-  courseId    String
-  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  exams Exam[]
 }
 
 model Exam {
-  id           String   @id @default(cuid())
-  title        String
-  courseId     String
-  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  passingScore Int      @default(50)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(cuid())
+  title           String
+  subjectId       String
+  subject         Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  passingScore    Int      @default(50)
+  durationMinutes Int      @default(30)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   questions   Question[]
-  submissions ExamSubmission[]
+  submissions Submission[]
 }
 
 model Question {
@@ -78,21 +63,21 @@ model Question {
   exam          Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
   text          String
   type          QuestionType
-  options       Json? // Stores options for MCQ e.g. ["Option A", "Option B"]
-  correctAnswer String // The correct answer value
+  options       Json?        // Stores options for MCQ e.g. ["Option A", "Option B"]
+  correctAnswer String       // The correct answer value
   points        Int          @default(1)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
 
-model ExamSubmission {
+model Submission {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   examId    String
   exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
   score     Int
-  answers   Json // Stores user answers e.g. { "questionId": "answer" }
+  answers   Json     // Stores user answers e.g. { "questionId": "answer" }
   passed    Boolean
   createdAt DateTime @default(now())
 }
