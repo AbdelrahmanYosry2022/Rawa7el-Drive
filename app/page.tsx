@@ -203,7 +203,7 @@ export default async function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {subjects.map((subject) => (
+            {subjects.map((subject: any) => (
               <Link key={subject.id} href={`/subjects/${subject.id}`}>
                 <Card className="bg-white border border-slate-100 shadow-sm rounded-xl flex flex-col items-center justify-center py-6 hover:shadow-md transition-shadow cursor-pointer">
                   <CardContent className="flex flex-col items-center justify-center gap-3 p-0">
