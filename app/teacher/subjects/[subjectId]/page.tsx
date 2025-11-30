@@ -3,10 +3,11 @@ import { notFound } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Clock, Target, GraduationCap, Trash2, ArrowRight } from 'lucide-react';
+import { Clock, Target, GraduationCap, Trash2 } from 'lucide-react';
 import { deleteExam } from '@/app/actions/teacher/exams';
 import { CreateExamModal } from '@/components/teacher/create-exam-modal';
 import { EditExamModal } from '@/components/teacher/edit-exam-modal';
+import { BackButton } from '@/components/teacher/back-button';
 
 async function handleDeleteExam(formData: FormData) {
   'use server';
@@ -44,28 +45,27 @@ export default async function TeacherSubjectDetailPage({
     <div className="max-w-6xl mx-auto py-8 px-6 space-y-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="space-y-2 text-right">
-          <div className="flex items-center gap-3 justify-end">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-              <GraduationCap className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-semibold text-slate-900">
-                {subject.title}
-              </h1>
-              {subject.description && (
-                <p className="text-xs text-slate-500 max-w-xl">
-                  {subject.description}
-                </p>
-              )}
+        <div className="space-y-2 text-right flex-1">
+          <div className="flex items-center justify-between gap-3">
+            <BackButton />
+            <div className="flex items-center gap-3 justify-start flex-1">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-xl md:text-2xl font-semibold text-slate-900">
+                  {subject.title}
+                </h1>
+                {subject.description && (
+                  <p className="text-xs text-slate-500 max-w-xl">
+                    {subject.description}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2 justify-end">
-          <Link href="/teacher/subjects" className="text-xs text-slate-500 flex items-center gap-1">
-            <ArrowRight className="w-3 h-3" />
-            الرجوع لإدارة المواد
-          </Link>
           <CreateExamModal subjectId={subject.id} />
         </div>
       </div>

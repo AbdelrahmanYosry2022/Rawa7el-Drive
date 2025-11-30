@@ -2,8 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { ExamQuestionBuilder, type ClientQuestion } from '@/components/teacher/exam-question-builder';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, Target, GraduationCap, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { Clock, Target, GraduationCap } from 'lucide-react';
+import { BackButton } from '@/components/teacher/back-button';
 
 export default async function TeacherExamEditorPage({
   params,
@@ -40,7 +40,8 @@ export default async function TeacherExamEditorPage({
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 justify-end flex-1">
+          <BackButton />
+          <div className="flex items-center gap-3 justify-start flex-1">
             <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
               <GraduationCap className="w-5 h-5" />
             </div>
@@ -53,13 +54,6 @@ export default async function TeacherExamEditorPage({
               </p>
             </div>
           </div>
-          <Link
-            href={`/teacher/subjects/${exam.subjectId}`}
-            className="text-xs text-slate-500 flex items-center gap-1"
-          >
-            <ArrowRight className="w-3 h-3" />
-            الرجوع لاختبارات المادة
-          </Link>
         </div>
 
         <Card className="bg-white border border-slate-100 shadow-sm">
