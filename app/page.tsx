@@ -29,6 +29,8 @@ export default async function Home() {
           role: 'STUDENT',
         },
       });
+    } else {
+      redirect('/sign-in');
     }
   }
 

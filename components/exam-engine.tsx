@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { submitExam } from '@/app/actions/exam';
+import { submitExam } from '@/app/actions/submitExam';
 
 type Question = {
   id: string;
