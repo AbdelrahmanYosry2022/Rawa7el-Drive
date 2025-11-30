@@ -45,14 +45,14 @@ export default async function Home() {
   });
 
   const completedExams = submissions.length;
-  const passedExams = submissions.filter((s) => s.passed).length;
+  const passedExams = submissions.filter((s: any) => s.passed).length;
   const averageScore =
     completedExams > 0
-      ? Math.round(submissions.reduce((sum, s) => sum + s.score, 0) / completedExams)
+      ? Math.round(submissions.reduce((sum: any, s: any) => sum + s.score, 0) / completedExams)
       : 0;
   const successRate = completedExams > 0 ? Math.round((passedExams / completedExams) * 100) : 0;
 
-  const totalQuestionsAnswered = submissions.reduce((sum, s) => {
+  const totalQuestionsAnswered = submissions.reduce((sum: any, s: any) => {
     if (!s.answers || typeof s.answers !== 'object') return sum;
     try {
       const obj = s.answers as Record<string, unknown>;
