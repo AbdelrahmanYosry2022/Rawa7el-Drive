@@ -4,7 +4,8 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Folder, GraduationCap, Clock } from 'lucide-react';
+import { StatsCard } from '@/components/dashboard/stats-card';
+import { Search, Folder, GraduationCap, Clock, CheckCircle2, Target, Percent } from 'lucide-react';
 
 export default async function Home() {
   const user = await currentUser();
@@ -30,6 +31,34 @@ export default async function Home() {
       });
     }
   }
+
+  // Fetch user submissions for stats
+  const submissions = await prisma.submission.findMany({
+    where: { userId: dbUser.id },
+    select: {
+      score: true,
+      passed: true,
+      answers: true,
+    },
+  });
+
+  const completedExams = submissions.length;
+  const passedExams = submissions.filter((s) => s.passed).length;
+  const averageScore =
+    completedExams > 0
+      ? Math.round(submissions.reduce((sum, s) => sum + s.score, 0) / completedExams)
+      : 0;
+  const successRate = completedExams > 0 ? Math.round((passedExams / completedExams) * 100) : 0;
+
+  const totalQuestionsAnswered = submissions.reduce((sum, s) => {
+    if (!s.answers || typeof s.answers !== 'object') return sum;
+    try {
+      const obj = s.answers as Record<string, unknown>;
+      return sum + Object.keys(obj).length;
+    } catch {
+      return sum;
+    }
+  }, 0);
 
   // Fetch real subjects with exam count
   const subjects = await prisma.subject.findMany({
@@ -112,6 +141,38 @@ export default async function Home() {
             </Button>
           </div>
         </div>
+      </section>
+
+      {/* Stats cards */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
+          title="الاختبارات المنجزة"
+          value={completedExams}
+          subtitle="إجمالي محاولات الاختبارات"
+          icon={GraduationCap}
+          color="blue"
+        />
+        <StatsCard
+          title="تم الاجتياز"
+          value={passedExams}
+          subtitle="عدد الاختبارات الناجحة"
+          icon={CheckCircle2}
+          color="green"
+        />
+        <StatsCard
+          title="متوسط الدرجة"
+          value={completedExams > 0 ? `${averageScore}%` : '—'}
+          subtitle="متوسط نتائجك في كل المحاولات"
+          icon={Target}
+          color="purple"
+        />
+        <StatsCard
+          title="نسبة النجاح"
+          value={completedExams > 0 ? `${successRate}%` : '—'}
+          subtitle="من جميع الاختبارات التي خضتها"
+          icon={Percent}
+          color="orange"
+        />
       </section>
 
       {/* Search bar */}
