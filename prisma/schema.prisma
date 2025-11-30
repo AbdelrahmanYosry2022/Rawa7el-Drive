@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STUDENT
+}
+
+enum MediaType {
+  VIDEO
+  AUDIO
+  PDF
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  clerkId   String   @unique
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submissions ExamSubmission[]
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lessons Lesson[]
+  exams   Exam[]
+}
+
+model Lesson {
+  id          String    @id @default(cuid())
+  title       String
+  driveFileId String
+  mediaType   MediaType
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Exam {
+  id           String   @id @default(cuid())
+  title        String
+  courseId     String
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  passingScore Int      @default(50)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  questions   Question[]
+  submissions ExamSubmission[]
+}
+
+model Question {
+  id            String       @id @default(cuid())
+  examId        String
+  exam          Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  text          String
+  type          QuestionType
+  options       Json? // Stores options for MCQ e.g. ["Option A", "Option B"]
+  correctAnswer String // The correct answer value
+  points        Int          @default(1)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model ExamSubmission {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  examId    String
+  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  score     Int
+  answers   Json // Stores user answers e.g. { "questionId": "answer" }
+  passed    Boolean
+  createdAt DateTime @default(now())
+}
