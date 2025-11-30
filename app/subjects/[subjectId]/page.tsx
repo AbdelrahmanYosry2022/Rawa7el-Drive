@@ -6,6 +6,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
+// Type definition for exam with question count
+interface SubjectExam {
+  id: string;
+  title: string;
+  durationMinutes: number;
+  passingScore: number;
+  _count: { questions: number };
+}
+
 export default async function SubjectPage({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
 
@@ -48,7 +57,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
   }
 
   // Fetch submissions for this subject's exams for the current user
-  const examIds = subject.exams.map((e) => e.id);
+  const examIds = subject.exams.map((e: SubjectExam) => e.id);
   const submissions = examIds.length
     ? await prisma.submission.findMany({
         where: {
@@ -121,7 +130,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {subject.exams.map((exam) => {
+            {subject.exams.map((exam: SubjectExam) => {
               const submission = submissionsByExamId.get(exam.id);
               const hasSubmission = !!submission;
               const passed = submission?.passed;
