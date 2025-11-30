@@ -157,3 +157,79 @@ export async function updateExam(examId: string, data: UpdateExamInput) {
   revalidatePath(`/teacher/subjects/${exam.subjectId}`);
   revalidatePath(`/teacher/exams/${examId}`);
 }
+
+// Bulk import questions from JSON
+export async function addQuestionsBulk(examId: string, questionsJson: string) {
+  await requireAdmin();
+
+  if (!examId) {
+    throw new Error('Exam id is required');
+  }
+
+  try {
+    const questions = JSON.parse(questionsJson);
+
+    if (!Array.isArray(questions)) {
+      throw new Error('Invalid format: Expected an array of questions');
+    }
+
+    if (questions.length === 0) {
+      throw new Error('No questions found in the JSON');
+    }
+
+    // Validate and create questions in a transaction
+    const createdQuestions = await prisma.$transaction(
+      questions.map((q: any) => {
+        // Validate required fields
+        if (!q.text || typeof q.text !== 'string') {
+          throw new Error('Each question must have a "text" field');
+        }
+        if (!q.type || (q.type !== 'MCQ' && q.type !== 'TRUE_FALSE')) {
+          throw new Error('Each question must have a valid "type" (MCQ or TRUE_FALSE)');
+        }
+        if (!q.correctAnswer) {
+          throw new Error('Each question must have a "correctAnswer" field');
+        }
+
+        const points = Number.isFinite(q.points) && q.points > 0 ? q.points : 10;
+        let optionsJson: string[] = [];
+
+        if (q.type === 'MCQ') {
+          if (!Array.isArray(q.options) || q.options.length < 2) {
+            throw new Error('MCQ questions must have at least 2 options');
+          }
+          optionsJson = q.options.map((o: any) => String(o).trim()).filter(Boolean);
+          if (!optionsJson.includes(q.correctAnswer)) {
+            throw new Error(`Correct answer "${q.correctAnswer}" must be one of the options`);
+          }
+        } else {
+          // TRUE_FALSE
+          optionsJson = ['صحيح', 'خطأ'];
+          if (!optionsJson.includes(q.correctAnswer)) {
+            throw new Error('TRUE_FALSE correct answer must be either "صحيح" or "خطأ"');
+          }
+        }
+
+        return prisma.question.create({
+          data: {
+            examId,
+            text: q.text.trim(),
+            type: q.type,
+            options: optionsJson,
+            correctAnswer: q.correctAnswer,
+            points,
+          },
+        });
+      })
+    );
+
+    revalidatePath(`/teacher/exams/${examId}`);
+    return { success: true, count: createdQuestions.length };
+  } catch (error: any) {
+    console.error('Bulk import error:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Failed to import questions. Check JSON format.' 
+    };
+  }
+}

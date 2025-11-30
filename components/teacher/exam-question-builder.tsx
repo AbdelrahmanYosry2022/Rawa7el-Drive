@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { BulkImportDialog } from '@/components/teacher/bulk-import-dialog';
 
 export type ClientQuestion = {
   id: string;
@@ -86,9 +87,12 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
       {/* Left: question form */}
       <Card className="bg-white border border-slate-100 shadow-sm">
         <CardContent className="p-5 space-y-4">
-          <div className="space-y-1 text-right">
-            <h3 className="text-sm font-semibold text-slate-900">إضافة سؤال جديد</h3>
-            <p className="text-xs text-slate-500">قم بإضافة نص السؤال ونوعه والإجابة الصحيحة.</p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1 text-right flex-1">
+              <h3 className="text-sm font-semibold text-slate-900">إضافة سؤال جديد</h3>
+              <p className="text-xs text-slate-500">قم بإضافة نص السؤال ونوعه والإجابة الصحيحة.</p>
+            </div>
+            <BulkImportDialog examId={examId} onSuccess={() => router.refresh()} />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 text-right">
