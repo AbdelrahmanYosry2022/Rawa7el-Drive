@@ -45,7 +45,7 @@ export default async function StartExamPage({
     notFound();
   }
 
-  const clientQuestions: ClientQuestion[] = exam.questions.map((q) => ({
+  const clientQuestions: ClientQuestion[] = exam.questions.map((q: any) => ({
     id: q.id,
     text: q.text,
     type: q.type,
