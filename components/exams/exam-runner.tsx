@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { submitExam, type ExamSubmissionResult } from '@/app/actions/submitExam';
+import confetti from 'canvas-confetti';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
@@ -170,6 +171,74 @@ export function ExamRunner({ exam }: ExamClientProps) {
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [submitExamNow]);
+
+  // Confetti effect when passed
+  useEffect(() => {
+    if (result && result.success && result.passed) {
+      const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+
+      // 🎆 Initial firework burst from center
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { x: 0.5, y: 0.5 },
+        colors,
+        startVelocity: 45,
+        gravity: 1.2,
+      });
+
+      // 🎇 Second burst slightly delayed
+      setTimeout(() => {
+        confetti({
+          particleCount: 80,
+          spread: 100,
+          origin: { x: 0.5, y: 0.4 },
+          colors,
+          startVelocity: 35,
+        });
+      }, 200);
+
+      // 🎉 Continuous side confetti
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        // Left side
+        confetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors,
+        });
+        // Right side
+        confetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors,
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+
+      // 🎆 Final center burst
+      setTimeout(() => {
+        confetti({
+          particleCount: 150,
+          spread: 180,
+          origin: { x: 0.5, y: 0.6 },
+          colors,
+          startVelocity: 30,
+          gravity: 0.8,
+        });
+      }, 1500);
+    }
+  }, [result]);
 
   if (result && result.success) {
     return (

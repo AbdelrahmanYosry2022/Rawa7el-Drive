@@ -62,6 +62,7 @@ export function MyExamsTable({ submissions }: MyExamsTableProps) {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="text-right w-12">#</TableHead>
                   <TableHead className="text-right">الاختبار</TableHead>
                   <TableHead className="text-right">التاريخ</TableHead>
                   <TableHead className="text-right">الدرجة</TableHead>
@@ -70,12 +71,17 @@ export function MyExamsTable({ submissions }: MyExamsTableProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {submissions.map((submission) => {
+                {submissions.map((submission, index) => {
                   const score = submission.percentage ?? 0;
                   const passed = submission.passed;
 
                   return (
                     <TableRow key={submission.id}>
+                      <TableCell className="text-center">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
+                          {index + 1}
+                        </span>
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-col items-start space-y-0.5">
                           <span className="text-sm font-medium text-slate-900">
