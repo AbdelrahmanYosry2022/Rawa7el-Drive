@@ -112,7 +112,12 @@ export default async function TeacherExamEditorPage({
         </div>
 
         <TabsContent value="questions">
-          <ExamQuestionBuilder examId={exam.id} initialQuestions={clientQuestions} />
+          <ExamQuestionBuilder 
+            examId={exam.id} 
+            initialQuestions={clientQuestions}
+            examTimerMode={exam.timerMode}
+            examQuestionTimeSeconds={exam.questionTimeSeconds}
+          />
         </TabsContent>
 
         <TabsContent value="results">

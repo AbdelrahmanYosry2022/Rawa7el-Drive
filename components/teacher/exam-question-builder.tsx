@@ -21,19 +21,23 @@ export type ClientQuestion = {
   options: string[];
   correctAnswer: string;
   points: number;
+  timeSeconds?: number | null;
 };
 
 interface ExamQuestionBuilderProps {
   examId: string;
   initialQuestions: ClientQuestion[];
+  examTimerMode: 'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION';
+  examQuestionTimeSeconds: number | null;
 }
 
-export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBuilderProps) {
+export function ExamQuestionBuilder({ examId, initialQuestions, examTimerMode, examQuestionTimeSeconds }: ExamQuestionBuilderProps) {
   const router = useRouter();
   const [questions] = useState<ClientQuestion[]>(initialQuestions);
   const [questionText, setQuestionText] = useState('');
   const [questionType, setQuestionType] = useState<'MCQ' | 'TRUE_FALSE'>('MCQ');
   const [points, setPoints] = useState('10');
+  const [questionTime, setQuestionTime] = useState(String(examQuestionTimeSeconds || 60));
   const [mcqOptions, setMcqOptions] = useState<string[]>(['', '', '', '']);
   const [correctAnswer, setCorrectAnswer] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -265,6 +269,24 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
                 />
               </div>
             </div>
+
+            {examTimerMode === 'PER_QUESTION' && (
+              <div className="space-y-1">
+                <label className="text-xs text-slate-500" htmlFor="question-time">
+                  وقت السؤال (بالثواني)
+                </label>
+                <Input
+                  id="question-time"
+                  type="number"
+                  min={10}
+                  max={600}
+                  value={questionTime}
+                  onChange={(e) => setQuestionTime(e.target.value)}
+                  className="border-slate-200 text-slate-900 placeholder:text-slate-400"
+                  placeholder={`الافتراضي: ${examQuestionTimeSeconds || 60} ثانية`}
+                />
+              </div>
+            )}
 
             {questionType === 'MCQ' ? (
               <div className="space-y-2">

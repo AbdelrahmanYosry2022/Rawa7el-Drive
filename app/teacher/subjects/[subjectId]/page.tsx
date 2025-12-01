@@ -15,6 +15,8 @@ interface SubjectExam {
   title: string;
   durationMinutes: number;
   passingScore: number;
+  timerMode: 'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION';
+  questionTimeSeconds: number | null;
   _count: { questions: number };
 }
 
@@ -134,6 +136,8 @@ export default async function TeacherSubjectDetailPage({
                         initialTitle={exam.title}
                         initialDurationMinutes={exam.durationMinutes}
                         initialPassingScore={exam.passingScore}
+                        initialTimerMode={exam.timerMode}
+                        initialQuestionTimeSeconds={exam.questionTimeSeconds}
                       />
                       <form action={handleDeleteExam}>
                         <input type="hidden" name="id" value={exam.id} />

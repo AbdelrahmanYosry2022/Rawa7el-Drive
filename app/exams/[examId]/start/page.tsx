@@ -12,6 +12,7 @@ interface PrismaQuestion {
   options: any;
   correctAnswer: string;
   points: number;
+  timeSeconds: number | null;
 }
 
 // Enable caching for this page (revalidate every 300 seconds = 5 min)
@@ -52,6 +53,8 @@ export default async function StartExamPage({
       title: true,
       durationMinutes: true,
       passingScore: true,
+      timerMode: true,
+      questionTimeSeconds: true,
       subject: {
         select: {
           id: true,
@@ -66,6 +69,7 @@ export default async function StartExamPage({
           options: true,
           correctAnswer: true,
           points: true,
+          timeSeconds: true,
         },
         orderBy: { createdAt: 'asc' },
       },
@@ -81,6 +85,7 @@ export default async function StartExamPage({
     text: q.text,
     type: q.type,
     options: Array.isArray(q.options) ? (q.options as string[]) : [],
+    timeSeconds: q.timeSeconds,
   }));
 
   const session = await startExamSession(exam.id);
@@ -107,6 +112,8 @@ export default async function StartExamPage({
             title: exam.title,
             durationMinutes: exam.durationMinutes,
             passingScore: exam.passingScore,
+            timerMode: exam.timerMode,
+            questionTimeSeconds: exam.questionTimeSeconds,
             questions: clientQuestions,
             startedAt:
               session && session.success

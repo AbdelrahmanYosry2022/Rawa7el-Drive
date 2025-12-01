@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { submitExam, type ExamSubmissionResult } from '@/app/actions/submitExam';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 export type ClientQuestion = {
@@ -11,7 +11,10 @@ export type ClientQuestion = {
   text: string;
   type: 'MCQ' | 'TRUE_FALSE';
   options: string[];
+  timeSeconds?: number | null;
 };
+
+type TimerMode = 'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION';
 
 export type ExamClientProps = {
   exam: {
@@ -19,6 +22,8 @@ export type ExamClientProps = {
     title: string;
     durationMinutes: number;
     passingScore: number;
+    timerMode: TimerMode;
+    questionTimeSeconds: number | null;
     questions: ClientQuestion[];
     startedAt: string;
   };
@@ -30,7 +35,9 @@ export function ExamRunner({ exam }: ExamClientProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<ExamSubmissionResult | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [questionRemainingSeconds, setQuestionRemainingSeconds] = useState<number | null>(null);
   const [violations, setViolations] = useState(0);
+  const [showFinishDialog, setShowFinishDialog] = useState(false);
 
   const totalQuestions = exam.questions.length;
   const currentQuestion = exam.questions[currentIndex];
@@ -77,13 +84,18 @@ export function ExamRunner({ exam }: ExamClientProps) {
     [answers, exam.id, isSubmitting, totalQuestions],
   );
 
-  const handleSubmit = () => {
-    void submitExamNow();
+  const handleFinishClick = () => {
+    setShowFinishDialog(true);
   };
 
-  // Timer setup based on startedAt and duration
+  const confirmFinish = () => {
+    setShowFinishDialog(false);
+    void submitExamNow({ force: true });
+  };
+
+  // EXAM_TOTAL timer
   useEffect(() => {
-    if (!exam.startedAt || !exam.durationMinutes) return;
+    if (exam.timerMode !== 'EXAM_TOTAL' || !exam.startedAt || !exam.durationMinutes) return;
 
     const started = new Date(exam.startedAt).getTime();
     const end = started + exam.durationMinutes * 60_000;
@@ -93,7 +105,6 @@ export function ExamRunner({ exam }: ExamClientProps) {
       const diffSec = Math.max(0, Math.floor((end - now) / 1000));
       setRemainingSeconds(diffSec);
       if (diffSec === 0) {
-        // Auto-submit when time is up (force, even لو في أسئلة فاضية)
         void submitExamNow({ force: true });
       }
     };
@@ -101,9 +112,46 @@ export function ExamRunner({ exam }: ExamClientProps) {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [exam.startedAt, exam.durationMinutes, submitExamNow]);
+  }, [exam.timerMode, exam.startedAt, exam.durationMinutes, submitExamNow]);
 
-  // Anti-cheat: detect tab switching using visibilitychange
+  // PER_QUESTION timer
+  useEffect(() => {
+    if (exam.timerMode !== 'PER_QUESTION') return;
+
+    const questionTime =
+      currentQuestion.timeSeconds ?? exam.questionTimeSeconds ?? 60;
+
+    setQuestionRemainingSeconds(questionTime);
+
+    const tick = () => {
+      setQuestionRemainingSeconds((prev) => {
+        if (prev === null || prev <= 0) return 0;
+        const next = prev - 1;
+        if (next === 0) {
+          // Auto-advance to next question
+          if (currentIndex < totalQuestions - 1) {
+            setTimeout(() => goNext(), 100);
+          } else {
+            // Last question, submit
+            setTimeout(() => void submitExamNow({ force: true }), 100);
+          }
+        }
+        return next;
+      });
+    };
+
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [
+    exam.timerMode,
+    currentIndex,
+    currentQuestion,
+    exam.questionTimeSeconds,
+    totalQuestions,
+    submitExamNow,
+  ]);
+
+  // Anti-cheat: detect tab switching
   useEffect(() => {
     const handleVisibility = () => {
       if (document.hidden) {
@@ -155,17 +203,6 @@ export function ExamRunner({ exam }: ExamClientProps) {
                 العودة إلى لوحة التحكم
               </Button>
             </Link>
-            <button
-              type="button"
-              onClick={() => {
-                setResult(null);
-                setAnswers({});
-                setCurrentIndex(0);
-              }}
-              className="text-sm text-slate-500 hover:text-slate-700"
-            >
-              إعادة محاولة الاختبار
-            </button>
           </div>
         </div>
 
@@ -236,7 +273,7 @@ export function ExamRunner({ exam }: ExamClientProps) {
     );
   }
 
-  const formatRemaining = (seconds: number | null) => {
+  const formatTime = (seconds: number | null) => {
     if (seconds === null) return '...';
     const clamped = Math.max(0, seconds);
     const m = Math.floor(clamped / 60)
@@ -296,33 +333,69 @@ export function ExamRunner({ exam }: ExamClientProps) {
     );
   };
 
+  const questionProgress =
+    exam.timerMode === 'PER_QUESTION' && questionRemainingSeconds !== null
+      ? ((currentQuestion.timeSeconds ?? exam.questionTimeSeconds ?? 60) -
+          questionRemainingSeconds) /
+        (currentQuestion.timeSeconds ?? exam.questionTimeSeconds ?? 60)
+      : 0;
+
   return (
-    <div className="space-y-6">
-      {/* Sticky timer */}
-      <div className="sticky top-0 z-10">
-        <div className="mb-3 flex items-center justify-between rounded-xl bg-slate-900 text-slate-50 px-4 py-2 text-sm shadow-md">
-          <div className="flex flex-col text-right">
-            <span className="font-medium">الوقت المتبقي</span>
-            {violations > 0 && (
-              <span className="text-[11px] text-amber-300">
-                تم رصد مغادرة الشاشة {violations} مرة
-              </span>
-            )}
+    <div className="space-y-4">
+      {/* Timer Display */}
+      {exam.timerMode === 'EXAM_TOTAL' && remainingSeconds !== null && (
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-right">
+            <Clock className="w-5 h-5 text-indigo-600" />
+            <span className="text-sm font-medium text-slate-700">الوقت المتبقي</span>
           </div>
           <span
-            className={
-              remainingSeconds !== null && remainingSeconds <= 60
-                ? 'font-mono text-lg font-semibold text-rose-300'
-                : 'font-mono text-lg font-semibold'
-            }
+            className={`font-mono text-lg font-semibold ${
+              remainingSeconds <= 60 ? 'text-rose-600' : 'text-slate-900'
+            }`}
           >
-            {formatRemaining(remainingSeconds)}
+            {formatTime(remainingSeconds)}
           </span>
         </div>
-      </div>
+      )}
+
+      {exam.timerMode === 'PER_QUESTION' && questionRemainingSeconds !== null && (
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-right">
+              <Clock className="w-5 h-5 text-amber-600" />
+              <span className="text-sm font-medium text-slate-700">وقت السؤال</span>
+            </div>
+            <span
+              className={`font-mono text-lg font-semibold ${
+                questionRemainingSeconds <= 10 ? 'text-rose-600' : 'text-slate-900'
+              }`}
+            >
+              {questionRemainingSeconds}s
+            </span>
+          </div>
+          {/* Progress bar */}
+          <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${
+                questionRemainingSeconds <= 10 ? 'bg-rose-500' : 'bg-amber-500'
+              }`}
+              style={{ width: `${questionProgress * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Violations warning */}
+      {violations > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2 text-sm text-amber-800">
+          <AlertTriangle className="w-4 h-4" />
+          <span>تم رصد مغادرة الشاشة {violations} مرة</span>
+        </div>
+      )}
 
       {/* Top progress */}
-      <header className="mb-6">
+      <header className="mb-4">
         <div className="flex items-center justify-between mb-2 text-sm text-slate-500">
           <span>السؤال {currentIndex + 1} من {totalQuestions}</span>
           <span>{Math.round(progressValue)}%</span>
@@ -334,6 +407,7 @@ export function ExamRunner({ exam }: ExamClientProps) {
           />
         </div>
       </header>
+
       {/* Question card */}
       <main>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-4">
@@ -348,40 +422,75 @@ export function ExamRunner({ exam }: ExamClientProps) {
 
       {/* Navigation */}
       <footer className="mt-4 flex items-center justify-between gap-4">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={currentIndex === 0 || isSubmitting}
-          onClick={goPrev}
-          className="gap-2"
-        >
-          <ArrowRight className="w-4 h-4" />
-          السابق
-        </Button>
-
         <div className="flex items-center gap-3">
+          {exam.timerMode !== 'PER_QUESTION' && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={currentIndex === 0 || isSubmitting}
+              onClick={goPrev}
+              className="gap-2"
+            >
+              <ArrowRight className="w-4 h-4" />
+              السابق
+            </Button>
+          )}
+
           <Button
             type="button"
-            onClick={currentIndex === totalQuestions - 1 ? handleSubmit : goNext}
-            disabled={!selectedAnswer || isSubmitting}
-            className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-60"
+            onClick={handleFinishClick}
+            disabled={isSubmitting}
+            variant="outline"
+            className="gap-2 border-rose-200 text-rose-600 hover:bg-rose-50"
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                جارٍ الإرسال...
-              </>
-            ) : currentIndex === totalQuestions - 1 ? (
-              'إنهاء الاختبار'
-            ) : (
-              <>
-                التالي
-                <ArrowLeft className="w-4 h-4" />
-              </>
-            )}
+            إنهاء الاختبار
           </Button>
         </div>
+
+        <Button
+          type="button"
+          onClick={goNext}
+          disabled={!selectedAnswer || isSubmitting || currentIndex === totalQuestions - 1}
+          className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-60"
+        >
+          التالي
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
       </footer>
+
+      {/* Finish Confirmation Dialog */}
+      {showFinishDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-amber-600" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">تأكيد إنهاء الاختبار</h3>
+            </div>
+
+            <p className="text-sm text-slate-600 text-right">
+              هل أنت متأكد من إنهاء الاختبار الآن؟ سيتم حفظ إجاباتك الحالية وإرسالها للتصحيح.
+            </p>
+
+            <div className="flex items-center gap-3 pt-2">
+              <Button
+                onClick={() => setShowFinishDialog(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                إلغاء
+              </Button>
+              <Button
+                onClick={confirmFinish}
+                className="flex-1 bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                تأكيد الإنهاء
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -22,6 +22,7 @@ interface DashboardExam {
   title: string;
   durationMinutes: number;
   passingScore: number;
+  timerMode: 'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION';
   subject: { title: string };
   _count: { questions: number };
   createdAt: Date;
@@ -119,8 +120,18 @@ export default async function Home() {
 
   // Fetch recent exams (limit 4)
   const recentExams = await prisma.exam.findMany({
-    include: {
-      subject: true,
+    select: {
+      id: true,
+      title: true,
+      durationMinutes: true,
+      timerMode: true,
+      createdAt: true,
+      subject: {
+        select: {
+          title: true,
+          color: true,
+        },
+      },
       _count: {
         select: { questions: true },
       },
@@ -251,16 +262,30 @@ export default async function Home() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {recentExams.map((exam: DashboardExam) => (
-              <Link key={exam.id} href={`/exams/${exam.id}/start`}>
+              <Link key={exam.id} href={`/exams/${exam.id}`}>
                 <Card className="bg-white border border-slate-100 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer">
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center text-indigo-600">
                         <GraduationCap className="w-5 h-5" />
                       </div>
-                      <span className="px-2 py-1 rounded-md text-[10px] font-semibold bg-emerald-100 text-emerald-600">
-                        اختبار
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {exam.timerMode === 'NONE' && (
+                          <span className="px-2 py-1 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600">
+                            بدون توقيت
+                          </span>
+                        )}
+                        {exam.timerMode === 'EXAM_TOTAL' && (
+                          <span className="px-2 py-1 rounded-md text-[10px] font-semibold bg-indigo-100 text-indigo-600">
+                            ⏱️ {exam.durationMinutes} دقيقة
+                          </span>
+                        )}
+                        {exam.timerMode === 'PER_QUESTION' && (
+                          <span className="px-2 py-1 rounded-md text-[10px] font-semibold bg-amber-100 text-amber-600">
+                            ⏱️ لكل سؤال
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-1 text-right">

@@ -24,6 +24,8 @@ export type CreateExamInput = {
   title: string;
   durationMinutes: number;
   passingScore: number;
+  timerMode: 'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION';
+  questionTimeSeconds: number | null;
 };
 
 export async function createExam(subjectId: string, data: CreateExamInput) {
@@ -42,6 +44,8 @@ export async function createExam(subjectId: string, data: CreateExamInput) {
       subjectId,
       durationMinutes: duration,
       passingScore,
+      timerMode: data.timerMode || 'EXAM_TOTAL',
+      questionTimeSeconds: data.questionTimeSeconds,
     },
   });
 
@@ -67,6 +71,7 @@ export type AddQuestionInput = {
   options?: string[];
   correctAnswer: string;
   points: number;
+  timeSeconds?: number | null;
 };
 
 export async function addQuestion(examId: string, data: AddQuestionInput) {
@@ -102,6 +107,7 @@ export async function addQuestion(examId: string, data: AddQuestionInput) {
       options: optionsJson,
       correctAnswer: data.correctAnswer,
       points,
+      timeSeconds: data.timeSeconds,
     },
   });
 
@@ -156,6 +162,8 @@ export type UpdateExamInput = {
   title?: string;
   durationMinutes?: number;
   passingScore?: number;
+  timerMode?: 'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION';
+  questionTimeSeconds?: number | null;
 };
 
 export async function updateExam(examId: string, data: UpdateExamInput) {
@@ -178,6 +186,12 @@ export async function updateExam(examId: string, data: UpdateExamInput) {
   }
   if (data.passingScore !== undefined && Number.isFinite(data.passingScore)) {
     updateData.passingScore = data.passingScore;
+  }
+  if (data.timerMode !== undefined) {
+    updateData.timerMode = data.timerMode;
+  }
+  if (data.questionTimeSeconds !== undefined) {
+    updateData.questionTimeSeconds = data.questionTimeSeconds;
   }
 
   await prisma.exam.update({

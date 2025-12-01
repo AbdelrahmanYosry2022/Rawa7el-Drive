@@ -12,6 +12,8 @@ interface EditExamModalProps {
   initialTitle: string;
   initialDurationMinutes: number;
   initialPassingScore: number;
+  initialTimerMode: 'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION';
+  initialQuestionTimeSeconds: number | null;
 }
 
 export function EditExamModal({
@@ -19,12 +21,16 @@ export function EditExamModal({
   initialTitle,
   initialDurationMinutes,
   initialPassingScore,
+  initialTimerMode,
+  initialQuestionTimeSeconds,
 }: EditExamModalProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState(initialTitle);
   const [duration, setDuration] = useState(String(initialDurationMinutes));
   const [passingScore, setPassingScore] = useState(String(initialPassingScore));
+  const [timerMode, setTimerMode] = useState<'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION'>(initialTimerMode);
+  const [questionTime, setQuestionTime] = useState(String(initialQuestionTimeSeconds || 60));
   const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (e: FormEvent) => {
@@ -36,10 +42,13 @@ export function EditExamModal({
 
     startTransition(async () => {
       try {
+        const questionTimeSeconds = timerMode === 'PER_QUESTION' ? parseInt(questionTime || '60', 10) : null;
         await updateExam(examId, {
           title,
           durationMinutes: Number.isFinite(durationMinutes) ? durationMinutes : undefined,
           passingScore: Number.isFinite(passing) ? passing : undefined,
+          timerMode,
+          questionTimeSeconds,
         });
         setOpen(false);
         router.refresh();
@@ -119,6 +128,67 @@ export function EditExamModal({
                     className="border-slate-200 text-slate-900 placeholder:text-slate-400"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-slate-500">نظام التوقيت</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTimerMode('NONE')}
+                      className={`px-3 py-2 text-xs rounded-lg border transition text-right ${
+                        timerMode === 'NONE'
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="font-medium">بدون توقيت</div>
+                      <div className="text-[10px] text-slate-500">يمكن للطالب الإجابة براحته</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTimerMode('EXAM_TOTAL')}
+                      className={`px-3 py-2 text-xs rounded-lg border transition text-right ${
+                        timerMode === 'EXAM_TOTAL'
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="font-medium">توقيت للامتحان ككل</div>
+                      <div className="text-[10px] text-slate-500">عد تنازلي للامتحان بالكامل</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTimerMode('PER_QUESTION')}
+                      className={`px-3 py-2 text-xs rounded-lg border transition text-right ${
+                        timerMode === 'PER_QUESTION'
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                          : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="font-medium">توقيت لكل سؤال</div>
+                      <div className="text-[10px] text-slate-500">انتقال تلقائي عند انتهاء الوقت</div>
+                    </button>
+                  </div>
+                </div>
+
+                {timerMode === 'PER_QUESTION' && (
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-500" htmlFor="question-time-edit">
+                      الوقت الافتراضي لكل سؤال (بالثواني)
+                    </label>
+                    <Input
+                      id="question-time-edit"
+                      type="number"
+                      min={10}
+                      max={600}
+                      value={questionTime}
+                      onChange={(e) => setQuestionTime(e.target.value)}
+                      className="border-slate-200 text-slate-900"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

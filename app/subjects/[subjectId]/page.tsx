@@ -206,7 +206,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
                       </div>
 
                       {/* Action Button (always visible) */}
-                      <Link href={`/exams/${exam.id}/start`}>
+                      <Link href={`/exams/${exam.id}`}>
                         <Button
                           className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                         >
