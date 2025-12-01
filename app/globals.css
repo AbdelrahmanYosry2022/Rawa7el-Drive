@@ -128,7 +128,7 @@ body {
 }
 
 /* Driver.js Custom Theme - Premium Arabic Style */
-.driver-popover {
+.rawa7el-tour.driver-popover {
   font-family: var(--font-graphik), system-ui, sans-serif !important;
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
   border: none !important;
@@ -140,7 +140,7 @@ body {
   max-width: 320px !important;
 }
 
-.driver-popover::before {
+.rawa7el-tour.driver-popover::before {
   content: '';
   position: absolute;
   inset: -2px;
@@ -150,7 +150,7 @@ body {
   opacity: 0.6;
 }
 
-.driver-popover-title {
+.rawa7el-tour .driver-popover-title {
   font-family: var(--font-graphik), system-ui, sans-serif !important;
   font-size: 1rem !important;
   font-weight: 700 !important;
@@ -159,7 +159,7 @@ body {
   line-height: 1.6 !important;
 }
 
-.driver-popover-description {
+.rawa7el-tour .driver-popover-description {
   font-family: var(--font-graphik), system-ui, sans-serif !important;
   font-size: 0.875rem !important;
   font-weight: 400 !important;
@@ -167,35 +167,33 @@ body {
   line-height: 1.8 !important;
 }
 
-.driver-popover-progress-text {
+.rawa7el-tour .driver-popover-progress-text {
   font-family: var(--font-graphik), system-ui, sans-serif !important;
   font-size: 0.75rem !important;
   color: #94a3b8 !important;
 }
 
-.driver-popover-navigation-btns {
+.rawa7el-tour .driver-popover-navigation-btns {
   gap: 0.5rem !important;
   margin-top: 1rem !important;
-  justify-content: flex-start !important;
 }
 
-.driver-popover-prev-btn,
-.driver-popover-next-btn {
+.rawa7el-tour .driver-popover-prev-btn,
+.rawa7el-tour .driver-popover-next-btn {
   font-family: var(--font-graphik), system-ui, sans-serif !important;
   font-size: 0.875rem !important;
   font-weight: 500 !important;
   padding: 0.5rem 1rem !important;
-  border-radius: 0.5rem !important;
   transition: all 0.2s ease !important;
 }
 
-.driver-popover-prev-btn {
+.rawa7el-tour .driver-popover-prev-btn {
   background: #f1f5f9 !important;
   color: #475569 !important;
   border: 1px solid #e2e8f0 !important;
 }
 
-.driver-popover-prev-btn:hover {
+.rawa7el-tour .driver-popover-prev-btn:hover {
   background: #e2e8f0 !important;
 }
 
@@ -203,53 +201,47 @@ body {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
   color: white !important;
   border: none !important;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4) !important;
 }
 
-.driver-popover-next-btn:hover {
+.rawa7el-tour .driver-popover-next-btn:hover {
   background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5) !important;
 }
 
-.driver-popover-close-btn {
+.rawa7el-tour .driver-popover-close-btn {
   color: #94a3b8 !important;
   width: 1.5rem !important;
   height: 1.5rem !important;
 }
 
-.driver-popover-close-btn:hover {
+.rawa7el-tour .driver-popover-close-btn:hover {
   color: #64748b !important;
 }
 
-.driver-popover-arrow {
+.rawa7el-tour .driver-popover-arrow {
   border-color: #10b981 !important;
 }
 
-.driver-popover-arrow-side-right {
+.rawa7el-tour .driver-popover-arrow-side-right {
   border-right-color: #10b981 !important;
 }
 
-.driver-popover-arrow-side-left {
+.rawa7el-tour .driver-popover-arrow-side-left {
   border-left-color: #10b981 !important;
 }
 
-.driver-popover-arrow-side-top {
+.rawa7el-tour .driver-popover-arrow-side-top {
   border-top-color: #10b981 !important;
 }
 
-.driver-popover-arrow-side-bottom {
+.rawa7el-tour .driver-popover-arrow-side-bottom {
   border-bottom-color: #10b981 !important;
 }
 
 /* Highlight box with rounded corners and glowing green border */
 .driver-active-element {
   border-radius: 0.75rem !important;
-  box-shadow: 
-    0 0 0 3px #10b981,
-    0 0 20px rgba(16, 185, 129, 0.5),
-    0 0 40px rgba(16, 185, 129, 0.3) !important;
-  animation: driver-glow 2s ease-in-out infinite alternate !important;
+  border: 1px solid #22c55e !important; /* بوردر أخضر واضح */
 }
 
 @keyframes driver-glow {
@@ -267,8 +259,3 @@ body {
   }
 }
 
-/* Overlay styling */
-.driver-overlay {
-  background: rgba(15, 23, 42, 0.75) !important;
-  backdrop-filter: blur(4px) !important;
-}

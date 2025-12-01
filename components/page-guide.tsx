@@ -237,9 +237,9 @@ export function PageGuide() {
       progressText: "{{current}} من {{total}}",
       animate: true,
       allowClose: true,
-      overlayClickNext: false,
       stagePadding: 10,
       stageRadius: 12,
+      popoverClass: "rawa7el-tour",
     });
     driverObj.drive();
   };
