@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import NextTopLoader from 'nextjs-toploader';
 import "./globals.css";
 
 const graphikArabic = localFont({
@@ -52,6 +53,17 @@ export default async function RootLayout({
         <body
           className={`${graphikArabic.variable} ${geistMono.variable} antialiased`}
         >
+          <NextTopLoader 
+            color="#4F46E5"
+            initialPosition={0.08}
+            crawlSpeed={200}
+            height={3}
+            crawl={true}
+            showSpinner={false}
+            easing="ease"
+            speed={200}
+            shadow="0 0 10px #4F46E5,0 0 5px #4F46E5"
+          />
           {isAuthenticated ? (
             <div className="flex h-screen overflow-hidden bg-slate-50">
               {/* Sidebar - fixed width, scrollable */}
