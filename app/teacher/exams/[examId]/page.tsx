@@ -21,7 +21,7 @@ interface ExamQuestion {
 
 interface ExamSubmission {
   id: string;
-  score: number;
+  score: number | null;
   passed: boolean;
   createdAt: Date;
   user: {

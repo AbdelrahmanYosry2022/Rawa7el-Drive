@@ -28,9 +28,9 @@ interface DashboardExam {
 }
 
 interface Submission {
-  score: number;
+  score: number | null;
   passed: boolean;
-  answers: any;
+  answers: unknown;
 }
 
 // Enable caching for this page (revalidate every 60 seconds)
@@ -87,7 +87,7 @@ export default async function Home() {
   const passedExams = submissions.filter((s: Submission) => s.passed).length;
   const averageScore =
     completedExams > 0
-      ? Math.round(submissions.reduce((sum: number, s: Submission) => sum + s.score, 0) / completedExams)
+      ? Math.round(submissions.reduce((sum: number, s: Submission) => sum + (s.score ?? 0), 0) / completedExams)
       : 0;
   const successRate = completedExams > 0 ? Math.round((passedExams / completedExams) * 100) : 0;
 
