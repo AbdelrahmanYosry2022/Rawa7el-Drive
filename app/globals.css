@@ -130,10 +130,10 @@ body {
 /* Driver.js Custom Theme - Premium Arabic Style */
 .rawa7el-tour.driver-popover {
   font-family: var(--font-graphik), system-ui, sans-serif !important;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
-  border: none !important;
+  background: #ffffff !important; /* كارد أبيض نقي */
+  border: 1px solid #e2e8f0 !important; /* إطار خفيف يناسب تصميم الداشبورد */
   border-radius: 1rem !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(16, 185, 129, 0.1) !important;
+  box-shadow: 0 18px 40px -18px rgba(15, 23, 42, 0.45) !important;
   padding: 1.25rem !important;
   direction: rtl !important;
   text-align: right !important;
@@ -145,7 +145,6 @@ body {
   position: absolute;
   inset: -2px;
   border-radius: 1.1rem;
-  background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #6ee7b7 100%);
   z-index: -1;
   opacity: 0.6;
 }
@@ -184,27 +183,29 @@ body {
   font-size: 0.875rem !important;
   font-weight: 500 !important;
   padding: 0.5rem 1rem !important;
+  border-radius: 9999px !important; /* أزرار كـ pill */
   transition: all 0.2s ease !important;
 }
 
 .rawa7el-tour .driver-popover-prev-btn {
-  background: #f1f5f9 !important;
-  color: #475569 !important;
+  background: #ffffff !important;
+  color: #64748b !important;
   border: 1px solid #e2e8f0 !important;
 }
 
 .rawa7el-tour .driver-popover-prev-btn:hover {
-  background: #e2e8f0 !important;
+  background: #f8fafc !important;
 }
 
-.driver-popover-next-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-  color: white !important;
+.rawa7el-tour .driver-popover-next-btn {
+  background: #4f46e5 !important; /* بنفس لون الأكشنز في المنصة */
+  color: #ffffff !important;
   border: none !important;
+  text-shadow: none !important;
 }
 
 .rawa7el-tour .driver-popover-next-btn:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  background: #4338ca !important;
   transform: translateY(-1px) !important;
 }
 
@@ -219,24 +220,9 @@ body {
 }
 
 .rawa7el-tour .driver-popover-arrow {
-  border-color: #10b981 !important;
+  background-color: transparent !important;
 }
 
-.rawa7el-tour .driver-popover-arrow-side-right {
-  border-right-color: #10b981 !important;
-}
-
-.rawa7el-tour .driver-popover-arrow-side-left {
-  border-left-color: #10b981 !important;
-}
-
-.rawa7el-tour .driver-popover-arrow-side-top {
-  border-top-color: #10b981 !important;
-}
-
-.rawa7el-tour .driver-popover-arrow-side-bottom {
-  border-bottom-color: #10b981 !important;
-}
 
 /* Highlight box with rounded corners and glowing green border */
 .driver-active-element {

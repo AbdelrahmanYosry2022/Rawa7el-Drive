@@ -231,8 +231,8 @@ export function PageGuide() {
     const driverObj = driver({
       showProgress: true,
       steps: steps,
-      nextBtnText: "التالي ←",
-      prevBtnText: "→ السابق",
+      nextBtnText: "التالي",
+      prevBtnText: "السابق",
       doneBtnText: "إنهاء ✓",
       progressText: "{{current}} من {{total}}",
       animate: true,
