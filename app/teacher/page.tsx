@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { Activity, BookOpen, FileText, Users } from 'lucide-react';
+import { DashboardInsightsTabs } from '@/components/teacher/dashboard-insights-tabs';
 
 function formatRelativeTime(date: Date) {
   const now = new Date();
@@ -120,6 +121,51 @@ export default async function TeacherDashboardPage() {
 
   const maxCount = last7Days.reduce((max, day) => (day.count > max ? day.count : max), 0);
 
+  // Prepare data for charts tabs
+  const attemptsChartData = topByAttempts
+    .map((stat) => {
+      const exam = examById.get(stat.examId);
+      if (!exam) return null;
+      return {
+        examId: stat.examId,
+        title: exam.title,
+        subjectTitle: exam.subject?.title || 'مادة غير معروفة',
+        total: stat.total,
+      };
+    })
+    .filter(Boolean) as {
+    examId: string;
+    title: string;
+    subjectTitle: string;
+    total: number;
+  }[];
+
+  const successChartData = topBySuccess
+    .map((stat) => {
+      const exam = examById.get(stat.examId);
+      if (!exam) return null;
+      const successPercent = Math.round(stat.rate * 100);
+      return {
+        examId: stat.examId,
+        title: exam.title,
+        subjectTitle: exam.subject?.title || 'مادة غير معروفة',
+        total: stat.total,
+        successPercent,
+      };
+    })
+    .filter(Boolean) as {
+    examId: string;
+    title: string;
+    subjectTitle: string;
+    total: number;
+    successPercent: number;
+  }[];
+
+  const weekChartData = last7Days.map((day) => ({
+    label: day.label,
+    count: day.count,
+  }));
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-6 space-y-6">
       {/* Header */}
@@ -173,151 +219,14 @@ export default async function TeacherDashboardPage() {
         </div>
       </div>
 
-      {/* Top exams & activity charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Most attempted exams */}
-        <div className="rounded-xl border border-slate-100 bg-white shadow-sm">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <FileText className="w-4 h-4" />
-              </div>
-              <div className="text-right">
-                <h2 className="text-sm font-semibold text-slate-900">أكثر الاختبارات دخولاً</h2>
-                <p className="text-[11px] text-slate-500">أعلى الاختبارات من حيث عدد المحاولات.</p>
-              </div>
-            </div>
-          </div>
-
-          {topByAttempts.length === 0 ? (
-            <div className="px-5 py-6 text-center text-xs text-slate-500">
-              لا توجد محاولات كافية لعرض إحصائيات.
-            </div>
-          ) : (
-            <div className="px-5 py-4 space-y-2">
-              {topByAttempts.map((stat) => {
-                const exam = examById.get(stat.examId);
-                if (!exam) return null;
-
-                const subjectTitle = exam.subject?.title || 'مادة غير معروفة';
-
-                return (
-                  <div
-                    key={stat.examId}
-                    className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0"
-                  >
-                    <div className="flex flex-col text-right">
-                      <span className="text-xs font-medium text-slate-900 line-clamp-1">
-                        {exam.title}
-                      </span>
-                      <span className="text-[11px] text-slate-500 line-clamp-1">{subjectTitle}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-[11px]">
-                      <span className="px-2 py-0.5 rounded-full bg-slate-50 text-slate-700 border border-slate-100">
-                        {stat.total} محاولة
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-
-      {/* Most successful exams */}
-      <div className="rounded-xl border border-slate-100 bg-white shadow-sm">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Activity className="w-4 h-4" />
-            </div>
-            <div className="text-right">
-              <h2 className="text-sm font-semibold text-slate-900">أكثر الاختبارات نجاحاً</h2>
-              <p className="text-[11px] text-slate-500">
-                أعلى الاختبارات من حيث نسبة النجاح (مع حد أدنى من المحاولات).
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {topBySuccess.length === 0 ? (
-          <div className="px-5 py-6 text-center text-xs text-slate-500">
-            لا توجد بيانات كافية لعرض نسب النجاح بعد.
-          </div>
-        ) : (
-          <div className="px-5 py-4 space-y-2">
-            {topBySuccess.map((stat) => {
-              const exam = examById.get(stat.examId);
-              if (!exam) return null;
-
-              const subjectTitle = exam.subject?.title || 'مادة غير معروفة';
-              const successPercent = Math.round(stat.rate * 100);
-
-              return (
-                <div
-                  key={stat.examId}
-                  className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0"
-                >
-                  <div className="flex flex-col text-right">
-                    <span className="text-xs font-medium text-slate-900 line-clamp-1">
-                      {exam.title}
-                    </span>
-                    <span className="text-[11px] text-slate-500 line-clamp-1">{subjectTitle}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-[11px]">
-                    <span className="px-2 py-0.5 rounded-full bg-slate-50 text-slate-700 border border-slate-100">
-                      {stat.total} محاولة
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-                      {successPercent}% نسبة النجاح
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+      {/* Insights tabs (charts) */}
+      <div className="mt-4">
+        <DashboardInsightsTabs
+          attempts={attemptsChartData}
+          success={successChartData}
+          week={weekChartData}
+        />
       </div>
-
-        {/* 7-day submissions chart */}
-        <div className="rounded-xl border border-slate-100 bg-white shadow-sm">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
-                <Activity className="w-4 h-4" />
-              </div>
-              <div className="text-right">
-                <h2 className="text-sm font-semibold text-slate-900">النشاط خلال ٧ أيام</h2>
-                <p className="text-[11px] text-slate-500">عدد المحاولات في كل يوم.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="px-5 py-4">
-            {maxCount === 0 ? (
-              <p className="text-center text-xs text-slate-500">لا توجد محاولات خلال الأيام الماضية.</p>
-            ) : (
-              <div className="h-32 flex items-start justify-between gap-2">
-                {last7Days.map((day) => {
-                  const height = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
-                  return (
-                    <div key={day.key} className="flex flex-col items-center justify-end gap-1 flex-1">
-                      <div
-                        className="w-full rounded-t-md bg-indigo-500/80"
-                        style={{ height: `${height}%` }}
-                      />
-                      <span className="text-[10px] text-slate-500">{day.label}</span>
-                      <span className="text-[10px] text-slate-600">{day.count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
 
       {/* Recent activity */}
       <div className="rounded-xl border border-slate-100 bg-white shadow-sm">

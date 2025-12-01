@@ -2,6 +2,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { redirect, notFound } from 'next/navigation';
 import { ExamRunner, type ClientQuestion } from '@/components/exams/exam-runner';
+import { startExamSession } from '@/app/actions/exam';
 
 // Type definition for Prisma question result
 interface PrismaQuestion {
@@ -82,6 +83,8 @@ export default async function StartExamPage({
     options: Array.isArray(q.options) ? (q.options as string[]) : [],
   }));
 
+  const session = await startExamSession(exam.id);
+
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 flex justify-center">
       <div className="w-full max-w-3xl space-y-6">
@@ -105,6 +108,10 @@ export default async function StartExamPage({
             durationMinutes: exam.durationMinutes,
             passingScore: exam.passingScore,
             questions: clientQuestions,
+            startedAt:
+              session && session.success
+                ? session.startedAt
+                : new Date().toISOString(),
           }}
         />
       </div>

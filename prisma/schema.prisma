@@ -20,6 +20,17 @@ enum QuestionType {
   TRUE_FALSE
 }
 
+enum SubmissionStatus {
+  ONGOING
+  COMPLETED
+}
+
+enum TimerMode {
+  NONE
+  EXAM_TOTAL
+  PER_QUESTION
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -45,14 +56,16 @@ model Subject {
 }
 
 model Exam {
-  id              String   @id @default(cuid())
-  title           String
-  subjectId       String
-  subject         Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  passingScore    Int      @default(50)
-  durationMinutes Int      @default(30)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                    String    @id @default(cuid())
+  title                 String
+  subjectId             String
+  subject               Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  passingScore          Int       @default(50)
+  durationMinutes       Int       @default(30)
+  timerMode             TimerMode @default(EXAM_TOTAL)
+  questionTimeSeconds   Int?      // Default time per question when timerMode = PER_QUESTION
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   questions   Question[]
   submissions Submission[]
@@ -67,18 +80,21 @@ model Question {
   options       Json?        // Stores options for MCQ e.g. ["Option A", "Option B"]
   correctAnswer String       // The correct answer value
   points        Int          @default(1)
+  timeSeconds   Int?         // Optional: override exam's questionTimeSeconds for this specific question
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 }
 
 model Submission {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   examId    String
-  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
-  score     Int
-  answers   Json     // Stores user answers e.g. { "questionId": "answer" }
+  exam      Exam             @relation(fields: [examId], references: [id], onDelete: Cascade)
+  score     Int?
+  answers   Json             // Stores user answers e.g. { "questionId": "answer" }
   passed    Boolean
-  createdAt DateTime @default(now())
+  status    SubmissionStatus @default(ONGOING)
+  startedAt DateTime         @default(now())
+  createdAt DateTime         @default(now())
 }

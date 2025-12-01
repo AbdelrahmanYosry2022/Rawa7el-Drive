@@ -88,17 +88,64 @@ export async function submitExam(
   const percentage = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
   const passed = percentage >= exam.passingScore;
 
-  // Persist submission
+  // Persist submission using existing ONGOING session when available
   try {
-    await prisma.submission.create({
-      data: {
+    const existing = await prisma.submission.findFirst({
+      where: {
         userId: user.id,
         examId: exam.id,
-        score: percentage,
-        passed,
-        answers: userAnswers,
+        status: 'ONGOING',
       },
+      orderBy: { startedAt: 'desc' },
     });
+
+    const now = new Date();
+
+    if (existing) {
+      const deadline = new Date(
+        existing.startedAt.getTime() + exam.durationMinutes * 60_000,
+      );
+
+      if (now > deadline) {
+        // Mark as completed with failing score if submitted after time
+        await prisma.submission.update({
+          where: { id: existing.id },
+          data: {
+            status: 'COMPLETED',
+            score: 0,
+            passed: false,
+            answers: userAnswers,
+          },
+        });
+
+        return {
+          success: false,
+          error: 'انتهى وقت الاختبار، لا يمكن إرسال الإجابات بعد انتهاء المدة.',
+        };
+      }
+
+      await prisma.submission.update({
+        where: { id: existing.id },
+        data: {
+          status: 'COMPLETED',
+          score: percentage,
+          passed,
+          answers: userAnswers,
+        },
+      });
+    } else {
+      await prisma.submission.create({
+        data: {
+          userId: user.id,
+          examId: exam.id,
+          score: percentage,
+          passed,
+          status: 'COMPLETED',
+          answers: userAnswers,
+          startedAt: now,
+        },
+      });
+    }
   } catch (error) {
     console.error('Failed to save submission:', error);
     return { success: false, error: 'Failed to save submission' };

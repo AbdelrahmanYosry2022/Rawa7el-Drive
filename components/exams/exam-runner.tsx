@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { submitExam, type ExamSubmissionResult } from '@/app/actions/submitExam';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
@@ -20,6 +20,7 @@ export type ExamClientProps = {
     durationMinutes: number;
     passingScore: number;
     questions: ClientQuestion[];
+    startedAt: string;
   };
 };
 
@@ -28,6 +29,8 @@ export function ExamRunner({ exam }: ExamClientProps) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<ExamSubmissionResult | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const [violations, setViolations] = useState(0);
 
   const totalQuestions = exam.questions.length;
   const currentQuestion = exam.questions[currentIndex];
@@ -48,24 +51,78 @@ export function ExamRunner({ exam }: ExamClientProps) {
     }
   };
 
-  const handleSubmit = async () => {
-    if (Object.keys(answers).length < totalQuestions) {
-      // يمكن تحسين الرسالة لاحقاً بمودال
-      alert('الرجاء الإجابة على جميع الأسئلة قبل إنهاء الاختبار.');
-      return;
-    }
+  const submitExamNow = useCallback(
+    async (options?: { force?: boolean }) => {
+      if (!options?.force && Object.keys(answers).length < totalQuestions) {
+        alert('الرجاء الإجابة على جميع الأسئلة قبل إنهاء الاختبار.');
+        return;
+      }
 
-    setIsSubmitting(true);
-    try {
-      const res = await submitExam(exam.id, answers);
-      setResult(res);
-    } catch (error) {
-      console.error(error);
-      alert('حدث خطأ أثناء إرسال الإجابات');
-    } finally {
-      setIsSubmitting(false);
-    }
+      if (isSubmitting) return;
+
+      setIsSubmitting(true);
+      try {
+        const res = await submitExam(exam.id, answers);
+        setResult(res);
+        if (!res.success) {
+          alert(res.error || 'حدث خطأ أثناء إرسال الإجابات');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('حدث خطأ أثناء إرسال الإجابات');
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [answers, exam.id, isSubmitting, totalQuestions],
+  );
+
+  const handleSubmit = () => {
+    void submitExamNow();
   };
+
+  // Timer setup based on startedAt and duration
+  useEffect(() => {
+    if (!exam.startedAt || !exam.durationMinutes) return;
+
+    const started = new Date(exam.startedAt).getTime();
+    const end = started + exam.durationMinutes * 60_000;
+
+    const tick = () => {
+      const now = Date.now();
+      const diffSec = Math.max(0, Math.floor((end - now) / 1000));
+      setRemainingSeconds(diffSec);
+      if (diffSec === 0) {
+        // Auto-submit when time is up (force, even لو في أسئلة فاضية)
+        void submitExamNow({ force: true });
+      }
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [exam.startedAt, exam.durationMinutes, submitExamNow]);
+
+  // Anti-cheat: detect tab switching using visibilitychange
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        setViolations((prev) => {
+          const next = prev + 1;
+          alert('تحذير: مغادرة شاشة الاختبار يتم مراقبتها!');
+          if (next > 2) {
+            void submitExamNow({ force: true });
+          }
+          return next;
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [submitExamNow]);
 
   if (result && result.success) {
     return (
@@ -179,6 +236,16 @@ export function ExamRunner({ exam }: ExamClientProps) {
     );
   }
 
+  const formatRemaining = (seconds: number | null) => {
+    if (seconds === null) return '...';
+    const clamped = Math.max(0, seconds);
+    const m = Math.floor(clamped / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (clamped % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
   const progressValue = totalQuestions > 0 ? ((currentIndex + 1) / totalQuestions) * 100 : 0;
   const selectedAnswer = answers[currentQuestion.id];
 
@@ -231,6 +298,29 @@ export function ExamRunner({ exam }: ExamClientProps) {
 
   return (
     <div className="space-y-6">
+      {/* Sticky timer */}
+      <div className="sticky top-0 z-10">
+        <div className="mb-3 flex items-center justify-between rounded-xl bg-slate-900 text-slate-50 px-4 py-2 text-sm shadow-md">
+          <div className="flex flex-col text-right">
+            <span className="font-medium">الوقت المتبقي</span>
+            {violations > 0 && (
+              <span className="text-[11px] text-amber-300">
+                تم رصد مغادرة الشاشة {violations} مرة
+              </span>
+            )}
+          </div>
+          <span
+            className={
+              remainingSeconds !== null && remainingSeconds <= 60
+                ? 'font-mono text-lg font-semibold text-rose-300'
+                : 'font-mono text-lg font-semibold'
+            }
+          >
+            {formatRemaining(remainingSeconds)}
+          </span>
+        </div>
+      </div>
+
       {/* Top progress */}
       <header className="mb-6">
         <div className="flex items-center justify-between mb-2 text-sm text-slate-500">
