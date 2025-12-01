@@ -6,6 +6,8 @@ import { Clock, Target, GraduationCap } from 'lucide-react';
 import { BackButton } from '@/components/teacher/back-button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ExamExportDropdown } from '@/components/teacher/exam-export-dropdown';
+import type { ExportQuestion } from '@/lib/export-exam';
 
 // Type definitions
 interface ExamQuestion {
@@ -62,6 +64,16 @@ export default async function TeacherExamEditorPage({
     points: q.points,
   }));
 
+  // For export functionality
+  const exportQuestions: ExportQuestion[] = exam.questions.map((q: ExamQuestion) => ({
+    id: q.id,
+    text: q.text,
+    type: q.type,
+    options: Array.isArray(q.options) ? (q.options as string[]) : [],
+    correctAnswer: q.correctAnswer,
+    points: q.points,
+  }));
+
   const hasSubmissions = exam.submissions.length > 0;
 
   return (
@@ -83,6 +95,10 @@ export default async function TeacherExamEditorPage({
               </p>
             </div>
           </div>
+          <ExamExportDropdown 
+            examTitle={exam.title} 
+            questions={exportQuestions} 
+          />
         </div>
 
         <Card className="bg-white border border-slate-100 shadow-sm">

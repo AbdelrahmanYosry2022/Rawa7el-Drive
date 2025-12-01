@@ -21,9 +21,8 @@ interface DashboardExam {
   id: string;
   title: string;
   durationMinutes: number;
-  passingScore: number;
   timerMode: 'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION';
-  subject: { title: string };
+  subject: { title: string; color: string | null };
   _count: { questions: number };
   createdAt: Date;
 }
