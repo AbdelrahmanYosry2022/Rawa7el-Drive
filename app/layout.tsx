@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { prisma } from "@/lib/prisma";
 import NextTopLoader from 'nextjs-toploader';
 import "./globals.css";
 
@@ -47,6 +48,17 @@ export default async function RootLayout({
   const { userId } = await auth();
   const isAuthenticated = !!userId;
 
+  const subjects = isAuthenticated
+    ? await prisma.subject.findMany({
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          color: true,
+        },
+      })
+    : [];
+
   return (
     <ClerkProvider>
       <html lang="ar" dir="rtl" suppressHydrationWarning>
@@ -68,7 +80,7 @@ export default async function RootLayout({
           {isAuthenticated ? (
             <div className="flex h-screen overflow-hidden bg-slate-50">
               {/* Sidebar - fixed width, scrollable */}
-              <Sidebar />
+              <Sidebar subjects={subjects} />
               
               {/* Main Content - flexible, scrollable */}
               <main className="flex-1 overflow-y-auto">

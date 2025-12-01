@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  BookOpen,
   LayoutDashboard,
   GraduationCap,
   User,
@@ -21,6 +20,12 @@ type NavItem = {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 };
 
+type SidebarSubject = {
+  id: string;
+  title: string;
+  color: string | null;
+};
+
 const studentMainNav: NavItem[] = [
   {
     title: 'لوحة التحكم',
@@ -31,41 +36,17 @@ const studentMainNav: NavItem[] = [
 
 const studentPinnedNav: NavItem[] = [
   {
-    title: 'دوراتي',
-    href: '/dashboard/courses',
-    icon: BookOpen,
-  },
-  {
     title: 'اختباراتي',
-    href: '/dashboard/exams',
+    href: '/my-exams',
     icon: GraduationCap,
   },
 ];
 
-const studentFolderNav: NavItem[] = [
-  {
-    title: 'المستوى التمهيدي',
-    href: '/dashboard/levels/intro',
-    icon: FolderKanban,
-  },
-  {
-    title: 'مستوى العقيدة',
-    href: '/dashboard/levels/aqueedah',
-    icon: FolderKanban,
-  },
-  {
-    title: 'مستوى الفقه',
-    href: '/dashboard/levels/fiqh',
-    icon: FolderKanban,
-  },
-  {
-    title: 'مستوى الحديث',
-    href: '/dashboard/levels/hadith',
-    icon: FolderKanban,
-  },
-];
+interface SidebarProps {
+  subjects: SidebarSubject[];
+}
 
-export function Sidebar() {
+export function Sidebar({ subjects }: SidebarProps) {
   const pathname = usePathname();
   const isTeacher = pathname.startsWith('/teacher');
 
@@ -134,10 +115,10 @@ export function Sidebar() {
         <div className="flex items-center justify-center">
           <Link href="/" aria-label="Rawa7el Drive" className="block">
             <Image
-              src="/logo/Rawa7el-drive-logo-v1.svg"
+              src="/logo/Rawa7el-drive-logo-v2.png"
               alt="Rawa7el Drive"
-              width={140}
-              height={32}
+              width={280}
+              height={64}
               className="h-8 w-auto"
               priority
             />
@@ -154,7 +135,16 @@ export function Sidebar() {
         ) : (
           <>
             {renderNavGroup('مُثبَّت', studentPinnedNav, true)}
-            {renderNavGroup('المجلدات', studentFolderNav, true)}
+            {subjects.length > 0 &&
+              renderNavGroup(
+                'المواد',
+                subjects.map((subject) => ({
+                  title: subject.title,
+                  href: `/subjects/${subject.id}`,
+                  icon: FolderKanban,
+                })),
+                true,
+              )}
           </>
         )}
 

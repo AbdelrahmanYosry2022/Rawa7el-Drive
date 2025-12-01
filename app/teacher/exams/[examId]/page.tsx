@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ExamExportDropdown } from '@/components/teacher/exam-export-dropdown';
 import type { ExportQuestion } from '@/lib/export-exam';
+import { getExamAnalytics } from '@/app/actions/teacher/analytics';
 
 // Type definitions
 interface ExamQuestion {
@@ -76,6 +77,8 @@ export default async function TeacherExamEditorPage({
 
   const hasSubmissions = exam.submissions.length > 0;
 
+  const analytics = await getExamAnalytics(exam.id);
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-6 space-y-6">
       {/* Header */}
@@ -124,6 +127,7 @@ export default async function TeacherExamEditorPage({
           <TabsList>
             <TabsTrigger value="questions">الأسئلة</TabsTrigger>
             <TabsTrigger value="results">النتائج</TabsTrigger>
+            <TabsTrigger value="analytics">تحليل الأداء</TabsTrigger>
           </TabsList>
         </div>
 
@@ -204,6 +208,104 @@ export default async function TeacherExamEditorPage({
                     })}
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <Card className="bg-white border border-slate-100 shadow-sm">
+            <CardContent className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-900">تحليل أداء الأسئلة</h3>
+                <span className="text-xs text-slate-400">
+                  {analytics.questionCount} سؤال
+                </span>
+              </div>
+
+              {analytics.questions.length === 0 ? (
+                <p className="text-xs text-slate-500 py-6 text-center">
+                  لا توجد بيانات كافية لعرض التحليل بعد.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {analytics.questions.map((q, index) => {
+                    const minAttempts = 5;
+                    const hasEnoughData = q.totalAttempts >= minAttempts;
+
+                    const difficultyColor =
+                      q.accuracy > 75
+                        ? 'bg-emerald-500'
+                        : q.accuracy >= 40
+                        ? 'bg-amber-500'
+                        : 'bg-rose-500';
+
+                    const difficultyLabel =
+                      q.accuracy > 75 ? 'سهل' : q.accuracy >= 40 ? 'متوسط' : 'صعب';
+
+                    const difficultyBadgeClass =
+                      difficultyLabel === 'سهل'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                        : difficultyLabel === 'متوسط'
+                        ? 'bg-amber-50 text-amber-700 border-amber-100'
+                        : 'bg-rose-50 text-rose-700 border-rose-100';
+
+                    return (
+                      <div key={q.questionId} className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-medium text-slate-800 flex-1 text-right">
+                            {index + 1}. {q.text}
+                          </p>
+                          <span className="text-[11px] text-slate-500 whitespace-nowrap">
+                            {q.totalAttempts} محاولة
+                          </span>
+                        </div>
+                        {hasEnoughData ? (
+                          <>
+                            <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
+                              <span>{q.accuracy}% من الطلاب أجابوا بشكل صحيح</span>
+                              <span
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 font-medium border ${difficultyBadgeClass}`}
+                              >
+                                {difficultyLabel}
+                              </span>
+                            </div>
+
+                            <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${difficultyColor}`}
+                                style={{ width: `${q.accuracy}%` }}
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
+                              <span>
+                                جارٍ جمع البيانات: {q.totalAttempts} / {minAttempts} محاولات
+                              </span>
+                              <span className="inline-flex items-center rounded-full px-2 py-0.5 font-medium border bg-slate-50 text-slate-600 border-slate-200">
+                                في انتظار المزيد من المحاولات
+                              </span>
+                            </div>
+
+                            <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-indigo-500"
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    (q.totalAttempts / minAttempts) * 100,
+                                  )}%`,
+                                }}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </CardContent>
           </Card>
