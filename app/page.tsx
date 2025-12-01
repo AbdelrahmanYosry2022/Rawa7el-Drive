@@ -50,17 +50,26 @@ export default async function Home() {
 
   if (!dbUser) {
     const email = user.emailAddresses[0]?.emailAddress;
+    const name = user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || null;
     if (email) {
       dbUser = await prisma.user.create({
         data: {
           clerkId: user.id,
           email,
+          name,
           role: 'STUDENT',
         },
       });
     } else {
       redirect('/sign-in');
     }
+  } else if (!dbUser.name && user.fullName) {
+    // Update name if it's missing
+    await prisma.user.update({
+      where: { id: dbUser.id },
+      data: { name: user.fullName },
+    });
+    dbUser.name = user.fullName;
   }
 
   // Fetch user submissions for stats (optimized query)
@@ -120,12 +129,6 @@ export default async function Home() {
     take: 4,
   });
 
-  const createdDate = new Date().toLocaleDateString('ar-EG', {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-  });
-
   const formatDate = (date: Date) => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -142,43 +145,11 @@ export default async function Home() {
   return (
     <div className="max-w-6xl mx-auto py-8 px-6 space-y-8">
       {/* Header: title, meta, avatars & actions */}
-      <section className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1 text-right">
-          <h1 className="text-3xl font-bold text-slate-900">أكاديمية الأساس</h1>
-          <p className="text-xs text-slate-400">
-            تم الإنشاء: {createdDate} · {subjects.length} مادة · {recentExams.length} اختبار
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {/* Avatar group */}
-          <div className="flex -space-x-3 rtl:space-x-reverse">
-            <div className="w-8 h-8 rounded-full bg-indigo-500 border-2 border-white text-xs font-semibold text-white flex items-center justify-center shadow-sm">
-              {user.firstName?.[0] || 'ط'}
-            </div>
-            <div className="w-8 h-8 rounded-full bg-sky-400 border-2 border-white text-xs font-semibold text-white flex items-center justify-center shadow-sm">
-              أ
-            </div>
-            <div className="w-8 h-8 rounded-full bg-violet-400 border-2 border-white text-xs font-semibold text-white flex items-center justify-center shadow-sm">
-              م
-            </div>
-            <div className="w-8 h-8 rounded-full bg-slate-100 border-2 border-white text-[10px] font-semibold text-slate-600 flex items-center justify-center shadow-sm">
-              +3
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2 h-9 text-sm"
-            >
-              مشاركة
-            </Button>
-            <Button className="bg-indigo-600 text-white hover:bg-indigo-700 px-5 py-2 h-9 text-sm shadow-sm">
-              تعديل
-            </Button>
-          </div>
-        </div>
+      <section className="text-right">
+        <h1 className="text-3xl font-bold text-slate-900">أكاديمية الأساس</h1>
+        <p className="text-xs text-slate-400 mt-1">
+          {subjects.length} مادة · {recentExams.length} اختبار
+        </p>
       </section>
 
       {/* Stats cards */}

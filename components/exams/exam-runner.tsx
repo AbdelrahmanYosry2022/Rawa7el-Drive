@@ -69,8 +69,9 @@ export function ExamRunner({ exam }: ExamClientProps) {
 
   if (result && result.success) {
     return (
-      <div className="flex justify-center py-10">
-        <div className="w-full max-w-xl bg-white rounded-2xl shadow-lg border border-slate-100 p-8 space-y-6 text-center">
+      <div className="max-w-4xl mx-auto py-10 px-4 space-y-8">
+        {/* Score Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 space-y-6 text-center">
           <div className="flex justify-center mb-2">
             {result.passed ? (
               <CheckCircle2 className="w-12 h-12 text-emerald-500" />
@@ -86,8 +87,8 @@ export function ExamRunner({ exam }: ExamClientProps) {
             <div className="text-5xl font-black text-indigo-600">
               {result.percentage}%
             </div>
-            <p className="text-slate-500 text-sm">
-              حصلت على {result.score} من {result.totalPoints} نقطة
+            <p className="text-slate-500 text-sm font-medium">
+              النقاط: {result.score} / {result.totalPoints}
             </p>
           </div>
 
@@ -110,6 +111,70 @@ export function ExamRunner({ exam }: ExamClientProps) {
             </button>
           </div>
         </div>
+
+        {/* Review Answers Section */}
+        {result.details && result.details.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-slate-900 text-right">مراجعة الإجابات</h3>
+            
+            {result.details.map((detail, index) => (
+            <div
+              key={detail.questionId}
+              className={`rounded-xl border-2 p-6 space-y-4 ${
+                detail.isCorrect
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-red-50 border-red-200'
+              }`}
+            >
+              {/* Question Header */}
+              <div className="flex items-start gap-3">
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  detail.isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                }`}>
+                  {index + 1}
+                </div>
+                <div className="flex-1">
+                  <p className="text-slate-900 font-medium text-right">{detail.text}</p>
+                </div>
+                <div className="flex-shrink-0">
+                  {detail.isCorrect ? (
+                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                  ) : (
+                    <XCircle className="w-6 h-6 text-red-600" />
+                  )}
+                </div>
+              </div>
+
+              {/* User Answer */}
+              <div className="pr-11 space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-semibold text-slate-700">إجابتك:</span>
+                  <span className={`font-medium ${
+                    detail.isCorrect ? 'text-green-700' : 'text-red-700'
+                  }`}>
+                    {detail.userAnswer || 'لم تجب'}
+                  </span>
+                  {detail.isCorrect ? (
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <XCircle className="w-4 h-4 text-red-600" />
+                  )}
+                </div>
+
+                {/* Show Correct Answer if Wrong */}
+                {!detail.isCorrect && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-semibold text-slate-700">الإجابة الصحيحة:</span>
+                    <span className="font-bold text-green-700">
+                      {detail.correctAnswer}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          </div>
+        )}
       </div>
     );
   }

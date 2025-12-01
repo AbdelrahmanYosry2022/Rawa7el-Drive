@@ -208,12 +208,7 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
                       {/* Action Button (always visible) */}
                       <Link href={`/exams/${exam.id}/start`}>
                         <Button
-                          variant={hasSubmission ? 'outline' : 'default'}
-                          className={
-                            hasSubmission
-                              ? 'w-full border-slate-200 text-slate-700 hover:bg-slate-50'
-                              : 'w-full bg-indigo-600 hover:bg-indigo-700 text-white'
-                          }
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
                         >
                           {hasSubmission ? 'أعد الاختبار' : 'ابدأ الاختبار'}
                         </Button>

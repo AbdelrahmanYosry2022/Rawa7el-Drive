@@ -108,6 +108,37 @@ export async function addQuestion(examId: string, data: AddQuestionInput) {
   revalidatePath(`/teacher/exams/${examId}`);
 }
 
+export async function updateQuestion(
+  questionId: string,
+  data: {
+    text: string;
+    type: 'MCQ' | 'TRUE_FALSE';
+    options: string[];
+    correctAnswer: string;
+    points: number;
+  }
+) {
+  await requireAdmin();
+
+  if (!questionId) throw new Error('Question id is required');
+
+  const question = await prisma.question.findUnique({ where: { id: questionId } });
+  if (!question) throw new Error('Question not found');
+
+  await prisma.question.update({
+    where: { id: questionId },
+    data: {
+      text: data.text,
+      type: data.type,
+      options: data.options,
+      correctAnswer: data.correctAnswer,
+      points: data.points,
+    },
+  });
+
+  revalidatePath(`/teacher/exams/${question.examId}`);
+}
+
 export async function deleteQuestion(questionId: string) {
   await requireAdmin();
 

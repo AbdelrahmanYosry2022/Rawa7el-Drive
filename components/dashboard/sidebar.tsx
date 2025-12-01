@@ -11,9 +11,9 @@ import {
   LogOut,
   Settings,
   FolderKanban,
-  Bookmark,
 } from 'lucide-react';
 import { SignOutButton } from '@clerk/nextjs';
+import Image from 'next/image';
 
 type NavItem = {
   title: string;
@@ -130,19 +130,18 @@ export function Sidebar() {
   return (
     <aside className="w-64 flex-shrink-0 bg-white border-l border-slate-100 flex flex-col h-full overflow-y-auto shadow-sm">
       {/* Logo Area */}
-      <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-indigo-200">
-            <BookOpen className="w-6 h-6" />
-          </div>
-          <div className="text-right">
-            <h1 className="font-bold text-base text-slate-900">أكاديمية الأساس</h1>
-            <p className="text-[11px] text-slate-400">Rawa7el Drive</p>
-          </div>
-        </div>
-        <div className="px-2 py-1 rounded-full bg-indigo-50 text-[10px] font-semibold text-indigo-600 flex items-center gap-1">
-          <Bookmark className="w-3 h-3" />
-          {isTeacher ? 'للمشرف' : 'للطلاب'}
+      <div className="px-6 pt-6 pb-4 border-b border-slate-100">
+        <div className="flex items-center justify-center">
+          <Link href="/" aria-label="Rawa7el Drive" className="block">
+            <Image
+              src="/logo/Rawa7el-drive-logo-v1.svg"
+              alt="Rawa7el Drive"
+              width={140}
+              height={32}
+              className="h-8 w-auto"
+              priority
+            />
+          </Link>
         </div>
       </div>
 

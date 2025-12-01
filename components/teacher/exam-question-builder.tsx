@@ -3,6 +3,7 @@
 import { useState, useTransition, FormEvent } from 'react';
 import {
   addQuestion,
+  updateQuestion,
   deleteQuestion,
   addQuestionsBulk,
   type AddQuestionsBulkResult,
@@ -10,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export type ClientQuestion = {
@@ -39,6 +40,7 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [importJson, setImportJson] = useState('');
   const [isImportPending, startImportTransition] = useTransition();
+  const [editingQuestion, setEditingQuestion] = useState<ClientQuestion | null>(null);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -74,6 +76,54 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
       next[index] = value;
       return next;
     });
+  };
+
+  const handleEditQuestion = (question: ClientQuestion) => {
+    setEditingQuestion(question);
+    setQuestionText(question.text);
+    setQuestionType(question.type);
+    setPoints(question.points.toString());
+    setCorrectAnswer(question.correctAnswer);
+    if (question.type === 'MCQ') {
+      setMcqOptions(question.options.length === 4 ? question.options : ['', '', '', '']);
+    }
+  };
+
+  const handleUpdateQuestion = (e: FormEvent) => {
+    e.preventDefault();
+    if (!editingQuestion) return;
+
+    const numericPoints = parseInt(points || '10', 10);
+    const payload = {
+      text: questionText,
+      type: questionType,
+      options: questionType === 'MCQ' ? mcqOptions : ['صحيح', 'خطأ'],
+      correctAnswer,
+      points: Number.isFinite(numericPoints) ? numericPoints : 10,
+    };
+
+    startTransition(async () => {
+      try {
+        await updateQuestion(editingQuestion.id, payload);
+        setEditingQuestion(null);
+        setQuestionText('');
+        setPoints('10');
+        setMcqOptions(['', '', '', '']);
+        setCorrectAnswer('');
+        router.refresh();
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingQuestion(null);
+    setQuestionText('');
+    setPoints('10');
+    setMcqOptions(['', '', '', '']);
+    setCorrectAnswer('');
+    setQuestionType('MCQ');
   };
 
   const handleDeleteQuestion = (id: string) => {
@@ -129,12 +179,28 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
       {/* Left: question form */}
       <Card className="bg-white border border-slate-100 shadow-sm">
         <CardContent className="p-5 space-y-4">
-          <div className="space-y-1 text-right">
-            <h3 className="text-sm font-semibold text-slate-900">إضافة سؤال جديد</h3>
-            <p className="text-xs text-slate-500">قم بإضافة نص السؤال ونوعه والإجابة الصحيحة.</p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1 text-right flex-1">
+              <h3 className="text-sm font-semibold text-slate-900">
+                {editingQuestion ? 'تعديل السؤال' : 'إضافة سؤال جديد'}
+              </h3>
+              <p className="text-xs text-slate-500">
+                {editingQuestion
+                  ? 'قم بتعديل بيانات السؤال ثم اضغط حفظ التعديلات.'
+                  : 'قم بإضافة نص السؤال ونوعه والإجابة الصحيحة.'}
+              </p>
+            </div>
+            <Button
+              type="button"
+              className="text-[11px] border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 bg-white px-3 py-1 h-8"
+              onClick={handleOpenImport}
+              disabled={isPending || isImportPending}
+            >
+              {isImportPending ? 'جاري الاستيراد...' : 'استيراد JSON'}
+            </Button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 text-right">
+          <form onSubmit={editingQuestion ? handleUpdateQuestion : handleSubmit} className="space-y-4 text-right">
             <div className="space-y-1">
               <label className="text-xs text-slate-500" htmlFor="question-text">
                 نص السؤال
@@ -242,29 +308,37 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
                         checked={correctAnswer === opt}
                         onChange={() => setCorrectAnswer(opt)}
                       />
-                      <span>{opt}</span>
+                      <span className="text-slate-900 font-medium">{opt}</span>
                     </label>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="flex justify-between items-center pt-2 gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="text-xs border-slate-200 text-slate-700 hover:bg-slate-50"
-                onClick={handleOpenImport}
-                disabled={isPending || isImportPending}
-              >
-                {isImportPending ? 'جاري الاستيراد...' : 'استيراد JSON'}
-              </Button>
+            <div className="flex justify-start items-center pt-2 gap-2">
+              {editingQuestion && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  disabled={isPending}
+                  className="h-9 px-4 border border-slate-300 text-slate-700 bg-white hover:bg-slate-50"
+                >
+                  إلغاء
+                </Button>
+              )}
               <Button
                 type="submit"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="h-9 px-5 bg-indigo-600 hover:bg-indigo-700 text-white"
                 disabled={isPending}
               >
-                {isPending ? 'جاري الإضافة...' : 'إضافة السؤال'}
+                {editingQuestion
+                  ? isPending
+                    ? 'جاري الحفظ...'
+                    : 'حفظ التعديلات'
+                  : isPending
+                  ? 'جاري الإضافة...'
+                  : 'إضافة السؤال'}
               </Button>
             </div>
           </form>
@@ -299,16 +373,28 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
                       الإجابة الصحيحة: {q.correctAnswer}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-500 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
-                    onClick={() => handleDeleteQuestion(q.id)}
-                    aria-label="حذف السؤال"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 flex-shrink-0"
+                      onClick={() => handleEditQuestion(q)}
+                      aria-label="تعديل السؤال"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
+                      onClick={() => handleDeleteQuestion(q.id)}
+                      aria-label="حذف السؤال"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -368,7 +454,7 @@ export function ExamQuestionBuilder({ examId, initialQuestions }: ExamQuestionBu
               <Button
                 type="button"
                 variant="outline"
-                className="text-xs border-slate-200 text-slate-700 hover:bg-slate-50"
+                className="text-xs hover:bg-red-700 "
                 onClick={handleCloseImport}
                 disabled={isImportPending}
               >

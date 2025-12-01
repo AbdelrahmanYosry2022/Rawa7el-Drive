@@ -49,9 +49,10 @@ export default async function RootLayout({
 
   return (
     <ClerkProvider>
-      <html lang="ar" dir="rtl">
+      <html lang="ar" dir="rtl" suppressHydrationWarning>
         <body
           className={`${graphikArabic.variable} ${geistMono.variable} antialiased`}
+          suppressHydrationWarning
         >
           <NextTopLoader 
             color="#4F46E5"

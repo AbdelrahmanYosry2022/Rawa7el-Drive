@@ -24,6 +24,7 @@ interface ExamSubmission {
   createdAt: Date;
   user: {
     email: string;
+    name: string | null;
   } | null;
 }
 
@@ -149,13 +150,18 @@ export default async function TeacherExamEditorPage({
                         <TableRow key={submission.id}>
                           <TableCell>
                             <div className="flex items-center justify-start gap-4">
-                              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[11px] font-semibold text-slate-600">
-                                {submission.user?.email?.charAt(0).toUpperCase() ?? '?'}
+                              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-[11px] font-semibold text-indigo-700">
+                                {submission.user?.name?.charAt(0).toUpperCase() || submission.user?.email?.charAt(0).toUpperCase() || '?'}
                               </div>
                               <div className="text-right">
                                 <p className="text-xs font-medium text-slate-800">
-                                  {submission.user?.email ?? 'طالب غير معروف'}
+                                  {submission.user?.name || submission.user?.email || 'طالب غير معروف'}
                                 </p>
+                                {submission.user?.name && submission.user?.email && (
+                                  <p className="text-[11px] text-slate-500">
+                                    {submission.user.email}
+                                  </p>
+                                )}
                               </div>
                             </div>
                           </TableCell>

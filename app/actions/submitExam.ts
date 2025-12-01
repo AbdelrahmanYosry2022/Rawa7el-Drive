@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 
 export type ExamQuestionDetail = {
   questionId: string;
+  text: string;
+  options: string[];
   userAnswer: string | null;
   correctAnswer: string;
   isCorrect: boolean;
@@ -62,8 +64,21 @@ export async function submitExam(
     if (isCorrect) {
       score += question.points;
     }
+    
+    // Parse options from JSON
+    let options: string[] = [];
+    try {
+      if (question.options && typeof question.options === 'object') {
+        options = question.options as string[];
+      }
+    } catch (e) {
+      options = [];
+    }
+    
     details.push({
       questionId: question.id,
+      text: question.text,
+      options,
       userAnswer,
       correctAnswer: question.correctAnswer,
       isCorrect,
