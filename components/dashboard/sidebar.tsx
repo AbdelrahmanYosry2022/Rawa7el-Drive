@@ -45,9 +45,10 @@ const studentPinnedNav: NavItem[] = [
 
 interface SidebarProps {
   subjects: SidebarSubject[];
+  userRole: 'ADMIN' | 'STUDENT';
 }
 
-export function Sidebar({ subjects }: SidebarProps) {
+export function Sidebar({ subjects, userRole }: SidebarProps) {
   const pathname = usePathname();
   const isTeacher = pathname.startsWith('/teacher');
 
@@ -151,7 +152,7 @@ export function Sidebar({ subjects }: SidebarProps) {
 
         <div className="space-y-1 pt-2">
           <p className="px-4 text-[10px] font-semibold tracking-[0.2em] text-slate-400">الحساب</p>
-          <Link href="/dashboard/profile" className="block">
+          <Link href="/profile" className="block">
             <span className="relative flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg border-r-4 border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-900 cursor-pointer">
               <User className="w-5 h-5 text-slate-400" />
               <span className="truncate">الملف الشخصي</span>
@@ -162,26 +163,31 @@ export function Sidebar({ subjects }: SidebarProps) {
 
       {/* Bottom Actions */}
       <div className="p-4 border-t border-slate-100 space-y-2">
-        {isTeacher ? (
-          <Link href="/">
-            <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors">
-              <LayoutDashboard className="w-5 h-5" />
-              العودة لواجهة الطالب
-            </button>
-          </Link>
-        ) : (
-          <Link href="/teacher">
-            <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors">
-              <LayoutDashboard className="w-5 h-5" />
-              الذهاب إلى لوحة الإدارة
-            </button>
-          </Link>
+{/* زر التبديل بين واجهة الطالب والأدمن - يظهر للأدمن فقط */}
+        {userRole === 'ADMIN' && (
+          isTeacher ? (
+            <Link href="/">
+              <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+                <LayoutDashboard className="w-5 h-5" />
+                العودة لواجهة الطالب
+              </button>
+            </Link>
+          ) : (
+            <Link href="/teacher">
+              <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+                <LayoutDashboard className="w-5 h-5" />
+                الذهاب إلى لوحة الإدارة
+              </button>
+            </Link>
+          )
         )}
 
-        <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-          <Settings className="w-5 h-5 text-slate-400" />
-          الإعدادات
-        </button>
+        <Link href="/settings">
+          <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+            <Settings className="w-5 h-5 text-slate-400" />
+            الإعدادات
+          </button>
+        </Link>
 
         <button
           onClick={() => {

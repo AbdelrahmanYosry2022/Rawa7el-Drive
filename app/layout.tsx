@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { WelcomeModal } from "@/components/welcome-modal";
 import { PageGuide } from "@/components/page-guide";
@@ -40,6 +40,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Rawa7el Drive",
   description: "Rawa7el Drive educational platform for exams and analytics",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Rawahel",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default async function RootLayout({
@@ -49,6 +58,21 @@ export default async function RootLayout({
 }>) {
   const { userId } = await auth();
   const isAuthenticated = !!userId;
+
+  // Fetch user role from DB
+  let userRole: 'ADMIN' | 'STUDENT' = 'STUDENT';
+  if (isAuthenticated) {
+    const clerkUser = await currentUser();
+    if (clerkUser) {
+      const dbUser = await prisma.user.findUnique({
+        where: { clerkId: clerkUser.id },
+        select: { role: true },
+      });
+      if (dbUser) {
+        userRole = dbUser.role;
+      }
+    }
+  }
 
   const subjects = isAuthenticated
     ? await prisma.subject.findMany({
@@ -85,7 +109,7 @@ export default async function RootLayout({
               <PageGuide />
               <div className="flex h-screen overflow-hidden bg-slate-50">
                 {/* Sidebar - fixed width, scrollable */}
-                <Sidebar subjects={subjects} />
+                <Sidebar subjects={subjects} userRole={userRole} />
                 
                 {/* Main Content - flexible, scrollable */}
                 <main className="flex-1 overflow-y-auto">

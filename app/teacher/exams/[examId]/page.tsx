@@ -4,6 +4,7 @@ import { ExamQuestionBuilder, type ClientQuestion } from '@/components/teacher/e
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, Target, GraduationCap } from 'lucide-react';
 import { BackButton } from '@/components/teacher/back-button';
+import { DeleteSubmissionButton } from '@/components/teacher/delete-submission-button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ExamExportDropdown } from '@/components/teacher/exam-export-dropdown';
@@ -164,6 +165,7 @@ export default async function TeacherExamEditorPage({
                       <TableHead>الدرجة</TableHead>
                       <TableHead>الحالة</TableHead>
                       <TableHead>التاريخ</TableHead>
+                      <TableHead>إجراء</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -205,6 +207,9 @@ export default async function TeacherExamEditorPage({
                             </span>
                           </TableCell>
                           <TableCell>{formattedDate}</TableCell>
+                          <TableCell>
+                            <DeleteSubmissionButton submissionId={submission.id} />
+                          </TableCell>
                         </TableRow>
                       );
                     })}

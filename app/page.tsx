@@ -194,18 +194,6 @@ export default async function Home() {
         />
       </section>
 
-      {/* Search bar */}
-      <section>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 px-4 py-3 flex items-center gap-3 max-w-xl">
-          <Search className="w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="ابحث عن دورة أو ملف..."
-            className="w-full bg-transparent border-none outline-none text-sm placeholder:text-slate-400 text-slate-700"
-          />
-        </div>
-      </section>
-
       {/* Subjects (Folders) */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">

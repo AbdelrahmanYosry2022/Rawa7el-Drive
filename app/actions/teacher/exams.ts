@@ -330,3 +330,20 @@ export async function addQuestionsBulk(
     return { success: false, error: 'Failed to import questions. Check JSON format.' };
   }
 }
+
+export async function deleteSubmission(submissionId: string) {
+  await requireAdmin();
+
+  if (!submissionId) throw new Error('Submission id is required');
+
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+    select: { examId: true },
+  });
+
+  if (!submission) return;
+
+  await prisma.submission.delete({ where: { id: submissionId } });
+
+  revalidatePath(`/teacher/exams/${submission.examId}`);
+}

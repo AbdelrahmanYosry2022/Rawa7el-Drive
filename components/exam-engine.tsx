@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { submitExam } from '@/app/actions/submitExam';
+import confetti from 'canvas-confetti';
 
 type Question = {
   id: string;
@@ -57,6 +58,37 @@ export function ExamEngine({ exam }: ExamProps) {
       setIsSubmitting(false);
     }
   };
+
+  // Confetti effect when passed
+  useEffect(() => {
+    if (result?.passed) {
+      // Fire confetti burst
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#4f46e5', '#10b981', '#f59e0b'],
+        });
+        confetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#4f46e5', '#10b981', '#f59e0b'],
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      };
+      frame();
+    }
+  }, [result]);
 
   if (result) {
     return (
