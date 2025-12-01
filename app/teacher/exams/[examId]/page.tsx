@@ -82,7 +82,7 @@ export default async function TeacherExamEditorPage({
   return (
     <div className="max-w-6xl mx-auto py-8 px-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4">
+      <div id="exam-header" className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
           <BackButton />
           <div className="flex items-center gap-3 justify-start flex-1">
@@ -98,10 +98,12 @@ export default async function TeacherExamEditorPage({
               </p>
             </div>
           </div>
-          <ExamExportDropdown 
-            examTitle={exam.title} 
-            questions={exportQuestions} 
-          />
+          <div id="export-btn">
+            <ExamExportDropdown 
+              examTitle={exam.title} 
+              questions={exportQuestions} 
+            />
+          </div>
         </div>
 
         <Card className="bg-white border border-slate-100 shadow-sm">
@@ -125,9 +127,9 @@ export default async function TeacherExamEditorPage({
       <Tabs defaultValue="questions" className="mt-4">
         <div className="flex items-center justify-between mb-2">
           <TabsList>
-            <TabsTrigger value="questions">الأسئلة</TabsTrigger>
-            <TabsTrigger value="results">النتائج</TabsTrigger>
-            <TabsTrigger value="analytics">تحليل الأداء</TabsTrigger>
+            <TabsTrigger id="questions-tab" value="questions">الأسئلة</TabsTrigger>
+            <TabsTrigger id="results-tab" value="results">النتائج</TabsTrigger>
+            <TabsTrigger id="analytics-tab" value="analytics">تحليل الأداء</TabsTrigger>
           </TabsList>
         </div>
 

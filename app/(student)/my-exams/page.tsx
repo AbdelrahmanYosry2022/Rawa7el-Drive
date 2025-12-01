@@ -104,7 +104,9 @@ export default async function MyExamsPage() {
         </div>
       </div>
 
-      <MyExamsTable submissions={clientSubmissions} />
+      <div id="my-exams-table">
+        <MyExamsTable submissions={clientSubmissions} />
+      </div>
     </div>
   );
 }

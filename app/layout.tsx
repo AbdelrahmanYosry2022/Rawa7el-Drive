@@ -4,6 +4,8 @@ import localFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { WelcomeModal } from "@/components/welcome-modal";
+import { PageGuide } from "@/components/page-guide";
 import { prisma } from "@/lib/prisma";
 import NextTopLoader from 'nextjs-toploader';
 import "./globals.css";
@@ -36,8 +38,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Al-Asas Academy",
-  description: "Sharia Academy Educational Platform",
+  title: "Rawa7el Drive",
+  description: "Rawa7el Drive educational platform for exams and analytics",
 };
 
 export default async function RootLayout({
@@ -78,15 +80,19 @@ export default async function RootLayout({
             shadow="0 0 10px #4F46E5,0 0 5px #4F46E5"
           />
           {isAuthenticated ? (
-            <div className="flex h-screen overflow-hidden bg-slate-50">
-              {/* Sidebar - fixed width, scrollable */}
-              <Sidebar subjects={subjects} />
-              
-              {/* Main Content - flexible, scrollable */}
-              <main className="flex-1 overflow-y-auto">
-                {children}
-              </main>
-            </div>
+            <>
+              <WelcomeModal />
+              <PageGuide />
+              <div className="flex h-screen overflow-hidden bg-slate-50">
+                {/* Sidebar - fixed width, scrollable */}
+                <Sidebar subjects={subjects} />
+                
+                {/* Main Content - flexible, scrollable */}
+                <main className="flex-1 overflow-y-auto">
+                  {children}
+                </main>
+              </div>
+            </>
           ) : (
             children
           )}

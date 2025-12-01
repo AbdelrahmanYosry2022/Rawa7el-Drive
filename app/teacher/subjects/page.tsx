@@ -30,7 +30,7 @@ export default async function TeacherSubjectsPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 justify-end">
+        <div id="create-subject-btn" className="flex items-center gap-2 justify-end">
           <CreateSubjectModal />
         </div>
       </div>
@@ -42,7 +42,7 @@ export default async function TeacherSubjectsPage() {
           </CardContent>
         </Card>
       ) : (
-        <section className="space-y-3">
+        <section id="subjects-grid" className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-900">جميع المواد</h3>
             <span className="text-xs text-slate-400">{subjects.length} مادة</span>

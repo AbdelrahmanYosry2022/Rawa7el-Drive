@@ -155,15 +155,15 @@ export default async function Home() {
   return (
     <div className="max-w-6xl mx-auto py-8 px-6 space-y-8">
       {/* Header: title, meta, avatars & actions */}
-      <section className="text-right">
-        <h1 className="text-3xl font-bold text-slate-900">أكاديمية الأساس</h1>
+      <section id="dashboard-header" className="text-right">
+        <h1 className="text-3xl font-bold text-slate-900">رواحل درايف</h1>
         <p className="text-xs text-slate-400 mt-1">
           {subjects.length} مادة · {recentExams.length} اختبار
         </p>
       </section>
 
       {/* Stats cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section id="stats-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="الاختبارات المنجزة"
           value={completedExams}
@@ -247,7 +247,7 @@ export default async function Home() {
       </section>
 
       {/* Available Exams */}
-      <section className="space-y-4">
+      <section id="recent-exams" className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-500">الاختبارات المتاحة</h2>
           <span className="text-xs text-slate-400">{recentExams.length} اختبار</span>
