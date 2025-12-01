@@ -33,6 +33,9 @@ interface Submission {
   answers: any;
 }
 
+// Enable caching for this page (revalidate every 60 seconds)
+export const revalidate = 60;
+
 export default async function Home() {
   const user = await currentUser();
 
@@ -60,7 +63,7 @@ export default async function Home() {
     }
   }
 
-  // Fetch user submissions for stats
+  // Fetch user submissions for stats (optimized query)
   const submissions = await prisma.submission.findMany({
     where: { userId: dbUser.id },
     select: {
@@ -68,6 +71,7 @@ export default async function Home() {
       passed: true,
       answers: true,
     },
+    orderBy: { createdAt: 'desc' },
   });
 
   const completedExams = submissions.length;
@@ -88,14 +92,20 @@ export default async function Home() {
     }
   }, 0);
 
-  // Fetch real subjects with exam count
+  // Fetch real subjects with exam count (limit to 6 for performance)
   const subjects = await prisma.subject.findMany({
-    include: {
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      icon: true,
+      color: true,
       _count: {
         select: { exams: true },
       },
     },
     orderBy: { createdAt: 'desc' },
+    take: 6,
   });
 
   // Fetch recent exams (limit 4)

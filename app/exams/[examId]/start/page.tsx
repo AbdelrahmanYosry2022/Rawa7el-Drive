@@ -13,6 +13,9 @@ interface PrismaQuestion {
   points: number;
 }
 
+// Enable caching for this page (revalidate every 300 seconds = 5 min)
+export const revalidate = 300;
+
 export default async function StartExamPage({
   params,
 }: {
@@ -43,9 +46,26 @@ export default async function StartExamPage({
 
   const exam = await prisma.exam.findUnique({
     where: { id: examId },
-    include: {
-      subject: true,
+    select: {
+      id: true,
+      title: true,
+      durationMinutes: true,
+      passingScore: true,
+      subject: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
       questions: {
+        select: {
+          id: true,
+          text: true,
+          type: true,
+          options: true,
+          correctAnswer: true,
+          points: true,
+        },
         orderBy: { createdAt: 'asc' },
       },
     },

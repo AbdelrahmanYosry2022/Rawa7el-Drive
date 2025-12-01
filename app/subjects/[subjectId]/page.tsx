@@ -15,6 +15,9 @@ interface SubjectExam {
   _count: { questions: number };
 }
 
+// Enable caching for this page (revalidate every 120 seconds)
+export const revalidate = 120;
+
 export default async function SubjectPage({ params }: { params: Promise<{ subjectId: string }> }) {
   const { subjectId } = await params;
 
@@ -40,9 +43,18 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
 
   const subject = await prisma.subject.findUnique({
     where: { id: subjectId },
-    include: {
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      icon: true,
+      color: true,
       exams: {
-        include: {
+        select: {
+          id: true,
+          title: true,
+          durationMinutes: true,
+          passingScore: true,
           _count: {
             select: { questions: true },
           },
