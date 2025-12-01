@@ -119,7 +119,7 @@ export function ExamRunner({ exam }: ExamClientProps) {
     if (exam.timerMode !== 'PER_QUESTION') return;
 
     const questionTime =
-      currentQuestion.timeSeconds ?? exam.questionTimeSeconds ?? 60;
+      exam.questions[currentIndex]?.timeSeconds ?? exam.questionTimeSeconds ?? 60;
 
     setQuestionRemainingSeconds(questionTime);
 
@@ -142,13 +142,12 @@ export function ExamRunner({ exam }: ExamClientProps) {
 
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     exam.timerMode,
     currentIndex,
-    currentQuestion,
+    // Removed exam.questions to prevent re-render on answer selection
     exam.questionTimeSeconds,
-    totalQuestions,
-    submitExamNow,
   ]);
 
   // Anti-cheat: detect tab switching
@@ -335,9 +334,9 @@ export function ExamRunner({ exam }: ExamClientProps) {
 
   const questionProgress =
     exam.timerMode === 'PER_QUESTION' && questionRemainingSeconds !== null
-      ? ((currentQuestion.timeSeconds ?? exam.questionTimeSeconds ?? 60) -
+      ? ((exam.questions[currentIndex]?.timeSeconds ?? exam.questionTimeSeconds ?? 60) -
           questionRemainingSeconds) /
-        (currentQuestion.timeSeconds ?? exam.questionTimeSeconds ?? 60)
+        (exam.questions[currentIndex]?.timeSeconds ?? exam.questionTimeSeconds ?? 60)
       : 0;
 
   return (
@@ -447,15 +446,27 @@ export function ExamRunner({ exam }: ExamClientProps) {
           </Button>
         </div>
 
-        <Button
-          type="button"
-          onClick={goNext}
-          disabled={!selectedAnswer || isSubmitting || currentIndex === totalQuestions - 1}
-          className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-60"
-        >
-          التالي
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
+        {currentIndex === totalQuestions - 1 ? (
+          <Button
+            type="button"
+            onClick={handleFinishClick}
+            disabled={!selectedAnswer || isSubmitting}
+            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-60"
+          >
+            إنهاء وإرسال
+            <CheckCircle2 className="w-4 h-4" />
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={goNext}
+            disabled={!selectedAnswer || isSubmitting}
+            className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-60"
+          >
+            التالي
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        )}
       </footer>
 
       {/* Finish Confirmation Dialog */}
