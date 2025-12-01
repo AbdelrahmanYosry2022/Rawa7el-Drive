@@ -6,6 +6,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { WelcomeModal } from "@/components/welcome-modal";
 import { PageGuide } from "@/components/page-guide";
+import { MobileNav } from "@/components/mobile-nav";
 import { prisma } from "@/lib/prisma";
 import NextTopLoader from 'nextjs-toploader';
 import "./globals.css";
@@ -112,9 +113,12 @@ export default async function RootLayout({
                 <Sidebar subjects={subjects} userRole={userRole} />
                 
                 {/* Main Content - flexible, scrollable */}
-                <main className="flex-1 overflow-y-auto">
+                <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
                   {children}
                 </main>
+                
+                {/* Mobile Bottom Navigation */}
+                <MobileNav userRole={userRole} />
               </div>
             </>
           ) : (

@@ -153,7 +153,7 @@ export default async function Home() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-6 space-y-8">
+    <div className="max-w-6xl mx-auto py-6 md:py-8 px-4 md:px-6 space-y-6 md:space-y-8">
       {/* Header: title, meta, avatars & actions */}
       <section id="dashboard-header" className="text-right">
         <h1 className="text-3xl font-bold text-slate-900">رواحل درايف</h1>

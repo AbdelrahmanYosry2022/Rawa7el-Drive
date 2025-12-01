@@ -111,7 +111,7 @@ export function Sidebar({ subjects, userRole }: SidebarProps) {
   );
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-white border-l border-slate-100 flex flex-col h-full overflow-y-auto shadow-sm">
+    <aside className="hidden md:flex w-64 flex-shrink-0 bg-white border-l border-slate-100 flex-col h-full overflow-y-auto shadow-sm">
       {/* Logo Area */}
       <div className="px-6 pt-6 pb-4 border-b border-slate-100">
         <div className="flex items-center justify-center">

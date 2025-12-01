@@ -2,9 +2,9 @@ import { UserProfile } from '@clerk/nextjs';
 
 export default function ProfilePage() {
   return (
-    <div className="max-w-4xl mx-auto py-8 px-6">
+    <div className="max-w-4xl mx-auto py-6 md:py-8 px-4 md:px-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-900">الملف الشخصي</h1>
+        <h1 className="text-xl md:text-2xl font-semibold text-slate-900">الملف الشخصي</h1>
         <p className="text-sm text-slate-500 mt-1">إدارة معلومات حسابك وإعدادات الأمان</p>
       </div>
       

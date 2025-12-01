@@ -94,7 +94,7 @@ export default async function MyExamsPage() {
   });
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-6 space-y-6">
+    <div className="max-w-5xl mx-auto py-6 md:py-8 px-4 md:px-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl md:text-2xl font-semibold text-slate-900">اختباراتي</h1>
