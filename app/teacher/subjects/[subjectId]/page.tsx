@@ -36,17 +36,23 @@ export default async function TeacherSubjectDetailPage({
 }) {
   const { subjectId } = await params;
 
-  const subject = await prisma.subject.findUnique({
-    where: { id: subjectId },
-    include: {
-      exams: {
-        include: {
-          _count: { select: { questions: true } },
+  const [subject, allSubjects] = await Promise.all([
+    prisma.subject.findUnique({
+      where: { id: subjectId },
+      include: {
+        exams: {
+          include: {
+            _count: { select: { questions: true } },
+          },
+          orderBy: { createdAt: 'desc' },
         },
-        orderBy: { createdAt: 'desc' },
       },
-    },
-  });
+    }),
+    prisma.subject.findMany({
+      select: { id: true, title: true },
+      orderBy: { title: 'asc' },
+    }),
+  ]);
 
   if (!subject) {
     notFound();
@@ -138,6 +144,8 @@ export default async function TeacherSubjectDetailPage({
                         initialPassingScore={exam.passingScore}
                         initialTimerMode={exam.timerMode}
                         initialQuestionTimeSeconds={exam.questionTimeSeconds}
+                        initialSubjectId={subjectId}
+                        subjects={allSubjects}
                       />
                       <form action={handleDeleteExam}>
                         <input type="hidden" name="id" value={exam.id} />

@@ -7,6 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Pencil, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+interface Subject {
+  id: string;
+  title: string;
+}
+
 interface EditExamModalProps {
   examId: string;
   initialTitle: string;
@@ -14,6 +19,8 @@ interface EditExamModalProps {
   initialPassingScore: number;
   initialTimerMode: 'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION';
   initialQuestionTimeSeconds: number | null;
+  initialSubjectId: string;
+  subjects: Subject[];
 }
 
 export function EditExamModal({
@@ -23,6 +30,8 @@ export function EditExamModal({
   initialPassingScore,
   initialTimerMode,
   initialQuestionTimeSeconds,
+  initialSubjectId,
+  subjects,
 }: EditExamModalProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -31,6 +40,7 @@ export function EditExamModal({
   const [passingScore, setPassingScore] = useState(String(initialPassingScore));
   const [timerMode, setTimerMode] = useState<'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION'>(initialTimerMode);
   const [questionTime, setQuestionTime] = useState(String(initialQuestionTimeSeconds || 60));
+  const [subjectId, setSubjectId] = useState(initialSubjectId);
   const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (e: FormEvent) => {
@@ -49,6 +59,7 @@ export function EditExamModal({
           passingScore: Number.isFinite(passing) ? passing : undefined,
           timerMode,
           questionTimeSeconds,
+          subjectId: subjectId !== initialSubjectId ? subjectId : undefined,
         });
         setOpen(false);
         router.refresh();
@@ -97,6 +108,30 @@ export function EditExamModal({
                   required
                   className="border-slate-200 text-slate-900 placeholder:text-slate-400"
                 />
+              </div>
+
+              {/* اختيار المادة (الفولدر) */}
+              <div className="space-y-1">
+                <label className="text-xs text-slate-500" htmlFor="exam-subject-edit">
+                  المادة (الفولدر)
+                </label>
+                <select
+                  id="exam-subject-edit"
+                  value={subjectId}
+                  onChange={(e) => setSubjectId(e.target.value)}
+                  className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {subjects.map((subject) => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.title}
+                    </option>
+                  ))}
+                </select>
+                {subjectId !== initialSubjectId && (
+                  <p className="text-[10px] text-amber-600">
+                    ⚠️ سيتم نقل الاختبار إلى مادة أخرى
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

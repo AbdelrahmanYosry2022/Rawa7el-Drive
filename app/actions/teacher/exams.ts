@@ -164,6 +164,7 @@ export type UpdateExamInput = {
   passingScore?: number;
   timerMode?: 'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION';
   questionTimeSeconds?: number | null;
+  subjectId?: string; // لنقل الاختبار لمادة أخرى
 };
 
 export async function updateExam(examId: string, data: UpdateExamInput) {
@@ -193,13 +194,21 @@ export async function updateExam(examId: string, data: UpdateExamInput) {
   if (data.questionTimeSeconds !== undefined) {
     updateData.questionTimeSeconds = data.questionTimeSeconds;
   }
+  if (data.subjectId !== undefined && data.subjectId.trim()) {
+    updateData.subjectId = data.subjectId.trim();
+  }
+
+  const oldSubjectId = exam.subjectId;
 
   await prisma.exam.update({
     where: { id: examId },
     data: updateData,
   });
 
-  revalidatePath(`/teacher/subjects/${exam.subjectId}`);
+  revalidatePath(`/teacher/subjects/${oldSubjectId}`);
+  if (data.subjectId && data.subjectId !== oldSubjectId) {
+    revalidatePath(`/teacher/subjects/${data.subjectId}`);
+  }
   revalidatePath(`/teacher/exams/${examId}`);
 }
 
@@ -346,4 +355,16 @@ export async function deleteSubmission(submissionId: string) {
   await prisma.submission.delete({ where: { id: submissionId } });
 
   revalidatePath(`/teacher/exams/${submission.examId}`);
+}
+
+export async function deleteAllSubmissions(examId: string) {
+  await requireAdmin();
+
+  if (!examId) throw new Error('Exam id is required');
+
+  await prisma.submission.deleteMany({
+    where: { examId },
+  });
+
+  revalidatePath(`/teacher/exams/${examId}`);
 }

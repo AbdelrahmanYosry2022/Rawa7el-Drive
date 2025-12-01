@@ -4,7 +4,7 @@ import { ExamQuestionBuilder, type ClientQuestion } from '@/components/teacher/e
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, Target, GraduationCap } from 'lucide-react';
 import { BackButton } from '@/components/teacher/back-button';
-import { DeleteSubmissionButton } from '@/components/teacher/delete-submission-button';
+import { ExamResultsTable } from '@/components/teacher/exam-results-table';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ExamExportDropdown } from '@/components/teacher/exam-export-dropdown';
@@ -144,80 +144,22 @@ export default async function TeacherExamEditorPage({
         </TabsContent>
 
         <TabsContent value="results">
-          <Card className="bg-white border border-slate-100 shadow-sm">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-900">نتائج الطلاب</h3>
-                <span className="text-xs text-slate-400">
-                  {exam.submissions.length} محاولة
-                </span>
-              </div>
-
-              {!hasSubmissions ? (
-                <p className="text-xs text-slate-500 py-6 text-center">
-                  لم يقم أحد بأداء هذا الاختبار بعد.
-                </p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>الطالب</TableHead>
-                      <TableHead>الدرجة</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead>إجراء</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {exam.submissions.map((submission: ExamSubmission) => {
-                      const date = new Date(submission.createdAt);
-                      const formattedDate = date.toLocaleDateString('ar-EG');
-                      const score = submission.score ?? 0;
-                      const passed = submission.passed;
-
-                      return (
-                        <TableRow key={submission.id}>
-                          <TableCell>
-                            <div className="flex items-center justify-start gap-4">
-                              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-[11px] font-semibold text-indigo-700">
-                                {submission.user?.name?.charAt(0).toUpperCase() || submission.user?.email?.charAt(0).toUpperCase() || '?'}
-                              </div>
-                              <div className="text-right">
-                                <p className="text-xs font-medium text-slate-800">
-                                  {submission.user?.name || submission.user?.email || 'طالب غير معروف'}
-                                </p>
-                                {submission.user?.name && submission.user?.email && (
-                                  <p className="text-[11px] text-slate-500">
-                                    {submission.user.email}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>{score}/100</TableCell>
-                          <TableCell>
-                            <span
-                              className={
-                                passed
-                                  ? 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100'
-                                  : 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-100'
-                              }
-                            >
-                              {passed ? 'ناجح' : 'راسب'}
-                            </span>
-                          </TableCell>
-                          <TableCell>{formattedDate}</TableCell>
-                          <TableCell>
-                            <DeleteSubmissionButton submissionId={submission.id} />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          <ExamResultsTable
+            examId={exam.id}
+            submissions={exam.submissions.map((submission) => ({
+              id: submission.id,
+              score: submission.score,
+              passed: submission.passed,
+              createdAt: submission.createdAt.toISOString(),
+              user: submission.user
+                ? {
+                    id: submission.user.id,
+                    name: submission.user.name,
+                    email: submission.user.email,
+                  }
+                : null,
+            }))}
+          />
         </TabsContent>
 
         <TabsContent value="analytics">
