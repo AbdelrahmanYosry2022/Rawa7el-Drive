@@ -108,18 +108,7 @@ export default async function RootLayout({
             <>
               <WelcomeModal />
               <PageGuide />
-              <div className="flex h-screen overflow-hidden bg-slate-50">
-                {/* Sidebar - fixed width, scrollable */}
-                <Sidebar subjects={subjects} userRole={userRole} />
-                
-                {/* Main Content - flexible, scrollable */}
-                <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
-                  {children}
-                </main>
-                
-                {/* Mobile Bottom Navigation */}
-                <MobileNav userRole={userRole} />
-              </div>
+              {children}
             </>
           ) : (
             children

@@ -11,6 +11,9 @@ import {
   Settings,
   LayoutDashboard,
   LogOut,
+  FileText,
+  ClipboardList,
+  FolderOpen,
 } from 'lucide-react';
 import { useState } from 'react';
 import { SignOutButton } from '@clerk/nextjs';
@@ -28,7 +31,7 @@ interface MobileNavProps {
 
 const navItems = [
   { href: '/', icon: LayoutGrid, label: 'الرئيسية' },
-  { href: '/my-exams', icon: GraduationCap, label: 'اختباراتي' },
+  { href: '/exams-platform', icon: GraduationCap, label: 'الاختبارات' },
   { href: '/profile', icon: User, label: 'حسابي' },
 ];
 
@@ -81,6 +84,36 @@ export function MobileNav({ userRole }: MobileNavProps) {
               <SheetTitle className="text-right text-base">القائمة</SheetTitle>
             </SheetHeader>
             <div className="py-4 space-y-1">
+              {/* Quick Links */}
+              <Link
+                href="/exams-platform"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <GraduationCap className="w-5 h-5 text-slate-400" />
+                <span className="text-sm font-medium">منصة الاختبارات</span>
+              </Link>
+              
+              <Link
+                href="/resources-platform"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <FileText className="w-5 h-5 text-slate-400" />
+                <span className="text-sm font-medium">منصة الملفات والموارد</span>
+              </Link>
+              
+              <Link
+                href="/activities-platform"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <ClipboardList className="w-5 h-5 text-slate-400" />
+                <span className="text-sm font-medium">منصة الأنشطة والواجبات</span>
+              </Link>
+
+              <div className="border-t border-slate-100 my-2" />
+
               {/* Settings */}
               <Link
                 href="/settings"

@@ -17,7 +17,6 @@ export default async function ExamOverviewPage({
     redirect('/sign-in');
   }
 
-  // Ensure user exists in DB
   let dbUser = await prisma.user.findUnique({ where: { clerkId: user.id } });
 
   if (!dbUser) {
@@ -64,7 +63,6 @@ export default async function ExamOverviewPage({
     notFound();
   }
 
-  // Get last completed submission for this user and exam
   const lastAttempt = await prisma.submission.findFirst({
     where: {
       userId: dbUser.id,

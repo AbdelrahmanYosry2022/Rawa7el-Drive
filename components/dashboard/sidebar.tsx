@@ -11,6 +11,8 @@ import {
   Settings,
   FolderKanban,
   HelpCircle,
+  FileText,
+  ClipboardList,
 } from 'lucide-react';
 import { SignOutButton } from '@clerk/nextjs';
 import Image from 'next/image';
@@ -29,7 +31,7 @@ type SidebarSubject = {
 
 const studentMainNav: NavItem[] = [
   {
-    title: 'لوحة التحكم',
+    title: 'الصفحة الرئيسية',
     href: '/',
     icon: LayoutDashboard,
   },
@@ -65,6 +67,16 @@ export function Sidebar({ subjects, userRole }: SidebarProps) {
       title: 'إدارة المواد',
       href: '/teacher/subjects',
       icon: FolderKanban,
+    },
+    {
+      title: 'الملفات والموارد',
+      href: '/teacher/resources',
+      icon: FileText,
+    },
+    {
+      title: 'الأنشطة والواجبات',
+      href: '/teacher/activities',
+      icon: ClipboardList,
     },
     {
       title: 'المستخدمون',

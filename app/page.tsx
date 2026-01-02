@@ -1,307 +1,236 @@
 import { currentUser } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { StatsCard } from '@/components/dashboard/stats-card';
-import { Search, Folder, GraduationCap, Clock, CheckCircle2, Target, Percent } from 'lucide-react';
+import { 
+  GraduationCap, 
+  FileText, 
+  ClipboardList,
+  Calendar,
+  TrendingUp,
+  BookOpen,
+  ArrowLeft,
+  Sparkles
+} from 'lucide-react';
+import Image from 'next/image';
 
-// Type definitions for dashboard data
-interface DashboardSubject {
-  id: string;
-  title: string;
-  description: string | null;
-  icon: string | null;
-  color: string | null;
-  _count: { exams: number };
-}
-
-interface DashboardExam {
-  id: string;
-  title: string;
-  durationMinutes: number;
-  timerMode: 'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION';
-  subject: { title: string; color: string | null };
-  _count: { questions: number };
-  createdAt: Date;
-}
-
-interface Submission {
-  score: number | null;
-  passed: boolean;
-  answers: unknown;
-}
-
-// Enable caching for this page (revalidate every 60 seconds)
 export const revalidate = 60;
 
-export default async function Home() {
+const platforms = [
+  {
+    id: 'exams',
+    title: 'منصة الاختبارات',
+    description: 'اختبر معلوماتك، تابع تقدمك، واحصل على نتائج فورية',
+    icon: GraduationCap,
+    href: '/exams-platform',
+    color: '#6366F1',
+    gradient: 'from-indigo-500 to-purple-600',
+    features: ['اختبارات تفاعلية', 'نتائج فورية', 'تتبع التقدم'],
+  },
+  {
+    id: 'resources',
+    title: 'منصة المناهج والملفات',
+    description: 'تصفح وحمّل المواد الدراسية والموارد التعليمية',
+    icon: FileText,
+    href: '/resources-platform',
+    color: '#10B981',
+    gradient: 'from-emerald-500 to-teal-600',
+    features: ['ملفات PDF', 'فيديوهات تعليمية', 'مستندات'],
+  },
+  {
+    id: 'activities',
+    title: 'منصة الأنشطة والواجبات',
+    description: 'تابع الأنشطة المطلوبة وأنجز واجباتك في الوقت المحدد',
+    icon: ClipboardList,
+    href: '/activities-platform',
+    color: '#F59E0B',
+    gradient: 'from-amber-500 to-orange-600',
+    features: ['واجبات منزلية', 'أوراق عمل', 'مشاريع'],
+  },
+];
+
+const comingSoonPlatforms = [
+  {
+    id: 'schedule',
+    title: 'منصة الجدول والخطط',
+    description: 'خطط دراسية مجدولة بالأيام والأسابيع',
+    icon: Calendar,
+    color: '#EC4899',
+  },
+  {
+    id: 'progress',
+    title: 'منصة تتبع التقدم',
+    description: 'تابع إنجازاتك وتطورك الأكاديمي',
+    icon: TrendingUp,
+    color: '#06B6D4',
+  },
+];
+
+export default async function LandingPage() {
   const user = await currentUser();
 
   if (!user) {
     redirect('/sign-in');
   }
 
-  // Ensure User Exists in DB (sync with Clerk)
-  let dbUser = await prisma.user.findUnique({
-    where: { clerkId: user.id },
-  });
-
-  if (!dbUser) {
-    const email = user.emailAddresses[0]?.emailAddress;
-    const name = user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || null;
-    if (email) {
-      dbUser = await prisma.user.create({
-        data: {
-          clerkId: user.id,
-          email,
-          name,
-          role: 'STUDENT',
-        },
-      });
-    } else {
-      redirect('/sign-in');
-    }
-  } else if (!dbUser.name && user.fullName) {
-    // Update name if it's missing
-    await prisma.user.update({
-      where: { id: dbUser.id },
-      data: { name: user.fullName },
-    });
-    dbUser.name = user.fullName;
-  }
-
-  // Fetch user submissions for stats (optimized query)
-  const submissions = await prisma.submission.findMany({
-    where: { userId: dbUser.id },
-    select: {
-      score: true,
-      passed: true,
-      answers: true,
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  const completedExams = submissions.length;
-  const passedExams = submissions.filter((s: Submission) => s.passed).length;
-  const averageScore =
-    completedExams > 0
-      ? Math.round(submissions.reduce((sum: number, s: Submission) => sum + (s.score ?? 0), 0) / completedExams)
-      : 0;
-  const successRate = completedExams > 0 ? Math.round((passedExams / completedExams) * 100) : 0;
-
-  const totalQuestionsAnswered = submissions.reduce((sum: number, s: Submission) => {
-    if (!s.answers || typeof s.answers !== 'object') return sum;
-    try {
-      const obj = s.answers as Record<string, unknown>;
-      return sum + Object.keys(obj).length;
-    } catch {
-      return sum;
-    }
-  }, 0);
-
-  // Fetch real subjects with exam count (limit to 6 for performance)
-  const subjects = await prisma.subject.findMany({
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      icon: true,
-      color: true,
-      _count: {
-        select: { exams: true },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 6,
-  });
-
-  // Fetch recent exams (limit 4)
-  const recentExams = await prisma.exam.findMany({
-    select: {
-      id: true,
-      title: true,
-      durationMinutes: true,
-      timerMode: true,
-      createdAt: true,
-      subject: {
-        select: {
-          title: true,
-          color: true,
-        },
-      },
-      _count: {
-        select: { questions: true },
-      },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 4,
-  });
-
-  const formatDate = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-    if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-    if (diffDays < 7) return `منذ ${diffDays} يوم`;
-    return date.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' });
-  };
+  const firstName = user.firstName || 'طالب';
 
   return (
-    <div className="max-w-6xl mx-auto py-6 md:py-8 px-4 md:px-6 space-y-6 md:space-y-8">
-      {/* Header: title, meta, avatars & actions */}
-      <section id="dashboard-header" className="text-right">
-        <h1 className="text-3xl font-bold text-slate-900">رواحل درايف</h1>
-        <p className="text-xs text-slate-400 mt-1">
-          {subjects.length} مادة · {recentExams.length} اختبار
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+      {/* Header */}
+      <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/logo/Rawa7el-drive-logo-v2.png"
+                alt="Rawa7el Drive"
+                width={200}
+                height={48}
+                className="h-8 w-auto"
+                priority
+              />
+            </div>
+            <Link 
+              href="/profile"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm">
+                {firstName.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm font-medium text-slate-700 hidden sm:block">{firstName}</span>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-16 text-center">
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 text-indigo-600 text-sm font-medium mb-6">
+          <Sparkles className="w-4 h-4" />
+          <span>مرحباً بك في رواحل درايف</span>
+        </div>
+        
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6">
+          منصتك التعليمية المتكاملة
+        </h1>
+        
+        <p className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto mb-8">
+          اختر المنصة المناسبة لك وابدأ رحلتك التعليمية الآن
         </p>
       </section>
 
-      {/* Stats cards */}
-      <section id="stats-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard
-          title="الاختبارات المنجزة"
-          value={completedExams}
-          subtitle="إجمالي محاولات الاختبارات"
-          icon={GraduationCap}
-          color="blue"
-        />
-        <StatsCard
-          title="تم الاجتياز"
-          value={passedExams}
-          subtitle="عدد الاختبارات الناجحة"
-          icon={CheckCircle2}
-          color="green"
-        />
-        <StatsCard
-          title="متوسط الدرجة"
-          value={completedExams > 0 ? `${averageScore}%` : '—'}
-          subtitle="متوسط نتائجك في كل المحاولات"
-          icon={Target}
-          color="purple"
-        />
-        <StatsCard
-          title="نسبة النجاح"
-          value={completedExams > 0 ? `${successRate}%` : '—'}
-          subtitle="من جميع الاختبارات التي خضتها"
-          icon={Percent}
-          color="orange"
-        />
+      {/* Main Platforms */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {platforms.map((platform) => {
+            const Icon = platform.icon;
+            
+            return (
+              <Link key={platform.id} href={platform.href}>
+                <Card className="group bg-white border-2 border-slate-100 rounded-2xl overflow-hidden hover:border-slate-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 h-full">
+                  <CardContent className="p-0">
+                    {/* Gradient Header */}
+                    <div className={`bg-gradient-to-br ${platform.gradient} p-8 relative overflow-hidden`}>
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
+                      
+                      <div className="relative">
+                        <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
+                          <Icon className="w-8 h-8 text-white" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-2">
+                          {platform.title}
+                        </h3>
+                      </div>
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="p-6">
+                      <p className="text-slate-600 mb-4 leading-relaxed">
+                        {platform.description}
+                      </p>
+                      
+                      <div className="space-y-2 mb-6">
+                        {platform.features.map((feature, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-sm text-slate-500">
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                            <span>{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                        <span className="text-sm font-medium text-slate-900">
+                          ادخل المنصة
+                        </span>
+                        <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-slate-900 group-hover:-translate-x-1 transition-all" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
       </section>
 
-      {/* Subjects (Folders) */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-500">المواد الدراسية</h2>
-          <span className="text-xs text-slate-400">{subjects.length} مادة</span>
+      {/* Coming Soon */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 pb-16">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">قريباً</h2>
+          <p className="text-slate-500">منصات جديدة قيد التطوير</p>
         </div>
-
-        {subjects.length === 0 ? (
-          <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-12 text-center">
-            <Folder className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-            <p className="text-slate-500 text-sm">لا توجد مواد دراسية حالياً</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {subjects.map((subject: DashboardSubject) => (
-              <Link key={subject.id} href={`/subjects/${subject.id}`}>
-                <Card className="bg-white border border-slate-100 shadow-sm rounded-xl flex flex-col items-center justify-center py-6 hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="flex flex-col items-center justify-center gap-3 p-0">
-                    <div
-                      className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600"
-                      style={subject.color ? { backgroundColor: `${subject.color}20`, color: subject.color } : {}}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {comingSoonPlatforms.map((platform) => {
+            const Icon = platform.icon;
+            
+            return (
+              <Card key={platform.id} className="bg-slate-50 border border-slate-200 rounded-2xl opacity-60">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: `${platform.color}20`, color: platform.color }}
                     >
-                      {subject.icon ? (
-                        <span className="text-2xl">{subject.icon}</span>
-                      ) : (
-                        <Folder className="w-8 h-8" />
-                      )}
+                      <Icon className="w-6 h-6" />
                     </div>
-                    <div className="text-center space-y-1">
-                      <p className="text-sm font-medium text-slate-900">{subject.title}</p>
-                      <p className="text-[11px] text-slate-400">{subject._count.exams} اختبار</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-lg font-semibold text-slate-900">
+                          {platform.title}
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-200 text-slate-600">
+                          قريباً
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-600">
+                        {platform.description}
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Available Exams */}
-      <section id="recent-exams" className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-500">الاختبارات المتاحة</h2>
-          <span className="text-xs text-slate-400">{recentExams.length} اختبار</span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
-
-        {recentExams.length === 0 ? (
-          <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-12 text-center">
-            <GraduationCap className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-            <p className="text-slate-500 text-sm">لا توجد اختبارات متاحة حالياً</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {recentExams.map((exam: DashboardExam) => (
-              <Link key={exam.id} href={`/exams/${exam.id}`}>
-                <Card className="bg-white border border-slate-100 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer">
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center text-indigo-600">
-                        <GraduationCap className="w-5 h-5" />
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {exam.timerMode === 'NONE' && (
-                          <span className="px-2 py-1 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600">
-                            بدون توقيت
-                          </span>
-                        )}
-                        {exam.timerMode === 'EXAM_TOTAL' && (
-                          <span className="px-2 py-1 rounded-md text-[10px] font-semibold bg-indigo-100 text-indigo-600">
-                            ⏱️ {exam.durationMinutes} دقيقة
-                          </span>
-                        )}
-                        {exam.timerMode === 'PER_QUESTION' && (
-                          <span className="px-2 py-1 rounded-md text-[10px] font-semibold bg-amber-100 text-amber-600">
-                            ⏱️ لكل سؤال
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1 text-right">
-                      <p className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2">
-                        {exam.title}
-                      </p>
-                      <p className="text-[11px] text-slate-500 leading-snug line-clamp-1">
-                        {exam.subject.title}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        <span>{exam.durationMinutes} دقيقة</span>
-                      </div>
-                      <span>{exam._count.questions} سؤال</span>
-                    </div>
-
-                    <p className="text-[11px] text-slate-400 text-left rtl:text-right">
-                      {formatDate(exam.createdAt)}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
       </section>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 bg-white/50 backdrop-blur-sm mt-12">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-slate-600">
+              <BookOpen className="w-5 h-5" />
+              <span className="text-sm">رواحل درايف - منصة تعليمية متكاملة</span>
+            </div>
+            <div className="text-sm text-slate-500">
+              © 2026 جميع الحقوق محفوظة
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
