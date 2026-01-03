@@ -1,0 +1,374 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== Enums ====================
+
+enum Role {
+  SUPER_ADMIN  // مشرف عام (كامل الصلاحيات)
+  ADMIN        // مشرف
+  TEACHER      // محاضر/معلم
+  STUDENT      // طالب
+}
+
+enum Platform {
+  BEDAYA           // منصة بداية
+  TAHT_EL_ESHREEN  // منصة تحت العشرين
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+}
+
+enum SubmissionStatus {
+  ONGOING
+  COMPLETED
+  GRADED
+}
+
+enum TimerMode {
+  NONE
+  EXAM_TOTAL
+  PER_QUESTION
+}
+
+enum ResourceType {
+  PDF
+  VIDEO
+  AUDIO
+  IMAGE
+  DOCUMENT
+  LINK
+  OTHER
+}
+
+enum ActivityType {
+  WORKSHEET
+  PROJECT
+  ASSIGNMENT
+  PRACTICE
+  READING
+  OTHER
+}
+
+enum AttendanceStatus {
+  PRESENT    // حاضر
+  ABSENT     // غائب
+  LATE       // متأخر
+  EXCUSED    // معذور
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  SUCCESS
+  ERROR
+  ANNOUNCEMENT
+}
+
+enum HalaqaDay {
+  SATURDAY
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+}
+
+// ==================== Core Models ====================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  clerkId   String   @unique
+  name      String?
+  phone     String?
+  avatar    String?
+  role      Role     @default(STUDENT)
+  platform  Platform @default(BEDAYA)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  submissions          Submission[]
+  attendanceRecords    Attendance[]
+  notificationsReceived Notification[] @relation("ReceivedNotifications")
+  notificationsSent    Notification[] @relation("SentNotifications")
+  
+  // Teacher relations
+  teachingSubjects     SubjectTeacher[]
+  teachingHalaqat      Halaqa[]         @relation("HalaqaTeacher")
+  
+  // Student relations
+  enrolledHalaqat      HalaqaStudent[]
+  studentEvaluations   StudentEvaluation[]
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  icon        String?
+  color       String?
+  platform    Platform @default(BEDAYA)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  exams      Exam[]
+  resources  Resource[]
+  activities Activity[]
+  teachers   SubjectTeacher[]
+  lessons    Lesson[]
+}
+
+model SubjectTeacher {
+  id        String   @id @default(cuid())
+  subjectId String
+  teacherId String
+  createdAt DateTime @default(now())
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher User    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([subjectId, teacherId])
+}
+
+// ==================== Exams Module ====================
+
+model Exam {
+  id                  String    @id @default(cuid())
+  title               String
+  description         String?
+  subjectId           String
+  passingScore        Int       @default(50)
+  durationMinutes     Int       @default(30)
+  timerMode           TimerMode @default(EXAM_TOTAL)
+  questionTimeSeconds Int?
+  isPublished         Boolean   @default(false)
+  shuffleQuestions    Boolean   @default(false)
+  shuffleOptions      Boolean   @default(false)
+  showResults         Boolean   @default(true)
+  maxAttempts         Int       @default(1)
+  platform            Platform  @default(BEDAYA)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  questions   Question[]
+  submissions Submission[]
+}
+
+model Question {
+  id            String       @id @default(cuid())
+  examId        String
+  text          String
+  type          QuestionType
+  options       Json?
+  correctAnswer String
+  explanation   String?
+  points        Int          @default(1)
+  timeSeconds   Int?
+  order         Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+}
+
+model Submission {
+  id          String           @id @default(cuid())
+  userId      String
+  examId      String
+  score       Int?
+  percentage  Float?
+  answers     Json
+  passed      Boolean          @default(false)
+  status      SubmissionStatus @default(ONGOING)
+  attemptNumber Int            @default(1)
+  startedAt   DateTime         @default(now())
+  submittedAt DateTime?
+  createdAt   DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+}
+
+// ==================== Resources Module ====================
+
+model Resource {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  type        ResourceType
+  url         String
+  fileSize    Int?
+  mimeType    String?
+  subjectId   String
+  isPublished Boolean      @default(true)
+  downloads   Int          @default(0)
+  platform    Platform     @default(BEDAYA)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+}
+
+// ==================== Activities Module ====================
+
+model Activity {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  type        ActivityType
+  content     String?
+  attachments Json?
+  subjectId   String
+  dueDate     DateTime?
+  isPublished Boolean      @default(true)
+  platform    Platform     @default(BEDAYA)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+}
+
+// ==================== Attendance Module ====================
+
+model AttendanceSession {
+  id        String   @id @default(cuid())
+  title     String?
+  date      DateTime @default(now())
+  platform  Platform @default(BEDAYA)
+  halaqaId  String?
+  createdAt DateTime @default(now())
+
+  halaqa    Halaqa?      @relation(fields: [halaqaId], references: [id], onDelete: Cascade)
+  records   Attendance[]
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  sessionId String
+  userId    String
+  status    AttendanceStatus @default(PRESENT)
+  notes     String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  session AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+}
+
+// ==================== Notifications Module ====================
+
+model Notification {
+  id         String           @id @default(cuid())
+  title      String
+  message    String
+  type       NotificationType @default(INFO)
+  isRead     Boolean          @default(false)
+  senderId   String?
+  receiverId String
+  platform   Platform         @default(BEDAYA)
+  createdAt  DateTime         @default(now())
+
+  sender   User? @relation("SentNotifications", fields: [senderId], references: [id], onDelete: SetNull)
+  receiver User  @relation("ReceivedNotifications", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+// ==================== Halaqat Module (تحت العشرين) ====================
+
+model Halaqa {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  teacherId   String
+  day         HalaqaDay
+  startTime   String     // Format: "HH:mm"
+  endTime     String     // Format: "HH:mm"
+  location    String?
+  maxStudents Int        @default(20)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  teacher     User                @relation("HalaqaTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  students    HalaqaStudent[]
+  lessons     HalaqaLesson[]
+  sessions    AttendanceSession[]
+  evaluations StudentEvaluation[]
+}
+
+model HalaqaStudent {
+  id        String   @id @default(cuid())
+  halaqaId  String
+  studentId String
+  joinedAt  DateTime @default(now())
+  isActive  Boolean  @default(true)
+
+  halaqa  Halaqa @relation(fields: [halaqaId], references: [id], onDelete: Cascade)
+  student User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([halaqaId, studentId])
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  content     String?
+  subjectId   String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subject       Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  halaqaLessons HalaqaLesson[]
+}
+
+model HalaqaLesson {
+  id          String    @id @default(cuid())
+  halaqaId    String
+  lessonId    String
+  scheduledAt DateTime?
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  halaqa Halaqa @relation(fields: [halaqaId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([halaqaId, lessonId])
+}
+
+model StudentEvaluation {
+  id        String   @id @default(cuid())
+  studentId String
+  halaqaId  String
+  score     Int      // 1-10
+  notes     String?
+  criteria  Json?    // { "attendance": 8, "participation": 7, "memorization": 9 }
+  period    String?  // e.g., "2024-Q1"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  halaqa  Halaqa @relation(fields: [halaqaId], references: [id], onDelete: Cascade)
+}

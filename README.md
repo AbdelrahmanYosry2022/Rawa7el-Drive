@@ -1,31 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rawa7el Platform - رواحل
+
+Turborepo monorepo containing two platforms:
+- **بداية (Bedaya)** - Educational platform for Bedaya project
+- **تحت العشرين (Taht El-Eshreen)** - Youth management platform
+
+## Project Structure
+
+```
+rawa7el/
+├── apps/
+│   ├── bedaya/              # منصة بداية
+│   └── taht-el-eshreen/     # منصة تحت العشرين (coming soon)
+├── packages/
+│   ├── database/            # Prisma schema + client
+│   ├── exam-logic/          # Exam system (headless)
+│   ├── attendance-logic/    # Attendance system (headless)
+│   ├── notifications-logic/ # Notifications system (headless)
+│   └── halaqat-logic/       # Halaqat system (headless)
+├── turbo.json
+├── package.json
+└── pnpm-workspace.yaml
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- pnpm 9+
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Install pnpm if not installed
+npm install -g pnpm
+
+# Install dependencies
+pnpm install
+
+# Generate Prisma client
+pnpm db:generate
+
+# Push database schema
+pnpm db:push
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Run all apps
+pnpm dev
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Run only Bedaya
+pnpm dev:bedaya
 
-## Learn More
+# Run only Taht El-Eshreen
+pnpm dev:taht
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Database
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+# Generate Prisma client
+pnpm db:generate
+
+# Push schema to database
+pnpm db:push
+
+# Open Prisma Studio
+pnpm db:studio
+```
+
+## Packages
+
+### @rawa7el/database
+Shared Prisma client and database schema.
+
+### @rawa7el/exam-logic
+Headless exam system with services for:
+- Creating/managing exams
+- Managing questions
+- Handling submissions and grading
+
+### @rawa7el/attendance-logic
+Headless attendance system with services for:
+- Creating attendance sessions
+- Recording attendance
+- Generating reports
+
+### @rawa7el/notifications-logic
+Headless notification system with services for:
+- Sending notifications
+- Broadcasting to roles
+- Managing notification preferences
+
+### @rawa7el/halaqat-logic
+Headless halaqat (study circles) system with services for:
+- Managing halaqat
+- Enrolling students
+- Tracking lessons and evaluations
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
