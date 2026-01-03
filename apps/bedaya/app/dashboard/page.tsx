@@ -1,283 +1,194 @@
 import { currentUser } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent } from '@rawa7el/ui/card';
+import { Button } from '@rawa7el/ui/button';
 import { 
-  GraduationCap, 
-  FileText, 
-  FolderOpen, 
-  Calendar,
+  Users, 
+  Calendar, 
   BookOpen,
-  ClipboardList,
+  UserPlus,
+  ClipboardCheck,
   TrendingUp,
-  Users,
-  ArrowLeft
+  ArrowLeft,
+  Settings,
+  LogOut,
+  Bell
 } from 'lucide-react';
+import { UserButton } from '@clerk/nextjs';
 
-// Enable caching for this page (revalidate every 60 seconds)
-export const revalidate = 60;
-
-// Feature card data
-const features = [
+const quickActions = [
   {
-    id: 'exams',
-    title: 'الاختبارات',
-    description: 'اختبر معلوماتك وتابع تقدمك',
-    icon: GraduationCap,
-    href: '/exams',
-    color: '#6366F1',
-    bgColor: 'bg-indigo-50',
-    stats: 'اختبارات متنوعة',
-  },
-  {
-    id: 'resources',
-    title: 'المناهج والملفات',
-    description: 'تصفح وحمّل المواد الدراسية',
-    icon: FileText,
-    href: '/resources',
+    id: 'students',
+    title: 'إدارة الطلاب',
+    description: 'تسجيل طلاب جدد، عرض وتعديل بيانات الطلاب',
+    icon: Users,
+    href: '/students',
     color: '#10B981',
-    bgColor: 'bg-emerald-50',
-    stats: 'ملفات ومستندات',
+    gradient: 'from-emerald-500 to-teal-600',
   },
   {
-    id: 'activities',
-    title: 'الأنشطة والواجبات',
-    description: 'تابع الأنشطة والمهام المطلوبة',
-    icon: ClipboardList,
-    href: '/activities',
+    id: 'attendance',
+    title: 'الحضور والغياب',
+    description: 'تسجيل حضور وغياب الطلاب اليومي',
+    icon: ClipboardCheck,
+    href: '/attendance',
+    color: '#6366F1',
+    gradient: 'from-indigo-500 to-purple-600',
+  },
+  {
+    id: 'halaqat',
+    title: 'الحلقات',
+    description: 'إدارة الحلقات القرآنية والمعلمين',
+    icon: BookOpen,
+    href: '/halaqat',
     color: '#F59E0B',
-    bgColor: 'bg-amber-50',
-    stats: 'أنشطة تفاعلية',
+    gradient: 'from-amber-500 to-orange-600',
   },
   {
-    id: 'subjects',
-    title: 'المواد الدراسية',
-    description: 'استعرض جميع المواد المتاحة',
-    icon: FolderOpen,
-    href: '/subjects',
-    color: '#8B5CF6',
-    bgColor: 'bg-purple-50',
-    stats: 'مواد متعددة',
-  },
-  {
-    id: 'schedule',
-    title: 'الجدول والخطط',
-    description: 'خطط دراسية مجدولة بالأيام',
-    icon: Calendar,
-    href: '/schedule',
-    color: '#EC4899',
-    bgColor: 'bg-pink-50',
-    stats: 'قريباً',
-    comingSoon: true,
-  },
-  {
-    id: 'progress',
-    title: 'تقدمي',
-    description: 'تابع إنجازاتك وتطورك',
+    id: 'reports',
+    title: 'التقارير',
+    description: 'تقارير الحضور والتقدم والإحصائيات',
     icon: TrendingUp,
-    href: '/progress',
-    color: '#06B6D4',
-    bgColor: 'bg-cyan-50',
-    stats: 'قريباً',
-    comingSoon: true,
+    href: '/reports',
+    color: '#EC4899',
+    gradient: 'from-pink-500 to-rose-600',
   },
 ];
 
-export default async function Home() {
+export default async function DashboardPage() {
   const user = await currentUser();
 
   if (!user) {
     redirect('/sign-in');
   }
 
-  // Ensure User Exists in DB (sync with Clerk)
-  let dbUser = await prisma.user.findUnique({
-    where: { clerkId: user.id },
-  });
-
-  if (!dbUser) {
-    const email = user.emailAddresses[0]?.emailAddress;
-    const name = user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || null;
-    if (email) {
-      dbUser = await prisma.user.create({
-        data: {
-          clerkId: user.id,
-          email,
-          name,
-          role: 'STUDENT',
-        },
-      });
-    } else {
-      redirect('/sign-in');
-    }
-  } else if (!dbUser.name && user.fullName) {
-    await prisma.user.update({
-      where: { id: dbUser.id },
-      data: { name: user.fullName },
-    });
-    dbUser.name = user.fullName;
-  }
-
-  // Fetch counts for stats
-  const [subjectsCount, examsCount, resourcesCount, activitiesCount] = await Promise.all([
-    prisma.subject.count(),
-    prisma.exam.count(),
-    prisma.resource.count(),
-    prisma.activity.count(),
-  ]);
-
-  // Get user's first name for greeting
-  const firstName = dbUser.name?.split(' ')[0] || user.firstName || 'طالب';
+  const firstName = user.firstName || 'مستخدم';
 
   return (
-    <div className="max-w-6xl mx-auto py-6 md:py-8 px-4 md:px-6 space-y-8">
-      {/* Welcome Header */}
-      <section className="text-right space-y-2">
-        <h1 className="text-3xl font-bold text-slate-900">
-          أهلاً بك، {firstName}! 👋
-        </h1>
-        <p className="text-slate-500">
-          اختر من الأقسام أدناه للبدء في رحلتك التعليمية
-        </p>
-      </section>
-
-      {/* Quick Stats */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-slate-100 p-4 text-center">
-          <div className="text-2xl font-bold text-indigo-600">{subjectsCount}</div>
-          <div className="text-xs text-slate-500 mt-1">مادة دراسية</div>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-100 p-4 text-center">
-          <div className="text-2xl font-bold text-emerald-600">{examsCount}</div>
-          <div className="text-xs text-slate-500 mt-1">اختبار</div>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-100 p-4 text-center">
-          <div className="text-2xl font-bold text-amber-600">{resourcesCount}</div>
-          <div className="text-xs text-slate-500 mt-1">ملف ومورد</div>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-100 p-4 text-center">
-          <div className="text-2xl font-bold text-purple-600">{activitiesCount}</div>
-          <div className="text-xs text-slate-500 mt-1">نشاط</div>
-        </div>
-      </section>
-
-      {/* Feature Cards Grid */}
-      <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-slate-500">الأقسام الرئيسية</h2>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            const isComingSoon = feature.comingSoon;
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
+      {/* Header */}
+      <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-slate-900">منصة بداية</h1>
+                <p className="text-xs text-slate-500">للحلقات القرآنية</p>
+              </div>
+            </div>
             
-            const CardWrapper = isComingSoon ? 'div' : Link;
-            const cardProps = isComingSoon ? {} : { href: feature.href };
+            <div className="flex items-center gap-3">
+              <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors relative">
+                <Bell className="w-5 h-5 text-slate-600" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              </button>
+              <UserButton afterSignOutUrl="/" />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Welcome Section */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-8 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24" />
+          
+          <div className="relative">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">
+              مرحباً، {firstName} 👋
+            </h2>
+            <p className="text-emerald-100 text-lg">
+              أهلاً بك في منصة بداية لإدارة الحلقات القرآنية
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Cards */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 pb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'إجمالي الطلاب', value: '0', icon: Users, color: 'emerald' },
+            { label: 'الحضور اليوم', value: '0', icon: ClipboardCheck, color: 'indigo' },
+            { label: 'الحلقات النشطة', value: '0', icon: BookOpen, color: 'amber' },
+            { label: 'نسبة الحضور', value: '0%', icon: TrendingUp, color: 'pink' },
+          ].map((stat, idx) => {
+            const Icon = stat.icon;
+            return (
+              <Card key={idx} className="bg-white border border-slate-100 rounded-2xl">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl bg-${stat.color}-100 flex items-center justify-center`}>
+                      <Icon className={`w-5 h-5 text-${stat.color}-600`} />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                      <p className="text-xs text-slate-500">{stat.label}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Quick Actions */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 pb-12">
+        <h3 className="text-lg font-semibold text-slate-900 mb-4">الإجراءات السريعة</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
             
             return (
-              isComingSoon ? (
-                <div key={feature.id}>
-                  <Card 
-                  className={`bg-white border border-slate-100 rounded-xl overflow-hidden transition-all duration-200 ${
-                    isComingSoon 
-                      ? 'opacity-60 cursor-not-allowed' 
-                      : 'hover:shadow-lg hover:border-slate-200 hover:-translate-y-1 cursor-pointer'
-                  }`}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div 
-                        className={`w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center`}
-                        style={{ color: feature.color }}
-                      >
-                        <Icon className="w-7 h-7" />
+              <Link key={action.id} href={action.href}>
+                <Card className="group bg-white border-2 border-slate-100 rounded-2xl overflow-hidden hover:border-slate-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full">
+                  <CardContent className="p-0">
+                    <div className="flex items-stretch">
+                      {/* Icon Section */}
+                      <div className={`bg-gradient-to-br ${action.gradient} p-6 flex items-center justify-center`}>
+                        <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                          <Icon className="w-7 h-7 text-white" />
+                        </div>
                       </div>
-                      {isComingSoon && (
-                        <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">
-                          قريباً
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm text-slate-500 leading-relaxed">
-                        {feature.description}
-                      </p>
-                    </div>
-                    
-                    {!isComingSoon && (
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className="text-xs text-slate-400">{feature.stats}</span>
-                        <ArrowLeft className="w-4 h-4 text-slate-400" />
+                      
+                      {/* Content */}
+                      <div className="flex-1 p-6 flex flex-col justify-center">
+                        <h4 className="text-lg font-semibold text-slate-900 mb-1">
+                          {action.title}
+                        </h4>
+                        <p className="text-sm text-slate-500 mb-3">
+                          {action.description}
+                        </p>
+                        <div className="flex items-center text-sm font-medium" style={{ color: action.color }}>
+                          <span>الدخول</span>
+                          <ArrowLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </CardContent>
                 </Card>
-                </div>
-              ) : (
-                <Link key={feature.id} href={feature.href}>
-                  <Card 
-                  className={`bg-white border border-slate-100 rounded-xl overflow-hidden transition-all duration-200 ${
-                    isComingSoon 
-                      ? 'opacity-60 cursor-not-allowed' 
-                      : 'hover:shadow-lg hover:border-slate-200 hover:-translate-y-1 cursor-pointer'
-                  }`}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div 
-                        className={`w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center`}
-                        style={{ color: feature.color }}
-                      >
-                        <Icon className="w-7 h-7" />
-                      </div>
-                      {isComingSoon && (
-                        <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">
-                          قريباً
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm text-slate-500 leading-relaxed">
-                        {feature.description}
-                      </p>
-                    </div>
-                    
-                    {!isComingSoon && (
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className="text-xs text-slate-400">{feature.stats}</span>
-                        <ArrowLeft className="w-4 h-4 text-slate-400" />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-                </Link>
-              )
+              </Link>
             );
-          })
+          })}
         </div>
       </section>
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-500">آخر النشاطات</h2>
-          <Link href="/exams" className="text-xs text-indigo-600 hover:text-indigo-700">
-            عرض الكل
-          </Link>
-        </div>
-        
-        <div className="bg-white rounded-xl border border-slate-100 p-8 text-center">
-          <BookOpen className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-          <p className="text-slate-500 text-sm">ابدأ رحلتك التعليمية الآن!</p>
-          <p className="text-slate-400 text-xs mt-1">اختر أحد الأقسام أعلاه للبدء</p>
-        </div>
-      </section>
+
+      {/* Quick Add Student Button */}
+      <div className="fixed bottom-6 left-6 z-50">
+        <Link href="/students/new">
+          <Button className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-full px-6 py-6 shadow-lg hover:shadow-xl transition-all">
+            <UserPlus className="w-5 h-5 ml-2" />
+            إضافة طالب جديد
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

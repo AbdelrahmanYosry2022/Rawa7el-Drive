@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "turbo dev",
+    "dev:portal": "turbo dev --filter=portal",
     "dev:bedaya": "turbo dev --filter=bedaya",
     "dev:taht": "turbo dev --filter=taht-el-eshreen",
     "build": "turbo build",
