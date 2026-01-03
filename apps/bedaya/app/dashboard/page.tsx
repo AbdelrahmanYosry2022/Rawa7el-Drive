@@ -2,7 +2,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@rawa7el/ui/card';
 import { 
   GraduationCap, 
   FileText, 
@@ -175,8 +175,9 @@ export default async function Home() {
             const cardProps = isComingSoon ? {} : { href: feature.href };
             
             return (
-              <CardWrapper key={feature.id} {...cardProps}>
-                <Card 
+              isComingSoon ? (
+                <div key={feature.id}>
+                  <Card 
                   className={`bg-white border border-slate-100 rounded-xl overflow-hidden transition-all duration-200 ${
                     isComingSoon 
                       ? 'opacity-60 cursor-not-allowed' 
@@ -215,13 +216,54 @@ export default async function Home() {
                     )}
                   </CardContent>
                 </Card>
-              </CardWrapper>
+                </div>
+              ) : (
+                <Link key={feature.id} href={feature.href}>
+                  <Card 
+                  className={`bg-white border border-slate-100 rounded-xl overflow-hidden transition-all duration-200 ${
+                    isComingSoon 
+                      ? 'opacity-60 cursor-not-allowed' 
+                      : 'hover:shadow-lg hover:border-slate-200 hover:-translate-y-1 cursor-pointer'
+                  }`}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div 
+                        className={`w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center`}
+                        style={{ color: feature.color }}
+                      >
+                        <Icon className="w-7 h-7" />
+                      </div>
+                      {isComingSoon && (
+                        <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">
+                          قريباً
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold text-slate-900">
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm text-slate-500 leading-relaxed">
+                        {feature.description}
+                      </p>
+                    </div>
+                    
+                    {!isComingSoon && (
+                      <div className="mt-4 flex items-center justify-between">
+                        <span className="text-xs text-slate-400">{feature.stats}</span>
+                        <ArrowLeft className="w-4 h-4 text-slate-400" />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                </Link>
+              )
             );
-          })}
+          })
         </div>
       </section>
-
-      {/* Recent Activity Section */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-500">آخر النشاطات</h2>

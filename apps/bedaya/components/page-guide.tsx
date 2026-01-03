@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { driver, DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 import { HelpCircle, Zap, ZapOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@rawa7el/ui/button";
 
 // مفتاح localStorage للتشغيل التلقائي
 const AUTO_TOUR_KEY = "autoTourEnabled";

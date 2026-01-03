@@ -1,4 +1,4 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@rawa7el/ui/card';
 import { ArrowRight } from 'lucide-react';
 
 export default function Loading() {

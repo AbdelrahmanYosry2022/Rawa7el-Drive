@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
   DialogContent,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@rawa7el/ui/dialog";
+import { Button } from "@rawa7el/ui/button";
 import { ChevronLeft } from "lucide-react";
 
 const slides = [

@@ -1,12 +1,12 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import { ExamQuestionBuilder, type ClientQuestion } from '@/components/teacher/exam-question-builder';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@rawa7el/ui/card';
 import { Clock, Target, GraduationCap } from 'lucide-react';
 import { BackButton } from '@/components/teacher/back-button';
 import { ExamResultsTable } from '@/components/teacher/exam-results-table';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@rawa7el/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@rawa7el/ui/table';
 import { ExamExportDropdown } from '@/components/teacher/exam-export-dropdown';
 import type { ExportQuestion } from '@/lib/export-exam';
 import { getExamAnalytics } from '@/app/actions/teacher/analytics';

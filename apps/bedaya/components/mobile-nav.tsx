@@ -23,7 +23,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
+} from '@rawa7el/ui/sheet';
 
 interface MobileNavProps {
   userRole: 'ADMIN' | 'STUDENT';

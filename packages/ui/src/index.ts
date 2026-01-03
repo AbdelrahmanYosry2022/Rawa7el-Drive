@@ -8,6 +8,7 @@ export * from './components/sheet';
 export * from './components/skeleton';
 export * from './components/table';
 export * from './components/tabs';
+export * from './components/carousel';
 
 // Utils
 export { cn } from './lib/utils';

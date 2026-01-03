@@ -18,9 +18,9 @@ import {
   FolderOpen,
   X
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Button } from '@rawa7el/ui/button';
+import { Card, CardContent } from '@rawa7el/ui/card';
+import { Input } from '@rawa7el/ui/input';
 
 interface Resource {
   id: string;

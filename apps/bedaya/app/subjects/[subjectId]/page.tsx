@@ -3,8 +3,8 @@ import { currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@rawa7el/ui/button';
+import { Card, CardContent } from '@rawa7el/ui/card';
 
 // Type definition for exam with question count
 interface SubjectExam {
