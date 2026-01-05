@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm turbo build --filter=bedaya",
+  "installCommand": "pnpm install",
   "outputDirectory": "apps/bedaya/.next",
-  "framework": "nextjs",
-  "installCommand": "pnpm install"
+  "framework": "nextjs"
 }

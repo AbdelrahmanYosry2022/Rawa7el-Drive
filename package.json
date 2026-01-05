@@ -16,6 +16,9 @@
     "test:all": "pnpm test && pnpm test:e2e",
     "types:generate": "pnpm --filter @rawa7el/supabase types:generate"
   },
+  "dependencies": {
+    "next": "^15.0.0"
+  },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@testing-library/dom": "^10.4.1",

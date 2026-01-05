@@ -90,8 +90,8 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      console.error('Error creating calendar event:', error);
-      return NextResponse.json({ error: 'فشل في إنشاء الحدث' }, { status: 500 });
+      console.error('Error creating calendar event:', JSON.stringify(error, null, 2));
+      return NextResponse.json({ error: 'فشل في إنشاء الحدث', details: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ event, message: 'تم إنشاء الحدث بنجاح' });
