@@ -14,7 +14,8 @@ import {
   Users,
   Save,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  QrCode
 } from 'lucide-react';
 
 // Mock data - will be replaced with real data from database
@@ -185,6 +186,16 @@ export default function AttendancePage() {
       {/* Quick Actions */}
       <section className="max-w-4xl mx-auto px-4 md:px-6 pb-4">
         <div className="flex gap-2">
+          <Link href="/attendance/qr">
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="rounded-xl text-xs bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
+            >
+              <QrCode className="w-3 h-3 ml-1" />
+              تسجيل بـ QR
+            </Button>
+          </Link>
           <Button 
             variant="outline" 
             size="sm" 

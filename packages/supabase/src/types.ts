@@ -17,6 +17,7 @@ export type ActivityType = 'WORKSHEET' | 'PROJECT' | 'ASSIGNMENT' | 'PRACTICE' |
 export type ResourceType = 'PDF' | 'VIDEO' | 'AUDIO' | 'IMAGE' | 'DOCUMENT' | 'LINK' | 'OTHER'
 export type NotificationType = 'INFO' | 'WARNING' | 'SUCCESS' | 'ERROR' | 'ANNOUNCEMENT'
 export type HalaqaDay = 'SATURDAY' | 'SUNDAY' | 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY'
+export type CalendarEventStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED'
 
 export type Database = {
   public: {
@@ -600,6 +601,54 @@ export type Database = {
         }
         Relationships: []
       }
+      CalendarEvent: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          date: string
+          startTime: string | null
+          endTime: string | null
+          location: string | null
+          speakers: Json | null
+          status: CalendarEventStatus
+          platform: Platform
+          createdBy: string
+          createdAt: string
+          updatedAt: string
+        }
+        Insert: {
+          id: string
+          title: string
+          description?: string | null
+          date: string
+          startTime?: string | null
+          endTime?: string | null
+          location?: string | null
+          speakers?: Json | null
+          status?: CalendarEventStatus
+          platform?: Platform
+          createdBy: string
+          createdAt?: string
+          updatedAt?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          date?: string
+          startTime?: string | null
+          endTime?: string | null
+          location?: string | null
+          speakers?: Json | null
+          status?: CalendarEventStatus
+          platform?: Platform
+          createdBy?: string
+          createdAt?: string
+          updatedAt?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -619,6 +668,7 @@ export type Database = {
       ResourceType: ResourceType
       NotificationType: NotificationType
       HalaqaDay: HalaqaDay
+      CalendarEventStatus: CalendarEventStatus
     }
     CompositeTypes: {
       [_ in never]: never

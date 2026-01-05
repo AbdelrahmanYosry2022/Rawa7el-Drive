@@ -19,6 +19,15 @@ import {
 
 const quickActions = [
   {
+    id: 'calendar',
+    title: 'تقويم المحاضرات',
+    description: 'عرض وإدارة جدول المحاضرات الشهرية',
+    icon: Calendar,
+    href: '/calendar',
+    color: '#8B5CF6',
+    gradient: 'from-violet-500 to-purple-600',
+  },
+  {
     id: 'students',
     title: 'إدارة الطلاب',
     description: 'تسجيل طلاب جدد، عرض وتعديل بيانات الطلاب',
