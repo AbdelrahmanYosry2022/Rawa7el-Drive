@@ -1,32 +1,20 @@
 'use client';
 
-import { UserButton, useUser } from '@clerk/nextjs';
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import Link from 'next/link';
 
 export function Header() {
-  const { user } = useUser();
-
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-10">
       
       {/* Left Side: User Profile */}
       <div className="flex items-center gap-4">
-         <div className="hidden md:block text-left rtl:text-right">
-          <p className="text-sm font-semibold text-slate-900 leading-none">
-            {user?.fullName || 'طالب'}
-          </p>
-          <p className="text-xs text-slate-500 mt-1">
-            {user?.primaryEmailAddress?.emailAddress}
-          </p>
-        </div>
-        <UserButton 
-            appearance={{
-                elements: {
-                    avatarBox: "w-10 h-10"
-                }
-            }}
-        />
+        <Link href="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+            <User className="w-5 h-5 text-indigo-600" />
+          </div>
+        </Link>
       </div>
 
       {/* Right Side: Search & Notifications */}

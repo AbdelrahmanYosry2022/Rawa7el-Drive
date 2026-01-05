@@ -1,31 +1,22 @@
 import { ReactNode } from 'react';
-import { currentUser } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
+import { createServerClient } from '@rawa7el/supabase';
 import { redirect } from 'next/navigation';
 
 export default async function TeacherLayout({ children }: { children: ReactNode }) {
-  const user = await currentUser();
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/sign-in');
+    redirect('/login');
   }
 
-  let dbUser = await prisma.user.findUnique({ where: { clerkId: user.id } });
+  const { data: dbUser } = await supabase
+    .from('User')
+    .select('*')
+    .eq('id', user.id)
+    .single();
 
-  if (!dbUser) {
-    const email = user.emailAddresses[0]?.emailAddress;
-    if (email) {
-      dbUser = await prisma.user.create({
-        data: {
-          clerkId: user.id,
-          email,
-          role: 'STUDENT',
-        },
-      });
-    }
-  }
-
-  if (!dbUser || dbUser.role !== 'ADMIN') {
+  if (!dbUser || (dbUser as any).role !== 'ADMIN') {
     redirect('/');
   }
 

@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
-import { arSA } from "@clerk/localizations";
 import "./globals.css";
 
 const cairo = Cairo({
@@ -20,12 +18,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider localization={arSA}>
-      <html lang="ar" dir="rtl">
-        <body className={`${cairo.variable} font-sans antialiased`}>
-          {children}
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="ar" dir="rtl">
+      <body className={`${cairo.variable} font-sans antialiased`}>
+        {children}
+      </body>
+    </html>
   );
 }

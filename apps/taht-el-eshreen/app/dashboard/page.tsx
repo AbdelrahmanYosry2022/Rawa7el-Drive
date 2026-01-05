@@ -1,5 +1,4 @@
-import { currentUser } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
+import { createServerClient } from '@rawa7el/supabase';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent } from '@rawa7el/ui/card';
@@ -85,50 +84,39 @@ const features = [
 ];
 
 export default async function Home() {
-  const user = await currentUser();
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/sign-in');
+    redirect('/login');
   }
 
-  // Ensure User Exists in DB (sync with Clerk)
-  let dbUser = await prisma.user.findUnique({
-    where: { clerkId: user.id },
-  });
+  // Get user profile
+  const { data: dbUser } = await supabase
+    .from('User')
+    .select('*')
+    .eq('id', user.id)
+    .single();
 
   if (!dbUser) {
-    const email = user.emailAddresses[0]?.emailAddress;
-    const name = user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || null;
-    if (email) {
-      dbUser = await prisma.user.create({
-        data: {
-          clerkId: user.id,
-          email,
-          name,
-          role: 'STUDENT',
-        },
-      });
-    } else {
-      redirect('/sign-in');
-    }
-  } else if (!dbUser.name && user.fullName) {
-    await prisma.user.update({
-      where: { id: dbUser.id },
-      data: { name: user.fullName },
-    });
-    dbUser.name = user.fullName;
+    redirect('/login');
   }
 
   // Fetch counts for stats
-  const [subjectsCount, examsCount, resourcesCount, activitiesCount] = await Promise.all([
-    prisma.subject.count(),
-    prisma.exam.count(),
-    prisma.resource.count(),
-    prisma.activity.count(),
+  const [subjectsResult, examsResult, resourcesResult, activitiesResult] = await Promise.all([
+    supabase.from('Subject').select('id', { count: 'exact', head: true }),
+    supabase.from('Exam').select('id', { count: 'exact', head: true }),
+    supabase.from('Resource').select('id', { count: 'exact', head: true }),
+    supabase.from('Activity').select('id', { count: 'exact', head: true }),
   ]);
 
+  const subjectsCount = subjectsResult.count || 0;
+  const examsCount = examsResult.count || 0;
+  const resourcesCount = resourcesResult.count || 0;
+  const activitiesCount = activitiesResult.count || 0;
+
   // Get user's first name for greeting
-  const firstName = dbUser.name?.split(' ')[0] || user.firstName || 'طالب';
+  const firstName = dbUser.name?.split(' ')[0] || 'طالب';
 
   return (
     <div className="max-w-6xl mx-auto py-6 md:py-8 px-4 md:px-6 space-y-8">

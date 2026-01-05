@@ -16,7 +16,6 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { useState } from 'react';
-import { SignOutButton } from '@clerk/nextjs';
 import {
   Sheet,
   SheetContent,
@@ -137,12 +136,12 @@ export function MobileNav({ userRole }: MobileNavProps) {
               )}
 
               {/* Logout */}
-              <SignOutButton>
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
+              <form action="/api/auth/signout" method="POST">
+                <button type="submit" className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
                   <LogOut className="w-5 h-5" />
                   <span className="text-sm font-medium">تسجيل الخروج</span>
                 </button>
-              </SignOutButton>
+              </form>
             </div>
           </SheetContent>
         </Sheet>

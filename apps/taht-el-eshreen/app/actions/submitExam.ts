@@ -1,7 +1,6 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/prisma';
+import { createServerClient } from '@rawa7el/supabase';
 
 export type ExamQuestionDetail = {
   questionId: string;
@@ -30,34 +29,52 @@ export async function submitExam(
   examId: string,
   userAnswers: Record<string, string>,
 ): Promise<ExamSubmissionResult> {
-  const { userId } = await auth();
+  const supabase = await createServerClient();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
 
-  if (!userId) {
+  if (!authUser) {
     return { success: false, error: 'Unauthorized' };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { clerkId: userId },
-  });
+  const { data: userData } = await supabase
+    .from('User')
+    .select('*')
+    .eq('id', authUser.id)
+    .single();
 
+  const user = userData as any;
   if (!user) {
     return { success: false, error: 'User profile not found' };
   }
 
-  const exam = await prisma.exam.findUnique({
-    where: { id: examId },
-    include: { questions: true },
-  });
+  const { data: examData } = await supabase
+    .from('Exam')
+    .select('*')
+    .eq('id', examId)
+    .single();
 
+  const exam = examData as any;
   if (!exam) {
     return { success: false, error: 'Exam not found' };
   }
+
+  const { data: questionsData } = await supabase
+    .from('Question')
+    .select('*')
+    .eq('examId', examId);
+
+  const questions = questionsData as any[];
+  if (!questions) {
+    return { success: false, error: 'Questions not found' };
+  }
+
+  const examWithQuestions = { ...exam, questions };
 
   let score = 0;
   let totalPoints = 0;
   const details: ExamQuestionDetail[] = [];
 
-  for (const question of exam.questions) {
+  for (const question of examWithQuestions.questions) {
     totalPoints += question.points;
     const userAnswer = userAnswers[question.id] ?? null;
     const isCorrect = userAnswer !== null && userAnswer === question.correctAnswer;
@@ -90,33 +107,34 @@ export async function submitExam(
 
   // Persist submission using existing ONGOING session when available
   try {
-    const existing = await prisma.submission.findFirst({
-      where: {
-        userId: user.id,
-        examId: exam.id,
-        status: 'ONGOING',
-      },
-      orderBy: { startedAt: 'desc' },
-    });
+    const { data: existingData } = await supabase
+      .from('Submission')
+      .select('*')
+      .eq('userId', user.id)
+      .eq('examId', exam.id)
+      .eq('status', 'ONGOING')
+      .order('startedAt', { ascending: false })
+      .limit(1)
+      .single();
 
+    const existing = existingData as any;
     const now = new Date();
 
     if (existing) {
-      const deadline = new Date(
-        existing.startedAt.getTime() + exam.durationMinutes * 60_000,
-      );
+      const startedAt = new Date(existing.startedAt);
+      const deadline = new Date(startedAt.getTime() + exam.durationMinutes * 60_000);
 
       if (now > deadline) {
         // Mark as completed with failing score if submitted after time
-        await prisma.submission.update({
-          where: { id: existing.id },
-          data: {
+        await (supabase as any)
+          .from('Submission')
+          .update({
             status: 'COMPLETED',
             score: 0,
             passed: false,
             answers: userAnswers,
-          },
-        });
+          })
+          .eq('id', existing.id);
 
         return {
           success: false,
@@ -124,27 +142,28 @@ export async function submitExam(
         };
       }
 
-      await prisma.submission.update({
-        where: { id: existing.id },
-        data: {
+      await (supabase as any)
+        .from('Submission')
+        .update({
           status: 'COMPLETED',
           score: percentage,
           passed,
           answers: userAnswers,
-        },
-      });
+        })
+        .eq('id', existing.id);
     } else {
-      await prisma.submission.create({
-        data: {
+      await (supabase as any)
+        .from('Submission')
+        .insert({
+          id: crypto.randomUUID(),
           userId: user.id,
           examId: exam.id,
           score: percentage,
           passed,
           status: 'COMPLETED',
           answers: userAnswers,
-          startedAt: now,
-        },
-      });
+          startedAt: now.toISOString(),
+        });
     }
   } catch (error) {
     console.error('Failed to save submission:', error);

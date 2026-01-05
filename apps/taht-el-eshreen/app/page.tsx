@@ -1,4 +1,4 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { createServerClient } from '@rawa7el/supabase';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent } from '@rawa7el/ui/card';
@@ -67,13 +67,20 @@ const comingSoonPlatforms = [
 ];
 
 export default async function LandingPage() {
-  const user = await currentUser();
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/sign-in');
+    redirect('/login');
   }
 
-  const firstName = user.firstName || 'طالب';
+  const { data: profile } = await supabase
+    .from('User')
+    .select('name')
+    .eq('id', user.id)
+    .single();
+
+  const firstName = profile?.name?.split(' ')[0] || 'طالب';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
