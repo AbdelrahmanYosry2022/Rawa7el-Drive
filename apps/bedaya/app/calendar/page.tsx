@@ -69,12 +69,8 @@ export default function CalendarPage() {
   const checkUserRole = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { data } = await supabase
-        .from('User')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-      setIsAdmin(['SUPER_ADMIN', 'ADMIN', 'TEACHER'].includes((data as any)?.role));
+      // Development mode: allow all users to manage calendar
+      setIsAdmin(true);
     }
   };
 

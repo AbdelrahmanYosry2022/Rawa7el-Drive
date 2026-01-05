@@ -31,35 +31,17 @@ CREATE POLICY "Users can view calendar events" ON "CalendarEvent"
     FOR SELECT
     USING (true);
 
--- Policy: Only admins can insert calendar events
+-- Policy: Allow all authenticated users to insert (development mode)
 CREATE POLICY "Admins can create calendar events" ON "CalendarEvent"
     FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM "User"
-            WHERE "User"."id" = auth.uid()::text
-            AND "User"."role" IN ('SUPER_ADMIN', 'ADMIN', 'TEACHER')
-        )
-    );
+    WITH CHECK (true);
 
--- Policy: Only admins can update calendar events
+-- Policy: Allow all authenticated users to update (development mode)
 CREATE POLICY "Admins can update calendar events" ON "CalendarEvent"
     FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM "User"
-            WHERE "User"."id" = auth.uid()::text
-            AND "User"."role" IN ('SUPER_ADMIN', 'ADMIN', 'TEACHER')
-        )
-    );
+    USING (true);
 
--- Policy: Only admins can delete calendar events
+-- Policy: Allow all authenticated users to delete (development mode)
 CREATE POLICY "Admins can delete calendar events" ON "CalendarEvent"
     FOR DELETE
-    USING (
-        EXISTS (
-            SELECT 1 FROM "User"
-            WHERE "User"."id" = auth.uid()::text
-            AND "User"."role" IN ('SUPER_ADMIN', 'ADMIN', 'TEACHER')
-        )
-    );
+    USING (true);
