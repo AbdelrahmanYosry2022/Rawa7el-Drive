@@ -15,7 +15,8 @@ import {
   LogOut,
   Bell,
   User,
-  FolderOpen
+  FolderOpen,
+  GraduationCap
 } from 'lucide-react';
 
 const quickActions = [
@@ -27,6 +28,15 @@ const quickActions = [
     href: '/calendar',
     color: '#8B5CF6',
     gradient: 'from-violet-500 to-purple-600',
+  },
+  {
+    id: 'lectures',
+    title: 'المحاضرات',
+    description: 'إنشاء وإدارة المحاضرات وربطها بالمواد والمواعيد',
+    icon: GraduationCap,
+    href: '/lectures',
+    color: '#0EA5E9',
+    gradient: 'from-sky-500 to-cyan-600',
   },
   {
     id: 'materials',
