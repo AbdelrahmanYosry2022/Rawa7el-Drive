@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@rawa7el/supabase/client';
 import Link from 'next/link';
 import { 
@@ -14,12 +14,22 @@ import {
   Trash2, 
   Eye,
   Search,
-  MoreVertical,
   Clock,
   CheckCircle,
   XCircle,
   ArrowRight,
-  GraduationCap
+  GraduationCap,
+  Upload,
+  Video,
+  Music,
+  Image as ImageIcon,
+  File,
+  Presentation,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  CalendarPlus,
+  Loader2
 } from 'lucide-react';
 
 interface Lecture {

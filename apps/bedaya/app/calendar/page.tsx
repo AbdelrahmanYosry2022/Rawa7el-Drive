@@ -241,15 +241,13 @@ export default function CalendarPage() {
               </div>
             </div>
 
-            {isAdmin && (
-              <Button
-                onClick={() => openCreateModal()}
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
+            <Link
+                href="/lectures"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg transition-all"
               >
-                <Plus className="w-4 h-4 ml-2" />
-                إضافة محاضرة
-              </Button>
-            )}
+                <BookOpen className="w-4 h-4" />
+                إدارة المحاضرات
+              </Link>
           </div>
         </div>
       </header>
@@ -388,15 +386,6 @@ export default function CalendarPage() {
                       <h3 className="text-lg font-semibold text-slate-900">
                         {DAYS_AR[selectedDate.getDay()]}، {selectedDate.getDate()} {MONTHS_AR[selectedDate.getMonth()]}
                       </h3>
-                      {isAdmin && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openCreateModal(selectedDate)}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      )}
                     </div>
 
                     {selectedDayEvents.length === 0 ? (
@@ -419,22 +408,16 @@ export default function CalendarPage() {
                           >
                             <div className="flex items-start justify-between mb-2">
                               <h4 className="font-semibold text-slate-900">{event.title}</h4>
-                              {isAdmin && (
-                                <div className="flex gap-1">
-                                  <button
-                                    onClick={() => openEditModal(event)}
-                                    className="p-1 rounded hover:bg-slate-200"
-                                  >
-                                    <Edit className="w-4 h-4 text-slate-500" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDelete(event.id)}
-                                    className="p-1 rounded hover:bg-red-100"
-                                  >
-                                    <Trash2 className="w-4 h-4 text-red-500" />
-                                  </button>
-                                </div>
-                              )}
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                event.status === 'COMPLETED'
+                                  ? 'bg-green-100 text-green-700'
+                                  : event.status === 'CANCELLED'
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-blue-100 text-blue-700'
+                              }`}>
+                                {event.status === 'COMPLETED' ? 'مكتملة' :
+                                 event.status === 'CANCELLED' ? 'ملغية' : 'مجدولة'}
+                              </span>
                             </div>
 
                             {event.description && (
@@ -479,26 +462,16 @@ export default function CalendarPage() {
                               )}
                             </div>
 
-                            {isAdmin && event.status === 'SCHEDULED' && (
-                              <div className="flex gap-2 mt-4 pt-3 border-t border-slate-200">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="flex-1 text-green-600 border-green-300 hover:bg-green-50"
-                                  onClick={() => handleStatusChange(event.id, 'COMPLETED')}
+                            {/* View only - no action buttons */}
+                            {event.status === 'SCHEDULED' && (
+                              <div className="mt-4 pt-3 border-t border-slate-200">
+                                <Link
+                                  href="/lectures"
+                                  className="flex items-center justify-center gap-2 w-full py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                                 >
-                                  <Check className="w-4 h-4 ml-1" />
-                                  تم
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
-                                  onClick={() => handleStatusChange(event.id, 'CANCELLED')}
-                                >
-                                  <X className="w-4 h-4 ml-1" />
-                                  إلغاء
-                                </Button>
+                                  <BookOpen className="w-4 h-4" />
+                                  إدارة من صفحة المحاضرات
+                                </Link>
                               </div>
                             )}
 
