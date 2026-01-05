@@ -50,16 +50,19 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    console.log('Auth check:', { user: user?.id, authError });
 
     if (!user) {
-      return NextResponse.json({ error: 'غير مصرح' }, { status: 401 });
+      return NextResponse.json({ error: 'غير مصرح', authError }, { status: 401 });
     }
 
     // Development mode: skip role check
     // TODO: Re-enable role check in production
 
     const body = await request.json();
+    console.log('Request body:', body);
     const { title, description, date, startTime, endTime, location, speakers } = body;
 
     if (!title || !date) {
@@ -69,29 +72,35 @@ export async function POST(request: Request) {
     const eventId = crypto.randomUUID();
     const now = new Date().toISOString();
 
+    const insertData = {
+      id: eventId,
+      title,
+      description: description || null,
+      date,
+      startTime: startTime || null,
+      endTime: endTime || null,
+      location: location || null,
+      speakers: speakers && speakers.length > 0 ? speakers : null,
+      status: 'SCHEDULED',
+      platform: 'BEDAYA',
+      createdBy: user.id,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    console.log('Insert data:', insertData);
+
     const { data: event, error } = await (supabase as any)
       .from('CalendarEvent')
-      .insert({
-        id: eventId,
-        title,
-        description: description || null,
-        date,
-        startTime: startTime || null,
-        endTime: endTime || null,
-        location: location || null,
-        speakers: speakers || null,
-        status: 'SCHEDULED',
-        platform: 'BEDAYA',
-        createdBy: user.id,
-        createdAt: now,
-        updatedAt: now,
-      })
+      .insert(insertData)
       .select()
       .single();
 
+    console.log('Insert result:', { event, error });
+
     if (error) {
       console.error('Error creating calendar event:', JSON.stringify(error, null, 2));
-      return NextResponse.json({ error: 'فشل في إنشاء الحدث', details: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'فشل في إنشاء الحدث', details: error.message, code: error.code }, { status: 500 });
     }
 
     return NextResponse.json({ event, message: 'تم إنشاء الحدث بنجاح' });
