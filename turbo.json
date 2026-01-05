@@ -14,10 +14,7 @@
     "lint": {
       "dependsOn": ["^build"]
     },
-    "db:generate": {
-      "cache": false
-    },
-    "db:push": {
+    "types:generate": {
       "cache": false
     }
   }

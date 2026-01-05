@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: ["@rawa7el/ui", "@rawa7el/database"],
 };
 
 export default nextConfig;

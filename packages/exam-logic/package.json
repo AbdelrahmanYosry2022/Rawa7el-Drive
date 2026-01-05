@@ -9,7 +9,7 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "@rawa7el/database": "workspace:*"
+    "@rawa7el/supabase": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5"

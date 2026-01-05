@@ -14,9 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:all": "pnpm test && pnpm test:e2e",
-    "db:generate": "pnpm --filter @rawa7el/database db:generate",
-    "db:push": "pnpm --filter @rawa7el/database db:push",
-    "db:studio": "pnpm --filter @rawa7el/database db:studio"
+    "types:generate": "pnpm --filter @rawa7el/supabase types:generate"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
