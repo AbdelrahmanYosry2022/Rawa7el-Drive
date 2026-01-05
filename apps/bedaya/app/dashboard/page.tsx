@@ -1,4 +1,4 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { createServerClient } from '@rawa7el/supabase';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent } from '@rawa7el/ui/card';
@@ -13,9 +13,9 @@ import {
   ArrowLeft,
   Settings,
   LogOut,
-  Bell
+  Bell,
+  User
 } from 'lucide-react';
-import { UserButton } from '@clerk/nextjs';
 
 const quickActions = [
   {
@@ -57,13 +57,20 @@ const quickActions = [
 ];
 
 export default async function DashboardPage() {
-  const user = await currentUser();
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/sign-in');
+    redirect('/login');
   }
 
-  const firstName = user.firstName || 'مستخدم';
+  const { data: profile } = await supabase
+    .from('User')
+    .select('name')
+    .eq('id', user.id)
+    .single();
+
+  const firstName = (profile as any)?.name || 'مستخدم';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
@@ -86,7 +93,11 @@ export default async function DashboardPage() {
                 <Bell className="w-5 h-5 text-slate-600" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
               </button>
-              <UserButton afterSignOutUrl="/" />
+              <form action="/api/auth/signout" method="POST">
+                <button type="submit" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                  <User className="w-5 h-5 text-slate-600" />
+                </button>
+              </form>
             </div>
           </div>
         </div>

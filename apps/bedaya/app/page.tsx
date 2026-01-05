@@ -1,11 +1,12 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { createServerClient } from '@rawa7el/supabase';
 import { redirect } from 'next/navigation';
 
 export default async function HomePage() {
-  const user = await currentUser();
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/sign-in');
+    redirect('/login');
   }
 
   // Redirect authenticated users to dashboard
