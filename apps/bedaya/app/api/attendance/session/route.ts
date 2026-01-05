@@ -1,9 +1,10 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { createClient as createServerClient } from '@rawa7el/supabase/server';
 import QRCode from 'qrcode';
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -33,11 +34,11 @@ export async function POST() {
       return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
     }
 
-    // Generate QR code URL - points to the check-in page
-    // Use VERCEL_URL in production, fallback to NEXT_PUBLIC_APP_URL or localhost
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003';
+    // Generate QR code URL - get the actual host from request headers
+    const headersList = await headers();
+    const host = headersList.get('host') || 'localhost:3003';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
     const checkInUrl = `${baseUrl}/attendance/checkin/${sessionId}`;
     const qrCodeUrl = await QRCode.toDataURL(checkInUrl, {
       width: 300,

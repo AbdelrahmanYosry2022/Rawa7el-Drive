@@ -93,6 +93,8 @@ export default function MaterialsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
+  const [isLinking, setIsLinking] = useState(false);
 
   // Upload form state
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -227,22 +229,32 @@ export default function MaterialsPage() {
     }
   };
 
-  const handleLinkToEvent = async (eventId: string) => {
-    if (!selectedMaterial) return;
+  const toggleEventSelection = (eventId: string) => {
+    setSelectedEventIds(prev => 
+      prev.includes(eventId) 
+        ? prev.filter(id => id !== eventId)
+        : [...prev, eventId]
+    );
+  };
 
+  const handleLinkToEvents = async () => {
+    if (!selectedMaterial || selectedEventIds.length === 0) return;
+
+    setIsLinking(true);
     try {
       const res = await fetch(`/api/materials/${selectedMaterial.id}/link`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId }),
+        body: JSON.stringify({ eventIds: selectedEventIds }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        showNotification('success', 'تم ربط الملف بالمحاضرة بنجاح');
+        showNotification('success', data.message || 'تم ربط الملف بالمحاضرات بنجاح');
         setShowLinkModal(false);
         setSelectedMaterial(null);
+        setSelectedEventIds([]);
       } else {
         showNotification('error', data.error || 'فشل في ربط الملف');
       }
@@ -250,6 +262,7 @@ export default function MaterialsPage() {
       console.error('Error linking:', error);
       showNotification('error', 'حدث خطأ أثناء ربط الملف');
     }
+    setIsLinking(false);
   };
 
   const filteredMaterials = materials.filter(m => 
@@ -670,17 +683,18 @@ export default function MaterialsPage() {
         </div>
       )}
 
-      {/* Link to Event Modal */}
+      {/* Link to Event Modal - Multi-select */}
       {showLinkModal && selectedMaterial && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md">
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">ربط بمحاضرة</h2>
+                <h2 className="text-xl font-bold text-gray-900">ربط بالمحاضرات</h2>
                 <button
                   onClick={() => {
                     setShowLinkModal(false);
                     setSelectedMaterial(null);
+                    setSelectedEventIds([]);
                   }}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
@@ -691,30 +705,59 @@ export default function MaterialsPage() {
 
             <div className="p-6">
               <p className="text-gray-600 mb-4">
-                اختر المحاضرة التي تريد ربط الملف <strong>"{selectedMaterial.title}"</strong> بها:
+                اختر المحاضرات التي تريد ربط الملف <strong>"{selectedMaterial.title}"</strong> بها:
               </p>
 
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {events.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">لا توجد محاضرات متاحة</p>
                 ) : (
-                  events.map((event) => (
-                    <button
-                      key={event.id}
-                      onClick={() => handleLinkToEvent(event.id)}
-                      className="w-full p-4 text-right bg-gray-50 hover:bg-indigo-50 rounded-xl transition-colors flex items-center gap-3"
-                    >
-                      <div className="p-2 bg-indigo-100 rounded-lg">
-                        <Calendar className="w-5 h-5 text-indigo-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{event.title}</p>
-                        <p className="text-sm text-gray-500">{formatDate(event.date)}</p>
-                      </div>
-                    </button>
-                  ))
+                  events.map((event) => {
+                    const isSelected = selectedEventIds.includes(event.id);
+                    return (
+                      <button
+                        key={event.id}
+                        onClick={() => toggleEventSelection(event.id)}
+                        className={`w-full p-4 text-right rounded-xl transition-colors flex items-center gap-3 ${
+                          isSelected 
+                            ? 'bg-indigo-100 border-2 border-indigo-500' 
+                            : 'bg-gray-50 hover:bg-indigo-50 border-2 border-transparent'
+                        }`}
+                      >
+                        <div className={`p-2 rounded-lg ${isSelected ? 'bg-indigo-500' : 'bg-indigo-100'}`}>
+                          {isSelected ? (
+                            <CheckCircle className="w-5 h-5 text-white" />
+                          ) : (
+                            <Calendar className="w-5 h-5 text-indigo-600" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{event.title}</p>
+                          <p className="text-sm text-gray-500">{formatDate(event.date)}</p>
+                        </div>
+                      </button>
+                    );
+                  })
                 )}
               </div>
+
+              {/* Selected count and submit button */}
+              {events.length > 0 && (
+                <div className="mt-6 space-y-3">
+                  {selectedEventIds.length > 0 && (
+                    <p className="text-sm text-indigo-600 font-medium text-center">
+                      تم اختيار {selectedEventIds.length} محاضرة
+                    </p>
+                  )}
+                  <button
+                    onClick={handleLinkToEvents}
+                    disabled={selectedEventIds.length === 0 || isLinking}
+                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLinking ? 'جاري الربط...' : 'ربط الملف بالمحاضرات المختارة'}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
