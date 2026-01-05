@@ -34,7 +34,11 @@ export async function POST() {
     }
 
     // Generate QR code URL - points to the check-in page
-    const checkInUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003'}/attendance/checkin/${sessionId}`;
+    // Use VERCEL_URL in production, fallback to NEXT_PUBLIC_APP_URL or localhost
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003';
+    const checkInUrl = `${baseUrl}/attendance/checkin/${sessionId}`;
     const qrCodeUrl = await QRCode.toDataURL(checkInUrl, {
       width: 300,
       margin: 2,
