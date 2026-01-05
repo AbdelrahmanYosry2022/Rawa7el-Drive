@@ -15,6 +15,7 @@
     "@rawa7el/halaqat-logic": "workspace:*",
     "@rawa7el/supabase": "workspace:*",
     "@rawa7el/ui": "workspace:*",
+    "@supabase/ssr": "^0.6.0",
     "@types/file-saver": "^2.0.7",
     "@types/qrcode": "^1.5.6",
     "class-variance-authority": "^0.7.1",

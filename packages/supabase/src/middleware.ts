@@ -35,7 +35,9 @@ export async function updateSession(request: NextRequest) {
 
   // Protected routes - redirect to login if not authenticated
   const isAuthPage = request.nextUrl.pathname.startsWith('/login')
-  const isPublicPage = request.nextUrl.pathname.startsWith('/attendance/checkin')
+  const isPublicPage = 
+    request.nextUrl.pathname.startsWith('/attendance/checkin') ||
+    request.nextUrl.pathname.startsWith('/api/attendance/checkin')
   
   if (!user && !isAuthPage && !isPublicPage) {
     const url = request.nextUrl.clone()

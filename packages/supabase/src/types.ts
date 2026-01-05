@@ -18,6 +18,7 @@ export type ResourceType = 'PDF' | 'VIDEO' | 'AUDIO' | 'IMAGE' | 'DOCUMENT' | 'L
 export type NotificationType = 'INFO' | 'WARNING' | 'SUCCESS' | 'ERROR' | 'ANNOUNCEMENT'
 export type HalaqaDay = 'SATURDAY' | 'SUNDAY' | 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY'
 export type CalendarEventStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED'
+export type MaterialType = 'PDF' | 'POWERPOINT' | 'DOCUMENT' | 'AUDIO' | 'VIDEO' | 'IMAGE' | 'OTHER'
 
 export type Database = {
   public: {
@@ -649,6 +650,87 @@ export type Database = {
         }
         Relationships: []
       }
+      Material: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          type: MaterialType
+          fileName: string
+          fileSize: number
+          mimeType: string
+          storagePath: string
+          publicUrl: string | null
+          thumbnailUrl: string | null
+          duration: number | null
+          pageCount: number | null
+          platform: Platform
+          uploadedBy: string
+          createdAt: string
+          updatedAt: string
+        }
+        Insert: {
+          id: string
+          title: string
+          description?: string | null
+          type: MaterialType
+          fileName: string
+          fileSize: number
+          mimeType: string
+          storagePath: string
+          publicUrl?: string | null
+          thumbnailUrl?: string | null
+          duration?: number | null
+          pageCount?: number | null
+          platform?: Platform
+          uploadedBy: string
+          createdAt?: string
+          updatedAt?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          type?: MaterialType
+          fileName?: string
+          fileSize?: number
+          mimeType?: string
+          storagePath?: string
+          publicUrl?: string | null
+          thumbnailUrl?: string | null
+          duration?: number | null
+          pageCount?: number | null
+          platform?: Platform
+          uploadedBy?: string
+          createdAt?: string
+          updatedAt?: string
+        }
+        Relationships: []
+      }
+      CalendarEventMaterial: {
+        Row: {
+          id: string
+          eventId: string
+          materialId: string
+          order: number
+          createdAt: string
+        }
+        Insert: {
+          id: string
+          eventId: string
+          materialId: string
+          order?: number
+          createdAt?: string
+        }
+        Update: {
+          id?: string
+          eventId?: string
+          materialId?: string
+          order?: number
+          createdAt?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -669,6 +751,7 @@ export type Database = {
       NotificationType: NotificationType
       HalaqaDay: HalaqaDay
       CalendarEventStatus: CalendarEventStatus
+      MaterialType: MaterialType
     }
     CompositeTypes: {
       [_ in never]: never

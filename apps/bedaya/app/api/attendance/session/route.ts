@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@rawa7el/supabase';
+import { createClient as createServerClient } from '@rawa7el/supabase/server';
 import QRCode from 'qrcode';
 
 export async function POST() {

@@ -1,4 +1,4 @@
-import { createServerClient } from '@rawa7el/supabase';
+import { createClient } from '@rawa7el/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent } from '@rawa7el/ui/card';
@@ -14,7 +14,8 @@ import {
   Settings,
   LogOut,
   Bell,
-  User
+  User,
+  FolderOpen
 } from 'lucide-react';
 
 const quickActions = [
@@ -26,6 +27,15 @@ const quickActions = [
     href: '/calendar',
     color: '#8B5CF6',
     gradient: 'from-violet-500 to-purple-600',
+  },
+  {
+    id: 'materials',
+    title: 'المواد التعليمية',
+    description: 'رفع وإدارة الملفات والمواد التعليمية',
+    icon: FolderOpen,
+    href: '/materials',
+    color: '#EC4899',
+    gradient: 'from-pink-500 to-rose-600',
   },
   {
     id: 'students',
@@ -66,7 +76,7 @@ const quickActions = [
 ];
 
 export default async function DashboardPage() {
-  const supabase = await createServerClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

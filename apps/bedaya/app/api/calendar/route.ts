@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@rawa7el/supabase';
+import { createClient as createServerClient } from '@rawa7el/supabase/server';
 
 // GET - Fetch all calendar events
 export async function GET(request: Request) {

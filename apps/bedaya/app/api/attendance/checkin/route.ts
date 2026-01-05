@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@rawa7el/supabase';
+import { createPublicClient } from '@rawa7el/supabase';
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const supabase = await createServerClient();
+    const supabase = createPublicClient();
 
     // Check if session exists
     const { data: session, error: sessionError } = await (supabase as any)
