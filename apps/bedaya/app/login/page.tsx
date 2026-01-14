@@ -19,6 +19,15 @@ export default function LoginPage() {
     setError(null)
     setIsLoading(true)
 
+    // Bypass for dummy mode (Development only)
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
+      document.cookie = "dummy-auth=true; path=/; max-age=3600";
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
+      router.push('/')
+      router.refresh()
+      return
+    }
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),

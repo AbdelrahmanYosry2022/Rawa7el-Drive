@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
-import { createServerClient } from '@rawa7el/supabase';
+import { createClient as createServerClient } from '@rawa7el/supabase/server';
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { WelcomeModal } from "@/components/welcome-modal";
 import { PageGuide } from "@/components/page-guide";

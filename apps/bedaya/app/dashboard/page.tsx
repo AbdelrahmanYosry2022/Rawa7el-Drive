@@ -1,11 +1,12 @@
 import { createClient } from '@rawa7el/supabase/server';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Card, CardContent } from '@rawa7el/ui/card';
 import { Button } from '@rawa7el/ui/button';
-import { 
-  Users, 
-  Calendar, 
+import {
+  Users,
+  Calendar,
   BookOpen,
   UserPlus,
   ClipboardCheck,
@@ -78,19 +79,31 @@ const quickActions = [
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    const cookieStore = await cookies();
+    const isDummyMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder');
+    const hasDummyAuth = cookieStore.get('dummy-auth')?.value === 'true';
+
+    if (isDummyMode && hasDummyAuth) {
+      user = { id: 'dummy-user', email: 'dummy@example.com' } as any;
+    } else {
+      redirect('/login');
+    }
   }
 
-  const { data: profile } = await supabase
-    .from('User')
-    .select('name')
-    .eq('id', user.id)
-    .single();
-
-  const firstName = (profile as any)?.name || 'مستخدم';
+  let firstName = 'مستخدم';
+  if (user && user.id !== 'dummy-user') {
+    const { data: profile } = await supabase
+      .from('User')
+      .select('name')
+      .eq('id', user.id)
+      .single();
+    firstName = (profile as any)?.name || 'مستخدم';
+  } else {
+    firstName = 'مستخدم تجريبي';
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
@@ -107,7 +120,7 @@ export default async function DashboardPage() {
                 <p className="text-xs text-slate-500">للحلقات القرآنية</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors relative">
                 <Bell className="w-5 h-5 text-slate-600" />
@@ -128,7 +141,7 @@ export default async function DashboardPage() {
         <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-8 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24" />
-          
+
           <div className="relative">
             <h2 className="text-2xl md:text-3xl font-bold mb-2">
               مرحباً، {firstName} 👋
@@ -172,11 +185,11 @@ export default async function DashboardPage() {
       {/* Quick Actions */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 pb-12">
         <h3 className="text-lg font-semibold text-slate-900 mb-4">الإجراءات السريعة</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {quickActions.map((action) => {
             const Icon = action.icon;
-            
+
             return (
               <Link key={action.id} href={action.href}>
                 <Card className="group bg-white border-2 border-slate-100 rounded-2xl overflow-hidden hover:border-slate-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full">
@@ -188,7 +201,7 @@ export default async function DashboardPage() {
                           <Icon className="w-7 h-7 text-white" />
                         </div>
                       </div>
-                      
+
                       {/* Content */}
                       <div className="flex-1 p-6 flex flex-col justify-center">
                         <h4 className="text-lg font-semibold text-slate-900 mb-1">

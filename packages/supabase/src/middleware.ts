@@ -35,11 +35,19 @@ export async function updateSession(request: NextRequest) {
 
   // Protected routes - redirect to login if not authenticated
   const isAuthPage = request.nextUrl.pathname.startsWith('/login')
-  const isPublicPage = 
+  const isPublicPage =
     request.nextUrl.pathname.startsWith('/attendance/checkin') ||
     request.nextUrl.pathname.startsWith('/api/attendance/checkin')
-  
+
+  const isDummyMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
+  const hasDummyAuth = request.cookies.get('dummy-auth')?.value === 'true'
+
   if (!user && !isAuthPage && !isPublicPage) {
+    // Allow access if we are in dummy mode and have the dummy auth cookie
+    if (isDummyMode && hasDummyAuth) {
+      return supabaseResponse
+    }
+
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

@@ -1,10 +1,11 @@
-import { createServerClient } from '@rawa7el/supabase';
+import { createClient } from '@rawa7el/supabase/server';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Card, CardContent } from '@rawa7el/ui/card';
-import { 
-  GraduationCap, 
-  FileText, 
+import {
+  GraduationCap,
+  FileText,
   ClipboardList,
   Calendar,
   TrendingUp,
@@ -67,20 +68,32 @@ const comingSoonPlatforms = [
 ];
 
 export default async function LandingPage() {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const supabase = await createClient();
+  let { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    const cookieStore = await cookies();
+    const isDummyMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder');
+    const hasDummyAuth = cookieStore.get('dummy-auth')?.value === 'true';
+
+    if (isDummyMode && hasDummyAuth) {
+      user = { id: 'dummy-user', email: 'dummy@example.com' } as any;
+    } else {
+      redirect('/login');
+    }
   }
 
-  const { data: profile } = await supabase
-    .from('User')
-    .select('name')
-    .eq('id', user.id)
-    .single();
-
-  const firstName = profile?.name?.split(' ')[0] || 'طالب';
+  let firstName = 'طالب';
+  if (user && user.id !== 'dummy-user') {
+    const { data: profile } = await supabase
+      .from('User')
+      .select('name')
+      .eq('id', user.id)
+      .single();
+    firstName = profile?.name?.split(' ')[0] || 'طالب';
+  } else {
+    firstName = 'زائر تجريبي';
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
@@ -98,7 +111,7 @@ export default async function LandingPage() {
                 priority
               />
             </div>
-            <Link 
+            <Link
               href="/profile"
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
             >
@@ -117,11 +130,11 @@ export default async function LandingPage() {
           <Sparkles className="w-4 h-4" />
           <span>مرحباً بك في رواحل درايف</span>
         </div>
-        
+
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6">
           منصتك التعليمية المتكاملة
         </h1>
-        
+
         <p className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto mb-8">
           اختر المنصة المناسبة لك وابدأ رحلتك التعليمية الآن
         </p>
@@ -132,7 +145,7 @@ export default async function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {platforms.map((platform) => {
             const Icon = platform.icon;
-            
+
             return (
               <Link key={platform.id} href={platform.href}>
                 <Card className="group bg-white border-2 border-slate-100 rounded-2xl overflow-hidden hover:border-slate-200 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 h-full">
@@ -141,7 +154,7 @@ export default async function LandingPage() {
                     <div className={`bg-gradient-to-br ${platform.gradient} p-8 relative overflow-hidden`}>
                       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
                       <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
-                      
+
                       <div className="relative">
                         <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
                           <Icon className="w-8 h-8 text-white" />
@@ -151,13 +164,13 @@ export default async function LandingPage() {
                         </h3>
                       </div>
                     </div>
-                    
+
                     {/* Content */}
                     <div className="p-6">
                       <p className="text-slate-600 mb-4 leading-relaxed">
                         {platform.description}
                       </p>
-                      
+
                       <div className="space-y-2 mb-6">
                         {platform.features.map((feature, idx) => (
                           <div key={idx} className="flex items-center gap-2 text-sm text-slate-500">
@@ -166,7 +179,7 @@ export default async function LandingPage() {
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                         <span className="text-sm font-medium text-slate-900">
                           ادخل المنصة
@@ -188,16 +201,16 @@ export default async function LandingPage() {
           <h2 className="text-2xl font-bold text-slate-900 mb-2">قريباً</h2>
           <p className="text-slate-500">منصات جديدة قيد التطوير</p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {comingSoonPlatforms.map((platform) => {
             const Icon = platform.icon;
-            
+
             return (
               <Card key={platform.id} className="bg-slate-50 border border-slate-200 rounded-2xl opacity-60">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
-                    <div 
+                    <div
                       className="w-12 h-12 rounded-xl flex items-center justify-center"
                       style={{ backgroundColor: `${platform.color}20`, color: platform.color }}
                     >
