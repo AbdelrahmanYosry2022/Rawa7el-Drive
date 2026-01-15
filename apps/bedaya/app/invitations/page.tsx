@@ -21,8 +21,8 @@ import { Card, CardContent } from '@rawa7el/ui/card'
 import { Button } from '@rawa7el/ui/button'
 import { Input } from '@rawa7el/ui/input'
 
-// Production URL - change this to your actual domain
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bedaya.rawa7el.com'
+// Production URL
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://rawa7el-drive.vercel.app'
 
 interface InvitationLink {
   id: string
