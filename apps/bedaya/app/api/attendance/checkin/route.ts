@@ -40,28 +40,86 @@ export async function POST(request: Request) {
       });
     }
 
-    // Find or create user by visitorId
+    // Find or create user - check multiple ways
     let userId: string;
 
-    // Check if we have a user with this visitorId stored in notes
-    const { data: existingUser } = await (supabase as any)
+    // 1. First check if we have a user with this visitorId stored in phone field
+    const { data: userByVisitor } = await (supabase as any)
       .from('User')
       .select('*')
       .eq('phone', `visitor:${visitorId}`)
       .single();
 
-    if (existingUser) {
-      userId = existingUser.id;
+    if (userByVisitor) {
+      // Found by visitorId - returning visitor
+      userId = userByVisitor.id;
       
       // Update name/email if provided and different
-      if (name && name !== existingUser.name) {
+      if (name && name !== userByVisitor.name) {
         await (supabase as any)
           .from('User')
-          .update({ name, email: email || existingUser.email })
+          .update({ name, email: email || userByVisitor.email })
           .eq('id', userId);
       }
     } else {
-      // First time - require name and email
+      // 2. Check if user exists by email (registered via invitation)
+      if (email) {
+        const { data: userByEmail } = await (supabase as any)
+          .from('User')
+          .select('*')
+          .eq('email', email)
+          .single();
+
+        if (userByEmail) {
+          // Found registered user by email - use their userId
+          userId = userByEmail.id;
+          
+          // Check if this user already checked in for this session
+          const { data: userAttendance } = await (supabase as any)
+            .from('Attendance')
+            .select('*')
+            .eq('sessionId', sessionId)
+            .eq('userId', userId)
+            .single();
+
+          if (userAttendance) {
+            return NextResponse.json({ 
+              success: true, 
+              message: `مرحباً ${userByEmail.name}! تم تسجيل حضورك مسبقاً`,
+              alreadyCheckedIn: true,
+              isRegisteredUser: true
+            });
+          }
+
+          // Create attendance record for registered user
+          const { error: attendanceError } = await (supabase as any)
+            .from('Attendance')
+            .insert({
+              id: crypto.randomUUID(),
+              sessionId,
+              userId,
+              status: 'PRESENT',
+              notes: `visitor:${visitorId}`,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            });
+
+          if (attendanceError) {
+            console.error('Error creating attendance:', attendanceError);
+            return NextResponse.json({ error: 'Failed to record attendance' }, { status: 500 });
+          }
+
+          return NextResponse.json({ 
+            success: true, 
+            message: `مرحباً ${userByEmail.name}! تم تسجيل حضورك بنجاح`,
+            alreadyCheckedIn: false,
+            isRegisteredUser: true,
+            userName: userByEmail.name
+          });
+        }
+      }
+
+      // 3. First time visitor - require name and email
       if (!name || !email) {
         return NextResponse.json({ 
           error: 'First time check-in requires name and email',
