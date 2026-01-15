@@ -21,6 +21,9 @@ import { Card, CardContent } from '@rawa7el/ui/card'
 import { Button } from '@rawa7el/ui/button'
 import { Input } from '@rawa7el/ui/input'
 
+// Production URL - change this to your actual domain
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://bedaya.rawa7el.com'
+
 interface InvitationLink {
   id: string
   token: string
@@ -117,7 +120,7 @@ export default function InvitationsPage() {
   }
 
   const copyLink = async (token: string, id: string) => {
-    const link = `${window.location.origin}/register?invite=${token}`
+    const link = `${SITE_URL}/register?invite=${token}`
     await navigator.clipboard.writeText(link)
     setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
@@ -303,7 +306,7 @@ export default function InvitationsPage() {
 
                       <div className="flex items-center gap-1 text-sm text-slate-500 bg-slate-50 rounded-lg px-3 py-2 mb-3">
                         <code className="text-indigo-600 truncate flex-1" dir="ltr">
-                          {`${typeof window !== 'undefined' ? window.location.origin : ''}/register?invite=${invitation.token}`}
+                          {`${SITE_URL}/register?invite=${invitation.token}`}
                         </code>
                       </div>
 
