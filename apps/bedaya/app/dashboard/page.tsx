@@ -22,6 +22,15 @@ import {
 
 const quickActions = [
   {
+    id: 'invitations',
+    title: 'روابط الدعوة',
+    description: 'إنشاء وإدارة روابط تسجيل الطلاب الجدد',
+    icon: UserPlus,
+    href: '/invitations',
+    color: '#6366F1',
+    gradient: 'from-indigo-500 to-purple-600',
+  },
+  {
     id: 'lectures',
     title: 'المحاضرات',
     description: 'إدارة المحاضرات والمواد التعليمية والمواعيد من مكان واحد',
