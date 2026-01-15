@@ -60,11 +60,14 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Protected routes - redirect to login if not authenticated
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')
+  const pathname = request.nextUrl.pathname
+  const isAuthPage = pathname === '/login' || pathname.startsWith('/login/') || 
+                     pathname === '/register' || pathname.startsWith('/register/')
   const isPublicPage =
-    request.nextUrl.pathname.startsWith('/attendance/checkin') ||
-    request.nextUrl.pathname.startsWith('/api/attendance/checkin') ||
-    request.nextUrl.pathname.startsWith('/api/invitations/validate')
+    pathname.startsWith('/attendance/checkin') ||
+    pathname.startsWith('/api/attendance/checkin') ||
+    pathname.startsWith('/api/invitations/validate') ||
+    pathname.startsWith('/api/invitations')
 
   const isDummyMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
   const hasDummyAuth = request.cookies.get('dummy-auth')?.value === 'true'
@@ -89,8 +92,6 @@ export async function updateSession(request: NextRequest) {
 
   // Role-based access control for authenticated users
   if (user && !isAuthPage && !isPublicPage) {
-    const pathname = request.nextUrl.pathname
-    
     // Check if trying to access admin route
     const isAdminRoute = ADMIN_ROUTES.some(route => pathname.startsWith(route))
     
