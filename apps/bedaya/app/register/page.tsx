@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@rawa7el/supabase/client'
 import Link from 'next/link'
 import { User, Mail, Lock, Phone, Loader2, Upload, ArrowRight, ShieldX, Link2 } from 'lucide-react'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const searchParams = useSearchParams()
   const inviteToken = searchParams.get('invite')
   
@@ -346,5 +346,26 @@ export default function RegisterPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+// Loading fallback for Suspense
+function RegisterLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4">
+      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 max-w-md w-full border border-white/20 text-center">
+        <Loader2 className="w-12 h-12 animate-spin text-emerald-500 mx-auto mb-4" />
+        <p className="text-gray-600">جاري التحميل...</p>
+      </div>
+    </div>
+  )
+}
+
+// Main export with Suspense wrapper
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterLoading />}>
+      <RegisterForm />
+    </Suspense>
   )
 }
