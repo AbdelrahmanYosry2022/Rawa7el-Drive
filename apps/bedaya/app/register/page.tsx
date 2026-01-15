@@ -1,12 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@rawa7el/supabase/client'
 import Link from 'next/link'
-import { User, Mail, Lock, Phone, Loader2, Upload, ArrowRight } from 'lucide-react'
+import { User, Mail, Lock, Phone, Loader2, Upload, ArrowRight, ShieldX, Link2 } from 'lucide-react'
 
 export default function RegisterPage() {
+  const searchParams = useSearchParams()
+  const inviteToken = searchParams.get('invite')
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,8 +20,39 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isValidatingInvite, setIsValidatingInvite] = useState(true)
+  const [inviteValid, setInviteValid] = useState(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
+
+  // Validate invitation token on mount
+  useEffect(() => {
+    const validateInvite = async () => {
+      if (!inviteToken) {
+        setIsValidatingInvite(false)
+        setInviteError('يجب الحصول على رابط دعوة للتسجيل في المنصة')
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/invitations/validate?token=${inviteToken}`)
+        const data = await response.json()
+
+        if (data.valid) {
+          setInviteValid(true)
+        } else {
+          setInviteError(data.error || 'رابط الدعوة غير صالح')
+        }
+      } catch (err) {
+        setInviteError('حدث خطأ في التحقق من رابط الدعوة')
+      } finally {
+        setIsValidatingInvite(false)
+      }
+    }
+
+    validateInvite()
+  }, [inviteToken])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -123,6 +157,14 @@ export default function RegisterPage() {
       }
 
       if (data.user) {
+        // Increment invitation usage count
+        if (inviteToken) {
+          await fetch('/api/invitations/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: inviteToken })
+          })
+        }
         // Success - Show verification message
         setSuccess(true)
       }
@@ -131,6 +173,43 @@ export default function RegisterPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Show loading while validating invite
+  if (isValidatingInvite) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4">
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 max-w-md w-full border border-white/20 text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-emerald-500 mx-auto mb-4" />
+          <p className="text-gray-600">جاري التحقق من رابط الدعوة...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error if invite is invalid
+  if (!inviteValid) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4">
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 max-w-md w-full border border-white/20 text-center">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShieldX className="w-10 h-10 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">رابط غير صالح</h2>
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            {inviteError}
+          </p>
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500">
+              للتسجيل في المنصة، يرجى التواصل مع المشرف للحصول على رابط دعوة صالح.
+            </p>
+            <Link href="/login" className="inline-block px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors">
+              العودة لتسجيل الدخول
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (success) {
