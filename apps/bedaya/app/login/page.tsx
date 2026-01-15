@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@rawa7el/supabase/client'
+import Link from 'next/link'
 import { Eye, EyeOff, Lock, Mail, Loader2, ShieldCheck } from 'lucide-react'
 
 export default function LoginPage() {
@@ -153,6 +154,15 @@ export default function LoginPage() {
                 'تسجيل الدخول'
               )}
             </button>
+
+            <div className="text-center mt-6">
+              <p className="text-sm text-gray-600">
+                ليس لديك حساب؟{' '}
+                <Link href="/register" className="font-semibold text-emerald-600 hover:text-emerald-500 transition-colors">
+                  إنشاء حساب جديد
+                </Link>
+              </p>
+            </div>
           </form>
 
           {/* Security Notice */}

@@ -97,10 +97,17 @@ export default async function DashboardPage() {
   if (user && user.id !== 'dummy-user') {
     const { data: profile } = await supabase
       .from('User')
-      .select('name')
+      .select('name, role')
       .eq('id', user.id)
       .single();
     firstName = (profile as any)?.name || 'مستخدم';
+
+    // Role-based Access Control
+    const role = (profile as any)?.role;
+    // Allow ADMIN and SUPER_ADMIN. If role is undefined or STUDENT/TEACHER, redirect.
+    if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+      redirect('/welcome');
+    }
   } else {
     firstName = 'مستخدم تجريبي';
   }
