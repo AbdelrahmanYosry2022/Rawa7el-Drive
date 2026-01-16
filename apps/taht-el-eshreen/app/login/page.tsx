@@ -23,8 +23,9 @@ export default function LoginPage() {
     if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
       document.cookie = "dummy-auth=true; path=/; max-age=3600";
       await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
-      router.push('/')
-      router.refresh()
+
+      // Redirect to Bedaya Student Dashboard
+      window.location.href = 'http://127.0.0.1:3003/student/dashboard'
       return
     }
 
@@ -45,8 +46,8 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/')
-      router.refresh()
+      // Redirect to Bedaya Student Dashboard
+      window.location.href = 'http://127.0.0.1:3003/student/dashboard'
     } catch {
       setError('حدث خطأ غير متوقع. حاول مرة أخرى')
     } finally {
@@ -69,8 +70,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg mb-4">
             <GraduationCap className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">رواحل درايف</h1>
-          <p className="text-gray-600">منصة تحت العشرين التعليمية</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">منصة بداية</h1>
+          <p className="text-gray-600">للحلقات القرآنية</p>
         </div>
 
         {/* Login Card */}

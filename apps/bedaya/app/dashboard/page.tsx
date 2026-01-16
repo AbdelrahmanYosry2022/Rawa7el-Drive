@@ -113,7 +113,12 @@ export default async function DashboardPage() {
 
     // Role-based Access Control
     const role = (profile as any)?.role;
-    // Allow ADMIN and SUPER_ADMIN. If role is undefined or STUDENT/TEACHER, redirect.
+
+    if (role === 'STUDENT') {
+      redirect('/student/dashboard');
+    }
+
+    // Allow ADMIN and SUPER_ADMIN. If role is undefined or TEACHER, redirect.
     if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
       redirect('/welcome');
     }
