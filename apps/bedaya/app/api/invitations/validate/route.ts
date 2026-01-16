@@ -12,6 +12,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ valid: false, error: 'Token is required' }, { status: 400 })
   }
 
+  // Bypass for dummy/development mode
+  const isDummyMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
+  if (isDummyMode && token === 'dummy') {
+    return NextResponse.json({ 
+      valid: true, 
+      invitation: {
+        id: 'dummy-id',
+        label: 'تطوير'
+      }
+    })
+  }
+
   const { data: invitation, error } = await (supabase as any)
     .from('invitation_links')
     .select('*')
