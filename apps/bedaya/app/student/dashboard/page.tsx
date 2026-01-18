@@ -18,7 +18,7 @@ import {
 import { Card, CardContent } from '@rawa7el/ui/card';
 import { Button } from '@rawa7el/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@rawa7el/ui/tabs';
-import { Student } from '../../lib/lms';
+import { Student } from '../../../lib/lms';
 
 // Terms config for UI tabs
 const TERMS_CONFIG = [
@@ -214,8 +214,8 @@ export default function StudentDashboard() {
                                   )}
                                   {lecture.hasAssignment && (
                                     <span className={`px-2 py-1 rounded-full ${lecture.assignmentStatus === 'submitted' ? 'bg-blue-100 text-blue-700' :
-                                        lecture.assignmentStatus === 'graded' ? 'bg-green-100 text-green-700' :
-                                          'bg-yellow-100 text-yellow-700'
+                                      lecture.assignmentStatus === 'graded' ? 'bg-green-100 text-green-700' :
+                                        'bg-yellow-100 text-yellow-700'
                                       }`}>
                                       {lecture.assignmentStatus === 'submitted' ? 'تم التسليم' :
                                         lecture.assignmentStatus === 'graded' ? 'تم التقييم' : 'مطلوب تكليف'}
