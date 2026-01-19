@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@rawa7el/supabase/client'
 import Link from 'next/link'
 import { Eye, EyeOff, Lock, Mail, Loader2, ShieldCheck } from 'lucide-react'
+import { ModeToggle } from '@/components/mode-toggle'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -21,11 +22,12 @@ export default function LoginPage() {
     setIsLoading(true)
 
     // Bypass for dummy mode (Development only)
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder') || process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1')) {
       document.cookie = "dummy-auth=true; path=/; max-age=3600";
       await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
-      router.push('/')
-      router.refresh()
+
+      // Redirect to Student Dashboard
+      window.location.href = '/student/dashboard'
       return
     }
 
@@ -56,12 +58,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 transition-colors duration-300">
+      <div className="absolute top-4 left-4 z-50">
+        <ModeToggle />
+      </div>
+
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-emerald-300 rounded-full mix-blend-multiply filter blur-xl animate-blob" />
-        <div className="absolute top-40 right-20 w-72 h-72 bg-teal-300 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000" />
-        <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-cyan-300 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000" />
+      <div className="absolute inset-0 opacity-30 pointer-events-none">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-emerald-300 dark:bg-emerald-900/30 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl animate-blob" />
+        <div className="absolute top-40 right-20 w-72 h-72 bg-teal-300 dark:bg-teal-900/30 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl animate-blob animation-delay-2000" />
+        <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-cyan-300 dark:bg-cyan-900/30 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl animate-blob animation-delay-4000" />
       </div>
 
       <div className="relative w-full max-w-md">
@@ -70,24 +76,24 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-lg mb-4">
             <ShieldCheck className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">منصة بداية</h1>
-          <p className="text-gray-600">للحلقات القرآنية</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">منصة بداية</h1>
+          <p className="text-gray-600 dark:text-gray-400">للحلقات القرآنية</p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
-          <h2 className="text-xl font-semibold text-gray-800 text-center mb-6">
+        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20 dark:border-slate-700/50 transition-colors duration-300">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 text-center mb-6">
             تسجيل الدخول
           </h2>
 
           <form onSubmit={handleLogin} className="space-y-5">
             {/* Email Field */}
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 البريد الإلكتروني
               </label>
               <div className="relative">
-                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                 <input
                   id="email"
                   type="email"
@@ -97,18 +103,18 @@ export default function LoginPage() {
                   required
                   autoComplete="email"
                   disabled={isLoading}
-                  className="w-full pr-11 pl-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-left dir-ltr placeholder:text-gray-400 disabled:opacity-50"
+                  className="w-full pr-11 pl-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-left dir-ltr placeholder:text-gray-400 dark:placeholder:text-gray-500 disabled:opacity-50 dark:text-white"
                 />
               </div>
             </div>
 
             {/* Password Field */}
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 كلمة المرور
               </label>
               <div className="relative">
-                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -119,13 +125,13 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   disabled={isLoading}
                   minLength={8}
-                  className="w-full pr-11 pl-11 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-left dir-ltr placeholder:text-gray-400 disabled:opacity-50"
+                  className="w-full pr-11 pl-11 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-left dir-ltr placeholder:text-gray-400 dark:placeholder:text-gray-500 disabled:opacity-50 dark:text-white"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -134,7 +140,7 @@ export default function LoginPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm text-center animate-shake">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl text-sm text-center animate-shake">
                 {error}
               </div>
             )}
@@ -156,9 +162,9 @@ export default function LoginPage() {
             </button>
 
             <div className="text-center mt-6">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 ليس لديك حساب؟{' '}
-                <Link href="/register" className="font-semibold text-emerald-600 hover:text-emerald-500 transition-colors">
+                <Link href="/register" className="font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-500 dark:hover:text-emerald-400 transition-colors">
                   إنشاء حساب جديد
                 </Link>
               </p>
@@ -166,8 +172,8 @@ export default function LoginPage() {
           </form>
 
           {/* Security Notice */}
-          <div className="mt-6 pt-6 border-t border-gray-100">
-            <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-slate-800 transition-colors duration-300">
+            <div className="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
               <span>اتصال آمن ومشفر</span>
             </div>
@@ -175,7 +181,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
           للحصول على حساب، تواصل مع المشرف
         </p>
       </div>

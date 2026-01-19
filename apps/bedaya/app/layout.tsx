@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
 import NextTopLoader from 'nextjs-toploader';
+import { Toaster } from 'sonner';
 import "./globals.css";
+import { ThemeProvider } from "../components/theme-provider";
 
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
@@ -30,7 +32,7 @@ export default function RootLayout({
         className={`${cairo.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
-        <NextTopLoader 
+        <NextTopLoader
           color="#10B981"
           initialPosition={0.08}
           crawlSpeed={200}
@@ -41,7 +43,15 @@ export default function RootLayout({
           speed={200}
           shadow="0 0 10px #10B981,0 0 5px #10B981"
         />
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster richColors position="top-center" />
+        </ThemeProvider>
       </body>
     </html>
   );

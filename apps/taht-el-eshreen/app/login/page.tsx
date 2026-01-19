@@ -20,12 +20,12 @@ export default function LoginPage() {
     setIsLoading(true)
 
     // Bypass for dummy mode (Development only)
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder') || process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1')) {
       document.cookie = "dummy-auth=true; path=/; max-age=3600";
       await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
 
       // Redirect to Bedaya Student Dashboard
-      window.location.href = 'http://127.0.0.1:3003/student/dashboard'
+      window.location.href = 'http://localhost:3003/student/dashboard'
       return
     }
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
       }
 
       // Redirect to Bedaya Student Dashboard
-      window.location.href = 'http://127.0.0.1:3003/student/dashboard'
+      window.location.href = 'http://localhost:3003/student/dashboard'
     } catch {
       setError('حدث خطأ غير متوقع. حاول مرة أخرى')
     } finally {

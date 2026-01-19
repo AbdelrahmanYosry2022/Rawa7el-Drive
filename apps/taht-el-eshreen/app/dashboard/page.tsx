@@ -1,11 +1,12 @@
 import { createServerClient } from '@rawa7el/supabase';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Card, CardContent } from '@rawa7el/ui/card';
-import { 
-  GraduationCap, 
-  FileText, 
-  FolderOpen, 
+import {
+  GraduationCap,
+  FileText,
+  FolderOpen,
   Calendar,
   BookOpen,
   ClipboardList,
@@ -85,18 +86,37 @@ const features = [
 
 export default async function Home() {
   const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    const cookieStore = await cookies();
+    const isDummyMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder');
+    const hasDummyAuth = cookieStore.get('dummy-auth')?.value === 'true';
+
+    if (isDummyMode && hasDummyAuth) {
+      user = { id: 'dummy-user', email: 'dummy@example.com' } as any;
+    } else {
+      redirect('/login');
+    }
   }
 
   // Get user profile
-  const { data: dbUser } = await supabase
-    .from('User')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  let dbUser = null;
+  if (user.id !== 'dummy-user') {
+    const { data } = await supabase
+      .from('User')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    dbUser = data;
+  } else {
+    dbUser = {
+      id: 'dummy-user',
+      name: 'طالب تجريبي',
+      role: 'STUDENT',
+      email: 'dummy@example.com'
+    };
+  }
 
   if (!dbUser) {
     redirect('/login');
@@ -153,99 +173,97 @@ export default async function Home() {
       {/* Feature Cards Grid */}
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-slate-500">الأقسام الرئيسية</h2>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {features.map((feature) => {
             const Icon = feature.icon;
             const isComingSoon = feature.comingSoon;
-            
+
             const CardWrapper = isComingSoon ? 'div' : Link;
             const cardProps = isComingSoon ? {} : { href: feature.href };
-            
+
             return (
               isComingSoon ? (
                 <div key={feature.id}>
-                  <Card 
-                  className={`bg-white border border-slate-100 rounded-xl overflow-hidden transition-all duration-200 ${
-                    isComingSoon 
-                      ? 'opacity-60 cursor-not-allowed' 
-                      : 'hover:shadow-lg hover:border-slate-200 hover:-translate-y-1 cursor-pointer'
-                  }`}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div 
-                        className={`w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center`}
-                        style={{ color: feature.color }}
-                      >
-                        <Icon className="w-7 h-7" />
+                  <Card
+                    className={`bg-white border border-slate-100 rounded-xl overflow-hidden transition-all duration-200 ${isComingSoon
+                        ? 'opacity-60 cursor-not-allowed'
+                        : 'hover:shadow-lg hover:border-slate-200 hover:-translate-y-1 cursor-pointer'
+                      }`}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div
+                          className={`w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center`}
+                          style={{ color: feature.color }}
+                        >
+                          <Icon className="w-7 h-7" />
+                        </div>
+                        {isComingSoon && (
+                          <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">
+                            قريباً
+                          </span>
+                        )}
                       </div>
-                      {isComingSoon && (
-                        <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">
-                          قريباً
-                        </span>
+
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-slate-900">
+                          {feature.title}
+                        </h3>
+                        <p className="text-sm text-slate-500 leading-relaxed">
+                          {feature.description}
+                        </p>
+                      </div>
+
+                      {!isComingSoon && (
+                        <div className="mt-4 flex items-center justify-between">
+                          <span className="text-xs text-slate-400">{feature.stats}</span>
+                          <ArrowLeft className="w-4 h-4 text-slate-400" />
+                        </div>
                       )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm text-slate-500 leading-relaxed">
-                        {feature.description}
-                      </p>
-                    </div>
-                    
-                    {!isComingSoon && (
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className="text-xs text-slate-400">{feature.stats}</span>
-                        <ArrowLeft className="w-4 h-4 text-slate-400" />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
                 </div>
               ) : (
                 <Link key={feature.id} href={feature.href}>
-                  <Card 
-                  className={`bg-white border border-slate-100 rounded-xl overflow-hidden transition-all duration-200 ${
-                    isComingSoon 
-                      ? 'opacity-60 cursor-not-allowed' 
-                      : 'hover:shadow-lg hover:border-slate-200 hover:-translate-y-1 cursor-pointer'
-                  }`}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div 
-                        className={`w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center`}
-                        style={{ color: feature.color }}
-                      >
-                        <Icon className="w-7 h-7" />
+                  <Card
+                    className={`bg-white border border-slate-100 rounded-xl overflow-hidden transition-all duration-200 ${isComingSoon
+                        ? 'opacity-60 cursor-not-allowed'
+                        : 'hover:shadow-lg hover:border-slate-200 hover:-translate-y-1 cursor-pointer'
+                      }`}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div
+                          className={`w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center`}
+                          style={{ color: feature.color }}
+                        >
+                          <Icon className="w-7 h-7" />
+                        </div>
+                        {isComingSoon && (
+                          <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">
+                            قريباً
+                          </span>
+                        )}
                       </div>
-                      {isComingSoon && (
-                        <span className="px-2 py-1 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-500">
-                          قريباً
-                        </span>
+
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-slate-900">
+                          {feature.title}
+                        </h3>
+                        <p className="text-sm text-slate-500 leading-relaxed">
+                          {feature.description}
+                        </p>
+                      </div>
+
+                      {!isComingSoon && (
+                        <div className="mt-4 flex items-center justify-between">
+                          <span className="text-xs text-slate-400">{feature.stats}</span>
+                          <ArrowLeft className="w-4 h-4 text-slate-400" />
+                        </div>
                       )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        {feature.title}
-                      </h3>
-                      <p className="text-sm text-slate-500 leading-relaxed">
-                        {feature.description}
-                      </p>
-                    </div>
-                    
-                    {!isComingSoon && (
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className="text-xs text-slate-400">{feature.stats}</span>
-                        <ArrowLeft className="w-4 h-4 text-slate-400" />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
                 </Link>
               )
             );
@@ -259,7 +277,7 @@ export default async function Home() {
             عرض الكل
           </Link>
         </div>
-        
+
         <div className="bg-white rounded-xl border border-slate-100 p-8 text-center">
           <BookOpen className="w-12 h-12 mx-auto text-slate-300 mb-3" />
           <p className="text-slate-500 text-sm">ابدأ رحلتك التعليمية الآن!</p>

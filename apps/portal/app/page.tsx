@@ -19,7 +19,7 @@ const platforms = [
     subtitle: 'للحلقات القرآنية',
     description: 'منصة متكاملة لإدارة الحلقات القرآنية، تسجيل الطلاب، متابعة الحضور والغياب، وتقييم الحفظ والتلاوة',
     icon: BookOpen,
-    href: 'http://localhost:3001',
+    href: 'http://localhost:3003',
     color: '#10B981',
     gradient: 'from-emerald-500 to-teal-600',
     features: [

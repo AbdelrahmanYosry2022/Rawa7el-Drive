@@ -16,6 +16,8 @@
     "./skeleton": "./src/components/skeleton.tsx",
     "./table": "./src/components/table.tsx",
     "./tabs": "./src/components/tabs.tsx",
+    "./badge": "./src/components/badge.tsx",
+    "./progress": "./src/components/progress.tsx",
     "./carousel": "./src/components/carousel.tsx",
     "./utils": "./src/lib/utils.ts"
   },

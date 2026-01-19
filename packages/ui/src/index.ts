@@ -9,6 +9,8 @@ export * from './components/skeleton';
 export * from './components/table';
 export * from './components/tabs';
 export * from './components/carousel';
+export * from './components/badge';
+export * from './components/progress';
 
 // Utils
 export { cn } from './lib/utils';
