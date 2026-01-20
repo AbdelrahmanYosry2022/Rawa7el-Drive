@@ -79,7 +79,7 @@ export default function LoginPage() {
               required
               autoComplete="email"
               disabled={isLoading}
-              className="h-12 bg-gray-50 border-gray-200 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-left dir-ltr"
+              className="h-12 bg-gray-50 border-gray-200 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-right"
             />
           </div>
 
@@ -93,7 +93,7 @@ export default function LoginPage() {
               required
               autoComplete="current-password"
               disabled={isLoading}
-              className="h-12 bg-gray-50 border-gray-200 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-left dir-ltr"
+              className="h-12 bg-gray-50 border-gray-200 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-right pr-4 pl-12"
             />
             <button
               type="button"

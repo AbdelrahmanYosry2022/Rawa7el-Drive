@@ -20,7 +20,9 @@ import {
   CheckCircle2, 
   Circle,
   ShieldCheck,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 
 function RegisterForm() {
@@ -44,6 +46,7 @@ function RegisterForm() {
     length: false,
     upperLower: false,
   })
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -170,14 +173,15 @@ function RegisterForm() {
         }
       }
 
-      // Check if email already exists
-      const { data: existingUsers } = await supabase
-        .from('User')
-        .select('id')
-        .eq('email', formData.email.trim().toLowerCase())
-        .limit(1)
+      // Check if email already exists via API
+      const checkEmailResponse = await fetch('/api/auth/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email.trim().toLowerCase() })
+      })
+      const { exists: emailExists } = await checkEmailResponse.json()
 
-      if (existingUsers && existingUsers.length > 0) {
+      if (emailExists) {
         setError('هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول أو استخدام بريد إلكتروني آخر.')
         setIsLoading(false)
         return
@@ -353,15 +357,24 @@ function RegisterForm() {
           </div>
 
           <div className="space-y-2">
-            <Input
-              name="password"
-              type="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="كلمة المرور"
-              className="h-12 bg-gray-50 border-gray-200 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
-            />
+            <div className="relative">
+              <Input
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="كلمة المرور"
+                className="h-12 bg-gray-50 border-gray-200 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-emerald-600 transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
             
             <div className="flex gap-4 text-[10px] text-gray-400 px-1">
               <div className="flex items-center gap-1">
