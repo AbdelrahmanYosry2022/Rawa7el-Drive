@@ -7,7 +7,7 @@ import { createClient } from '@rawa7el/supabase/client'
 import { Button } from '@rawa7el/ui/button'
 import { Input } from '@rawa7el/ui/input'
 import { Card, CardContent } from '@rawa7el/ui/card'
-import { Eye, EyeOff, Lock, Mail, Loader2, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [loginSuccess, setLoginSuccess] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -49,13 +50,37 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/')
-      router.refresh()
+      // Show success message then redirect
+      setLoginSuccess(true)
+      setTimeout(() => {
+        router.push('/')
+        router.refresh()
+      }, 1500)
     } catch {
       setError('حدث خطأ غير متوقع. حاول مرة أخرى')
-    } finally {
       setIsLoading(false)
     }
+  }
+
+  // Success screen after login
+  if (loginSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4" dir="rtl">
+        <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl p-10 max-w-md w-full border border-white/20 text-center">
+          <div className="w-24 h-24 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-8 animate-bounce">
+            <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+          </div>
+          <h2 className="text-2xl font-black text-gray-900 mb-4">تم تسجيل الدخول بنجاح!</h2>
+          <p className="text-gray-600 mb-8 font-medium">
+            مرحباً بك في منصة بداية
+          </p>
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+            <p className="text-sm text-gray-500">جاري تحميل المنصة...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
