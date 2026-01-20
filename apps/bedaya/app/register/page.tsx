@@ -4,7 +4,24 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@rawa7el/supabase/client'
 import Link from 'next/link'
-import { User, Mail, Lock, Phone, Loader2, Upload, ArrowRight, ShieldX, Link2 } from 'lucide-react'
+import { Button } from '@rawa7el/ui/button'
+import { Input } from '@rawa7el/ui/input'
+import { Card, CardContent } from '@rawa7el/ui/card'
+import { 
+  User, 
+  Mail, 
+  Lock, 
+  Phone, 
+  Loader2, 
+  Upload, 
+  ArrowRight, 
+  ShieldX, 
+  Link2, 
+  CheckCircle2, 
+  Circle,
+  ShieldCheck,
+  Image as ImageIcon
+} from 'lucide-react'
 
 function RegisterForm() {
   const searchParams = useSearchParams()
@@ -23,8 +40,19 @@ function RegisterForm() {
   const [isValidatingInvite, setIsValidatingInvite] = useState(true)
   const [inviteValid, setInviteValid] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    length: false,
+    upperLower: false,
+  })
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    setPasswordRequirements({
+      length: formData.password.length >= 8,
+      upperLower: /(?=.*[a-z])(?=.*[A-Z])/.test(formData.password),
+    })
+  }, [formData.password])
 
   // Validate invitation token on mount
   useEffect(() => {
@@ -92,7 +120,11 @@ function RegisterForm() {
       return false
     }
 
-    // 5. Password (Capital & Small)
+    // 5. Password (Minimum 8 characters & Capital & Small)
+    if (formData.password.length < 8) {
+      setError('كلمة المرور يجب أن تكون 8 أحرف على الأقل')
+      return false
+    }
     if (!/(?=.*[a-z])(?=.*[A-Z])/.test(formData.password)) {
       setError('كلمة المرور يجب أن تحتوي على حروف كبيرة (Capital) وصغيرة (Small)')
       return false
@@ -138,6 +170,19 @@ function RegisterForm() {
         }
       }
 
+      // Check if email already exists
+      const { data: existingUsers } = await supabase
+        .from('User')
+        .select('id')
+        .eq('email', formData.email.trim().toLowerCase())
+        .limit(1)
+
+      if (existingUsers && existingUsers.length > 0) {
+        setError('هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول أو استخدام بريد إلكتروني آخر.')
+        setIsLoading(false)
+        return
+      }
+
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -152,7 +197,11 @@ function RegisterForm() {
       })
 
       if (signUpError) {
-        setError(signUpError.message)
+        if (signUpError.message.includes('already registered')) {
+          setError('هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول أو استخدام بريد إلكتروني آخر.')
+        } else {
+          setError(signUpError.message)
+        }
         return
       }
 
@@ -179,9 +228,12 @@ function RegisterForm() {
   if (isValidatingInvite) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4">
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 max-w-md w-full border border-white/20 text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-emerald-500 mx-auto mb-4" />
-          <p className="text-gray-600">جاري التحقق من رابط الدعوة...</p>
+        <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl p-12 max-w-md w-full border border-white/20 text-center space-y-4">
+          <div className="relative mx-auto w-20 h-20">
+            <div className="absolute inset-0 bg-emerald-100 rounded-3xl animate-pulse" />
+            <Loader2 className="relative w-20 h-20 animate-spin text-emerald-500 p-4" />
+          </div>
+          <p className="text-gray-600 font-medium">جاري التحقق من رابط الدعوة...</p>
         </div>
       </div>
     )
@@ -190,22 +242,25 @@ function RegisterForm() {
   // Show error if invite is invalid
   if (!inviteValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4">
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 max-w-md w-full border border-white/20 text-center">
-          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ShieldX className="w-10 h-10 text-red-500" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4 text-right" dir="rtl">
+        <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl p-10 max-w-md w-full border border-white/20 text-center">
+          <div className="w-24 h-24 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-8 transform -rotate-6">
+            <ShieldX className="w-12 h-12 text-red-500" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">رابط غير صالح</h2>
-          <p className="text-gray-600 mb-8 leading-relaxed">
+          <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">رابط غير صالح</h2>
+          <p className="text-gray-600 mb-10 leading-relaxed font-medium">
             {inviteError}
           </p>
-          <div className="space-y-3">
-            <p className="text-sm text-gray-500">
+          <div className="space-y-6">
+            <p className="text-sm text-gray-500 bg-gray-50 py-3 px-4 rounded-2xl">
               للتسجيل في المنصة، يرجى التواصل مع المشرف للحصول على رابط دعوة صالح.
             </p>
-            <Link href="/login" className="inline-block px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors">
-              العودة لتسجيل الدخول
-            </Link>
+            <Button asChild className="w-full h-13 bg-gray-900 hover:bg-black text-white rounded-2xl transition-all">
+              <Link href="/login" className="flex items-center justify-center gap-2">
+                <span>العودة لتسجيل الدخول</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -214,142 +269,141 @@ function RegisterForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4">
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 max-w-md w-full border border-white/20 text-center">
-          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Mail className="w-10 h-10 text-emerald-600" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4 text-right" dir="rtl">
+        <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl p-10 max-w-md w-full border border-white/20 text-center">
+          <div className="w-24 h-24 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-8 transform rotate-6">
+            <Mail className="w-12 h-12 text-emerald-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">تحقق من بريدك الإلكتروني</h2>
-          <p className="text-gray-600 mb-8 leading-relaxed">
+          <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">تحقق من بريدك</h2>
+          <p className="text-gray-600 mb-10 leading-relaxed font-medium">
             تم إرسال رابط تفعيل الحساب إلى بريدك الإلكتروني.
             <br />
             يرجى النقر على الرابط لتفعيل حسابك والدخول إلى المنصة.
           </p>
-          <Link href="/login" className="inline-block px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors">
-            العودة لتسجيل الدخول
-          </Link>
+          <Button asChild className="w-full h-13 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-lg shadow-emerald-200 transition-all">
+            <Link href="/login" className="flex items-center justify-center gap-2">
+              <span>العودة لتسجيل الدخول</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4">
-      <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 max-w-md w-full border border-white/20 relative">
-        <Link href="/login" className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors">
-          <ArrowRight className="w-6 h-6" />
-        </Link>
-
+    <div className="min-h-screen flex items-center justify-center bg-white p-4 font-sans" dir="rtl">
+      <div className="w-full max-w-[400px]">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">إنشاء حساب جديد</h1>
-          <p className="text-gray-500 text-sm">أدخل بياناتك للتسجيل في المنصة</p>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-50 mb-4">
+            <Link2 className="w-8 h-8 text-emerald-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">إنشاء حساب</h1>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">الاسم الثلاثي <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <User className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                name="name"
-                type="text"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full pr-11 pl-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-right"
-                placeholder="الاسم الكامل"
-              />
-            </div>
+        <form onSubmit={handleRegister} className="space-y-5">
+          <Input
+            name="name"
+            type="text"
+            required
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="الاسم الثلاثي"
+            className="h-12 bg-gray-50 border-gray-200 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+          />
+          
+          <Input
+            name="phone"
+            type="tel"
+            required
+            value={formData.phone}
+            onChange={handleChange}
+            placeholder="رقم الهاتف"
+            className="h-12 bg-gray-50 border-gray-200 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-left dir-ltr placeholder:text-right"
+          />
+
+          <Input
+            name="email"
+            type="email"
+            required
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="البريد الإلكتروني"
+            className="h-12 bg-gray-50 border-gray-200 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-left dir-ltr placeholder:text-right"
+          />
+
+          <div className="relative group">
+            <input
+              name="avatar"
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
+              id="avatar-upload"
+            />
+            <label 
+              htmlFor="avatar-upload"
+              className="flex items-center justify-between w-full h-12 px-4 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-100 transition-all"
+            >
+              <span className="text-gray-400 text-sm truncate">
+                {avatarFile ? avatarFile.name : 'الصورة الشخصية (اختياري)'}
+              </span>
+              <span className="text-xs text-emerald-600 font-bold">تصفح</span>
+            </label>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">الصورة الشخصية <span className="text-gray-400 font-normal text-xs">(اختياري)</span></label>
-            <div className="relative">
-              <Upload className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                name="avatar"
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="w-full pr-11 pl-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-right file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">البريد الإلكتروني <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full pr-11 pl-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all dir-ltr text-left placeholder:text-right"
-                placeholder="example@email.com"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">رقم الهاتف <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                name="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full pr-11 pl-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all dir-ltr text-left placeholder:text-right"
-                placeholder="01xxxxxxxxx"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">كلمة المرور <span className="text-red-500">*</span></label>
-            <div className="relative">
-              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                name="password"
-                type="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full pr-11 pl-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all"
-                placeholder="********"
-              />
+            <Input
+              name="password"
+              type="password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="كلمة المرور"
+              className="h-12 bg-gray-50 border-gray-200 rounded-xl focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+            />
+            
+            <div className="flex gap-4 text-[10px] text-gray-400 px-1">
+              <div className="flex items-center gap-1">
+                {passwordRequirements.length ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <Circle className="w-3 h-3" />}
+                <span>8 أحرف</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {passwordRequirements.upperLower ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : <Circle className="w-3 h-3" />}
+                <span>حروف كبيرة وصغيرة</span>
+              </div>
             </div>
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center">
+            <p className="text-red-500 text-xs text-center font-medium">
               {error}
-            </div>
+            </p>
           )}
 
-          <button
+          <Button
             type="submit"
-            disabled={isLoading}
-            className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
+            disabled={isLoading || !passwordRequirements.length || !passwordRequirements.upperLower}
+            className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm mt-2"
           >
-            {isLoading ? <Loader2 className="animate-spin" /> : 'إنشاء الحساب'}
-          </button>
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'إنشاء الحساب'}
+          </Button>
 
-          <p className="text-center text-sm text-gray-600 mt-4">
-            لديك حساب بالفعل؟{' '}
-            <Link href="/login" className="font-semibold text-emerald-600 hover:underline">
-              تسجيل الدخول
+          <div className="text-center pt-2">
+            <Link href="/login" className="text-xs text-emerald-600 font-semibold hover:underline">
+              لديك حساب؟ تسجيل الدخول
             </Link>
-          </p>
+          </div>
         </form>
+
+        <p className="text-center text-[10px] text-gray-400 mt-12">
+          © {new Date().getFullYear()} RAWA7EL PLATFORM
+        </p>
       </div>
     </div>
   )
 }
 
-// Loading fallback for Suspense
 function RegisterLoading() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4">
