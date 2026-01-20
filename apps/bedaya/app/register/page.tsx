@@ -191,6 +191,7 @@ function RegisterForm() {
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: undefined, // Disable email redirect
           data: {
             name: formData.name,
             phone: formData.phone,
@@ -210,6 +211,13 @@ function RegisterForm() {
       }
 
       if (data.user) {
+        // Auto-confirm the user (skip email verification)
+        await fetch('/api/auth/confirm-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: data.user.id })
+        })
+
         // Increment invitation usage count
         if (inviteToken) {
           await fetch('/api/invitations/validate', {
@@ -218,8 +226,11 @@ function RegisterForm() {
             body: JSON.stringify({ token: inviteToken })
           })
         }
-        // Success - Show verification message
+        // Success - Redirect to login page directly
         setSuccess(true)
+        setTimeout(() => {
+          router.push('/login?registered=true')
+        }, 2000)
       }
     } catch (err) {
       setError('حدث خطأ غير متوقع. حاول مرة أخرى')
@@ -276,20 +287,17 @@ function RegisterForm() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4 text-right" dir="rtl">
         <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl p-10 max-w-md w-full border border-white/20 text-center">
           <div className="w-24 h-24 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-8 transform rotate-6">
-            <Mail className="w-12 h-12 text-emerald-600" />
+            <CheckCircle2 className="w-12 h-12 text-emerald-600" />
           </div>
-          <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">تحقق من بريدك</h2>
+          <h2 className="text-3xl font-black text-gray-900 mb-4 tracking-tight">تم إنشاء الحساب بنجاح!</h2>
           <p className="text-gray-600 mb-10 leading-relaxed font-medium">
-            تم إرسال رابط تفعيل الحساب إلى بريدك الإلكتروني.
+            مرحباً بك في منصة بداية
             <br />
-            يرجى النقر على الرابط لتفعيل حسابك والدخول إلى المنصة.
+            جاري تحويلك لصفحة تسجيل الدخول...
           </p>
-          <Button asChild className="w-full h-13 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-lg shadow-emerald-200 transition-all">
-            <Link href="/login" className="flex items-center justify-center gap-2">
-              <span>العودة لتسجيل الدخول</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </Button>
+          <div className="flex justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+          </div>
         </div>
       </div>
     )

@@ -11,25 +11,25 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
     
-    // Check in User table
-    const { data: existingUser } = await supabase
-      .from('User')
-      .select('id')
-      .eq('email', email.trim().toLowerCase())
-      .limit(1)
-      .single()
+    // Use the database function to check if email exists in auth.users
+    const { data, error } = await (supabase.rpc as any)('check_email_exists', {
+      email_to_check: email.trim().toLowerCase()
+    })
 
-    if (existingUser) {
-      return NextResponse.json({ exists: true })
+    if (error) {
+      console.error('Error checking email:', error)
+      // Fallback: check User table
+      const { data: existingUser } = await supabase
+        .from('User')
+        .select('id')
+        .eq('email', email.trim().toLowerCase())
+        .limit(1)
+        .single()
+      
+      return NextResponse.json({ exists: !!existingUser })
     }
 
-    // Also check auth.users via admin query (if User table doesn't have all users)
-    const { data: authUser } = await supabase.auth.admin.listUsers()
-    const emailExists = authUser?.users?.some(
-      (user) => user.email?.toLowerCase() === email.trim().toLowerCase()
-    )
-
-    return NextResponse.json({ exists: emailExists || false })
+    return NextResponse.json({ exists: data === true })
   } catch (error) {
     console.error('Error checking email:', error)
     return NextResponse.json({ exists: false })
