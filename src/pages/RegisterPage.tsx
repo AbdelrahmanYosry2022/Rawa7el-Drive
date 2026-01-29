@@ -173,21 +173,9 @@ export default function RegisterPage() {
             .eq('token', inviteToken)
         }
 
-        // Auto sign in after registration
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password: password
-        })
-
-        if (signInError) {
-          // If auto sign-in fails, redirect to login
-          setRegisterSuccess(true)
-          setTimeout(() => navigate('/login'), 2000)
-        } else {
-          // Auto sign-in successful, go to dashboard
-          setRegisterSuccess(true)
-          setTimeout(() => navigate('/dashboard'), 1500)
-        }
+        // Registration successful - redirect to login page
+        setRegisterSuccess(true)
+        setTimeout(() => navigate('/login'), 2000)
       }
     } catch {
       setError('حدث خطأ غير متوقع')

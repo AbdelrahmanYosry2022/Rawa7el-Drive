@@ -18,7 +18,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       })
@@ -35,9 +35,23 @@ export default function LoginPage() {
         return
       }
 
+      // Get user role from User table
+      const { data: userData } = await supabase
+        .from('User')
+        .select('role')
+        .eq('id', authData.user?.id)
+        .single()
+
       setLoginSuccess(true)
+      
+      // Redirect based on role
+      const userRole = userData?.role || 'STUDENT'
       setTimeout(() => {
-        navigate('/dashboard')
+        if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'TEACHER') {
+          navigate('/dashboard')
+        } else {
+          navigate('/student') // Student dashboard
+        }
       }, 1500)
     } catch {
       setError('حدث خطأ غير متوقع. حاول مرة أخرى')
