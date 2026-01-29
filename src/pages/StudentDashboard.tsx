@@ -132,6 +132,8 @@ const StudentHome = ({ user }: { user: UserData | null }) => (
   </div>
 );
 
+import StudentCalendarPage from './student/StudentCalendarPage';
+
 // Generic Placeholder for pages
 const PlaceholderPage = ({ title }: { title: string }) => (
   <div className="p-8">
@@ -233,7 +235,7 @@ export default function StudentDashboard() {
           <Routes>
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<StudentHome user={user} />} />
-            <Route path="calendar" element={<PlaceholderPage title="تقويم الحضور" />} />
+            <Route path="calendar" element={<StudentCalendarPage />} />
             <Route path="attendance" element={<PlaceholderPage title="سجل الحضور والغياب" />} />
             <Route path="materials" element={<PlaceholderPage title="المواد العلمية" />} />
             <Route path="exams" element={<PlaceholderPage title="الاختبارات" />} />

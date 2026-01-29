@@ -68,14 +68,7 @@ export default function StudentStartPage() {
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl mix-blend-multiply filter animate-pulse" style={{ animationDelay: '2s' }}></div>
       
       {/* Top Bar for Start Page */}
-      <div className="absolute top-0 inset-x-0 h-20 flex items-center justify-between px-6 md:px-10 z-20">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-blue-600 flex items-center justify-center shadow-lg shadow-emerald-200">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-black text-slate-800 tracking-tight">بداية الإنطلاق</span>
-        </div>
-
+      <div className="absolute top-0 inset-x-0 h-20 flex items-center justify-end px-6 md:px-10 z-20">
         <div className="flex items-center gap-4">
           <button 
             onClick={handleLogout}
