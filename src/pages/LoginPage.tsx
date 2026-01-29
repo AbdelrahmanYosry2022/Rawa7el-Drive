@@ -50,7 +50,7 @@ export default function LoginPage() {
         if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'TEACHER') {
           navigate('/dashboard')
         } else {
-          navigate('/student') // Student dashboard
+          navigate('/student') // Student Start Page (Landing)
         }
       }, 1500)
     } catch {

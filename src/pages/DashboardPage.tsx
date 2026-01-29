@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import {
   Users,
@@ -12,7 +13,8 @@ import {
   User,
   FolderOpen,
   GraduationCap,
-  LogOut
+  LogOut,
+  Loader2
 } from 'lucide-react'
 
 const quickActions = [
@@ -27,10 +29,49 @@ const quickActions = [
 
 export default function DashboardPage() {
   const navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    checkUser()
+  }, [])
+
+  const checkUser = async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      
+      if (!authUser) {
+        navigate('/login')
+        return
+      }
+
+      const { data: userData } = await supabase
+        .from('User')
+        .select('role')
+        .eq('id', authUser.id)
+        .single()
+
+      if (userData?.role === 'STUDENT') {
+        navigate('/student')
+        return
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     navigate('/login')
+  }
+
+  if (isLoading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+        <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+      </div>
+    )
   }
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #f8fafc, white, #ecfdf5)' }}>

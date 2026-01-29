@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
+import StudentStartPage from './pages/StudentStartPage'
 import StudentDashboard from './pages/StudentDashboard'
 import StudentsPage from './pages/students'
 import NewStudentPage from './pages/students/new'
@@ -23,8 +24,9 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
-      <Route path="/student" element={<StudentDashboard />} />
+      <Route path="/dashboard/*" element={<DashboardPage />} />
+      <Route path="/student" element={<StudentStartPage />} />
+      <Route path="/student/*" element={<StudentDashboard />} />
       <Route path="/students" element={<StudentsPage />} />
       <Route path="/students/new" element={<NewStudentPage />} />
       <Route path="/attendance" element={<AttendancePage />} />
