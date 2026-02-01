@@ -1,13 +1,53 @@
 import { createServerClient } from '@rawa7el/supabase'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 
 export async function getUser() {
+  // Bypass for dummy mode
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
+    const cookieStore = await cookies()
+    if (cookieStore.get('dummy-auth')?.value === 'true') {
+      return {
+        id: 'dummy-user-id',
+        email: 'dummy@example.com',
+        app_metadata: { provider: 'email' },
+        user_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+        role: 'authenticated'
+      } as any
+    }
+  }
+
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   return user
 }
 
 export async function getUserWithProfile() {
+  // Bypass for dummy mode
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
+    const user = await getUser()
+    if (user) {
+      return {
+        user,
+        profile: {
+          id: user.id,
+          email: user.email,
+          name: 'مستخدم تجريبي',
+          role: 'ADMIN',
+          platform: 'TAHT_EL_ESHREEN',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          phone: null,
+          avatar: null
+        } as any
+      }
+    }
+    return null
+  }
+
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   

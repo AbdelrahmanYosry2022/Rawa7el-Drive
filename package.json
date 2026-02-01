@@ -17,6 +17,7 @@
     "types:generate": "pnpm --filter @rawa7el/supabase types:generate"
   },
   "dependencies": {
+    "@prisma/client": "^7.3.0",
     "next": "^15.0.0"
   },
   "devDependencies": {

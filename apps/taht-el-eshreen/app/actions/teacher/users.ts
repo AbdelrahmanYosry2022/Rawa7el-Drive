@@ -1,17 +1,18 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
+import { createClient as createServerClient } from '@rawa7el/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
 async function requireAdmin() {
-  const { userId } = await auth();
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!userId) {
+  if (!user) {
     throw new Error('Unauthorized');
   }
 
-  const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } });
+  const dbUser = await prisma.user.findUnique({ where: { clerkId: user.id } });
 
   if (!dbUser || dbUser.role !== 'ADMIN') {
     throw new Error('Forbidden');

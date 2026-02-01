@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { submitExam, type ExamSubmissionResult } from '@/app/actions/submitExam';
 import confetti from 'canvas-confetti';
-import { Button } from '@/components/ui/button';
+import { Button } from '@rawa7el/ui/button';
 import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Clock, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 

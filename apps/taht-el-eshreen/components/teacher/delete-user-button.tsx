@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react';
 import { deleteUser } from '@/app/actions/teacher/users';
-import { Button } from '@/components/ui/button';
+import { Button } from '@rawa7el/ui/button';
 import { Trash2 } from 'lucide-react';
 
 interface DeleteUserButtonProps {

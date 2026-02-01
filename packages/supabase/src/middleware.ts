@@ -33,26 +33,78 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
+  const isDummyMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
+  const hasDummyAuth = request.cookies.get('dummy-auth')?.value === 'true'
+
+  let supabase: any;
+
+  if (isDummyMode) {
+    const createMockBuilder = (table: string) => {
+      const resultData = table === 'User' ? {
+             id: 'dummy-user-id',
+             role: 'ADMIN',
+             platform: 'TAHT_EL_ESHREEN'
+           } : []
+
+      return {
+        then: (onfulfilled: any, onrejected: any) => {
+          return Promise.resolve({ data: resultData, error: null }).then(onfulfilled, onrejected)
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+        select: function() { return this },
+        eq: function() { return this },
+        single: async function() {
+          const item = Array.isArray(resultData) ? resultData[0] : resultData
+          return { data: item || null, error: null }
         },
-      },
+        maybeSingle: async function() {
+          const item = Array.isArray(resultData) ? resultData[0] : resultData
+          return { data: item || null, error: null }
+        }
+      }
     }
-  )
+
+    supabase = {
+      auth: {
+        getUser: async () => {
+          if (hasDummyAuth) {
+            return {
+              data: {
+                user: {
+                  id: 'dummy-user-id',
+                  email: 'dummy@example.com',
+                  role: 'authenticated'
+                }
+              },
+              error: null
+            }
+          }
+          return { data: { user: null }, error: null }
+        }
+      },
+      from: (table: string) => createMockBuilder(table)
+    }
+  } else {
+    supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+            supabaseResponse = NextResponse.next({
+              request,
+            })
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            )
+          },
+        },
+      }
+    )
+  }
 
   // IMPORTANT: Do not add code between createServerClient and supabase.auth.getUser()
   const {
@@ -68,9 +120,6 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith('/api/attendance/checkin') ||
     pathname.startsWith('/api/invitations/validate') ||
     pathname.startsWith('/api/invitations')
-
-  const isDummyMode = process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')
-  const hasDummyAuth = request.cookies.get('dummy-auth')?.value === 'true'
 
   if (!user && !isAuthPage && !isPublicPage) {
     // Allow access if we are in dummy mode and have the dummy auth cookie
@@ -102,13 +151,12 @@ export async function updateSession(request: NextRequest) {
         .select('role')
         .eq('id', user.id)
         .single()
+      
+      const userRole = profile?.role
 
-      const userRole = (profile as any)?.role
-
-      // If user is STUDENT or TEACHER (not admin), redirect to welcome page
-      if (!userRole || (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN')) {
+      if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
         const url = request.nextUrl.clone()
-        url.pathname = '/welcome'
+        url.pathname = '/' // Redirect to student dashboard
         return NextResponse.redirect(url)
       }
     }

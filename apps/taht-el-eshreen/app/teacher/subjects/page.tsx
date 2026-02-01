@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@rawa7el/ui/card';
 import { CreateSubjectModal } from '@/components/teacher/create-subject-modal';
 import { SubjectsList } from '@/components/teacher/subjects-list';
 import { LayoutDashboard } from 'lucide-react';

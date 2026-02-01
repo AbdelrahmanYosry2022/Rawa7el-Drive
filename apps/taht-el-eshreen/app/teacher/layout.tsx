@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { createServerClient } from '@rawa7el/supabase';
+import { createClient as createServerClient } from '@rawa7el/supabase/server';
 import { redirect } from 'next/navigation';
 
 export default async function TeacherLayout({ children }: { children: ReactNode }) {

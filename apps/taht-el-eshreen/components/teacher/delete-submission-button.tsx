@@ -1,7 +1,7 @@
 'use client';
 
 import { Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@rawa7el/ui/button';
 import { deleteSubmission } from '@/app/actions/teacher/exams';
 
 interface DeleteSubmissionButtonProps {

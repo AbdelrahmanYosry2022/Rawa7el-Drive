@@ -1,4 +1,4 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { createClient as createServerClient } from '@rawa7el/supabase/server';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -56,10 +56,11 @@ function formatFileSize(bytes: number | null): string {
 }
 
 export default async function ResourcesPage() {
-  const user = await currentUser();
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/sign-in');
+    redirect('/login');
   }
 
   // Fetch all resources grouped by subject

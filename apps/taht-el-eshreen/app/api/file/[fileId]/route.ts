@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { createClient as createServerClient } from '@rawa7el/supabase/server';
 import { getFileStream, getFileMetadata } from '@/lib/drive';
 import { NextResponse } from 'next/server';
 
@@ -6,9 +6,10 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ fileId: string }> }
 ) {
-  const { userId } = await auth();
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!userId) {
+  if (!user) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
@@ -21,7 +22,7 @@ export async function GET(
   try {
     // 1. Get metadata
     const metadata = await getFileMetadata(fileId);
-    
+
     // 2. Get the stream (Node.js Readable)
     const nodeStream = await getFileStream(fileId);
 

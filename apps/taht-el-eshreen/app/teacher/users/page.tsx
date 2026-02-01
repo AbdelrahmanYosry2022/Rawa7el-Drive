@@ -1,7 +1,7 @@
 import { getUsers, updateUserRole } from '@/app/actions/teacher/users';
-import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@rawa7el/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@rawa7el/ui/table';
+import { Button } from '@rawa7el/ui/button';
 import { DeleteUserButton } from '@/components/teacher/delete-user-button';
 import { Users } from 'lucide-react';
 

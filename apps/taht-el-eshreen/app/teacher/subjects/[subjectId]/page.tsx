@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@rawa7el/ui/card';
+import { Button } from '@rawa7el/ui/button';
 import Link from 'next/link';
 import { Clock, Target, GraduationCap, Trash2 } from 'lucide-react';
 import { deleteExam } from '@/app/actions/teacher/exams';

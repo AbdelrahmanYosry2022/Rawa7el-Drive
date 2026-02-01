@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { currentUser } from '@clerk/nextjs/server';
+import { createClient as createServerClient } from '@rawa7el/supabase/server';
 
 export async function GET(
   request: Request,
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    
+
     const resource = await prisma.resource.findUnique({
       where: { id },
       include: {
@@ -39,8 +39,9 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const user = await currentUser();
-    
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -90,8 +91,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const user = await currentUser();
-    
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

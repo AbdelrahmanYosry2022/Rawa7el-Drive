@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@rawa7el/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@rawa7el/ui/table';
+import { Button } from '@rawa7el/ui/button';
 import { CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { DeleteSubmissionButton } from '@/components/teacher/delete-submission-button';
 import { deleteAllSubmissions } from '@/app/actions/teacher/exams';

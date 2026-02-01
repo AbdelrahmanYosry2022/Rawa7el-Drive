@@ -8,9 +8,9 @@ import {
   addQuestionsBulk,
   type AddQuestionsBulkResult,
 } from '@/app/actions/teacher/exams';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@rawa7el/ui/button';
+import { Input } from '@rawa7el/ui/input';
+import { Card, CardContent } from '@rawa7el/ui/card';
 import { Trash2, Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 

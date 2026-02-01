@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent } from '@rawa7el/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@rawa7el/ui/table';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
 export interface MyExamQuestionDetail {

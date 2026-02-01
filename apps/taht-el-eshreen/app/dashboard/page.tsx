@@ -1,4 +1,4 @@
-import { createServerClient } from '@rawa7el/supabase';
+import { createClient as createServerClient } from '@rawa7el/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent } from '@rawa7el/ui/card';
@@ -249,7 +249,7 @@ export default async function Home() {
                 </Link>
               )
             );
-          })
+          })}
         </div>
       </section>
       <section className="space-y-4">

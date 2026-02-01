@@ -1,7 +1,7 @@
 'use client';
 
 import { Bell, Search, User } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Input } from '@rawa7el/ui/input';
 import Link from 'next/link';
 
 export function Header() {

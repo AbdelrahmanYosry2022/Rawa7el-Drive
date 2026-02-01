@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@rawa7el/ui/card';
+import { Button } from '@rawa7el/ui/button';
 import { Folder, GraduationCap, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';

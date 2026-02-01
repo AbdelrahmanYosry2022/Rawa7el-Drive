@@ -2,8 +2,8 @@
 
 import { useState, useTransition, FormEvent } from 'react';
 import { updateExam } from '@/app/actions/teacher/exams';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@rawa7el/ui/button';
+import { Input } from '@rawa7el/ui/input';
 import { Pencil, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 

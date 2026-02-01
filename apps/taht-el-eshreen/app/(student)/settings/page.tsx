@@ -1,14 +1,15 @@
-import { currentUser } from '@clerk/nextjs/server';
+import { createClient as createServerClient } from '@rawa7el/supabase/server';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@rawa7el/ui/card';
 import { User, Calendar, Shield, Palette } from 'lucide-react';
 
 export default async function SettingsPage() {
-  const user = await currentUser();
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/sign-in');
+    redirect('/login');
   }
 
   const dbUser = await prisma.user.findUnique({
@@ -23,10 +24,10 @@ export default async function SettingsPage() {
 
   const joinedDate = dbUser?.createdAt
     ? new Date(dbUser.createdAt).toLocaleDateString('ar-EG', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
     : 'غير معروف';
 
   const roleLabel = dbUser?.role === 'ADMIN' ? 'مدير النظام' : 'طالب';
@@ -51,13 +52,13 @@ export default async function SettingsPage() {
             <div className="p-4 bg-slate-50 rounded-lg">
               <p className="text-xs text-slate-500 mb-1">الاسم</p>
               <p className="text-sm font-medium text-slate-900">
-                {dbUser?.name || user.fullName || 'غير محدد'}
+                {dbUser?.name || 'غير محدد'}
               </p>
             </div>
             <div className="p-4 bg-slate-50 rounded-lg">
               <p className="text-xs text-slate-500 mb-1">البريد الإلكتروني</p>
               <p className="text-sm font-medium text-slate-900">
-                {dbUser?.email || user.emailAddresses[0]?.emailAddress}
+                {dbUser?.email || user.email}
               </p>
             </div>
           </div>
