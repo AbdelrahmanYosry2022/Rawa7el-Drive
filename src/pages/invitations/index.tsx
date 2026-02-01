@@ -85,8 +85,8 @@ export default function InvitationsPage() {
         throw new Error('يجب تسجيل الدخول أولاً')
       }
 
-      // Generate a random token
-      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+      // Generate a random token (max 20 chars to match DB constraint)
+      const token = Math.random().toString(36).substring(2, 12) + Math.random().toString(36).substring(2, 12)
       
       const { error: insertError } = await supabase
         .from('invitation_links')
