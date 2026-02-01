@@ -46,7 +46,7 @@ const [userName, setUserName] = useState<string>('')
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
           أهلاً بك{userName ? ` يا ${userName}` : ''} 👋
         </h1>
-        <p className="text-lg text-gray-500 mb-6">في منصة بداية للحلقات القرآنية</p>
+        <p className="text-lg text-gray-500 mb-6">في منصة بداية للتأهيل العلمي والتربوي</p>
 
         {/* Status Card */}
         <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 mb-8 border border-emerald-100">

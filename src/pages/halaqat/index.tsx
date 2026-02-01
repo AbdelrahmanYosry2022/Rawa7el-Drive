@@ -19,28 +19,28 @@ import {
 const mockHalaqat = [
   { 
     id: '1', 
-    name: 'حلقة الفجر', 
-    teacher: 'الشيخ أحمد محمد',
-    time: 'بعد صلاة الفجر',
-    location: 'مسجد النور',
+    name: 'المجموعة الأولى', 
+    teacher: 'الأستاذ أحمد محمد',
+    time: 'السبت 9:00 ص',
+    location: 'قاعة التدريب الرئيسية',
     studentsCount: 15,
     status: 'active'
   },
   { 
     id: '2', 
-    name: 'حلقة العصر', 
-    teacher: 'الشيخ محمد علي',
-    time: 'بعد صلاة العصر',
-    location: 'مسجد الرحمة',
+    name: 'المجموعة الثانية', 
+    teacher: 'الأستاذ محمد علي',
+    time: 'الأحد 3:00 م',
+    location: 'قاعة المحاضرات',
     studentsCount: 12,
     status: 'active'
   },
   { 
     id: '3', 
-    name: 'حلقة المغرب', 
-    teacher: 'الشيخ عبدالله سعيد',
-    time: 'بعد صلاة المغرب',
-    location: 'مسجد التقوى',
+    name: 'المجموعة الثالثة', 
+    teacher: 'الأستاذ عبدالله سعيد',
+    time: 'الاثنين 5:00 م',
+    location: 'قاعة الورش',
     studentsCount: 8,
     status: 'inactive'
   },
@@ -64,15 +64,15 @@ export default function HalaqatPage() {
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-slate-900">الحلقات</h1>
-                  <p className="text-xs text-slate-500">{halaqat.length} حلقة</p>
+                  <h1 className="text-xl font-bold text-slate-900">المجموعات</h1>
+                  <p className="text-xs text-slate-500">{halaqat.length} مجموعة</p>
                 </div>
               </div>
             </div>
             
             <Button className="bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl">
               <Plus className="w-4 h-4 ml-2" />
-              إضافة حلقة
+              إضافة مجموعة
             </Button>
           </div>
         </div>

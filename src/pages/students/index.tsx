@@ -20,9 +20,9 @@ import {
 
 // Mock data - will be replaced with real data from database
 const mockStudents = [
-  { id: '1', name: 'أحمد محمد علي', phone: '0501234567', age: 12, halaqa: 'حلقة الفجر', joinDate: '2024-01-15', status: 'active' },
-  { id: '2', name: 'محمد عبدالله سعيد', phone: '0507654321', age: 10, halaqa: 'حلقة العصر', joinDate: '2024-02-20', status: 'active' },
-  { id: '3', name: 'عمر خالد أحمد', phone: '0509876543', age: 14, halaqa: 'حلقة الفجر', joinDate: '2024-03-10', status: 'inactive' },
+  { id: '1', name: 'أحمد محمد علي', phone: '0501234567', age: 12, halaqa: 'المجموعة الأولى', joinDate: '2024-01-15', status: 'active' },
+  { id: '2', name: 'محمد عبدالله سعيد', phone: '0507654321', age: 10, halaqa: 'المجموعة الثانية', joinDate: '2024-02-20', status: 'active' },
+  { id: '3', name: 'عمر خالد أحمد', phone: '0509876543', age: 14, halaqa: 'المجموعة الأولى', joinDate: '2024-03-10', status: 'inactive' },
 ];
 
 export default function StudentsPage() {
@@ -97,7 +97,7 @@ export default function StudentsPage() {
             <CardContent className="p-12 text-center">
               <Users className="w-16 h-16 mx-auto text-slate-300 mb-4" />
               <h3 className="text-lg font-semibold text-slate-900 mb-2">لا يوجد طلاب</h3>
-              <p className="text-slate-500 mb-6">ابدأ بإضافة طلاب جدد للحلقة</p>
+              <p className="text-slate-500 mb-6">ابدأ بإضافة طلاب جدد للبرنامج</p>
               <Link to="/students/new">
                 <Button className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl">
                   <UserPlus className="w-4 h-4 ml-2" />

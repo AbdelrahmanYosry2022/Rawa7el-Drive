@@ -20,11 +20,11 @@ import {
 
 // Mock data - will be replaced with real data from database
 const mockStudents = [
-  { id: '1', name: 'أحمد محمد علي', halaqa: 'حلقة الفجر' },
-  { id: '2', name: 'محمد عبدالله سعيد', halaqa: 'حلقة الفجر' },
-  { id: '3', name: 'عمر خالد أحمد', halaqa: 'حلقة الفجر' },
-  { id: '4', name: 'يوسف إبراهيم محمد', halaqa: 'حلقة الفجر' },
-  { id: '5', name: 'علي حسن عبدالرحمن', halaqa: 'حلقة الفجر' },
+  { id: '1', name: 'أحمد محمد علي', halaqa: 'المجموعة الأولى' },
+  { id: '2', name: 'محمد عبدالله سعيد', halaqa: 'المجموعة الأولى' },
+  { id: '3', name: 'عمر خالد أحمد', halaqa: 'المجموعة الأولى' },
+  { id: '4', name: 'يوسف إبراهيم محمد', halaqa: 'المجموعة الأولى' },
+  { id: '5', name: 'علي حسن عبدالرحمن', halaqa: 'المجموعة الأولى' },
 ];
 
 type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused' | null;
@@ -210,9 +210,9 @@ export default function AttendancePage() {
             onChange={(e) => setSelectedHalaqa(e.target.value)}
             className="h-8 px-3 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
-            <option value="all">جميع الحلقات</option>
-            <option value="halaqa-1">حلقة الفجر</option>
-            <option value="halaqa-2">حلقة العصر</option>
+            <option value="all">جميع المجموعات</option>
+            <option value="group-1">المجموعة الأولى</option>
+            <option value="group-2">المجموعة الثانية</option>
           </select>
         </div>
       </section>

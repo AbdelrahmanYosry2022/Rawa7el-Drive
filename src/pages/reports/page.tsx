@@ -43,7 +43,7 @@ export default function ReportsPage() {
             { label: 'إجمالي الطلاب', value: '45', icon: Users, color: 'emerald' },
             { label: 'نسبة الحضور', value: '87%', icon: ClipboardCheck, color: 'indigo' },
             { label: 'أيام الدراسة', value: '120', icon: Calendar, color: 'amber' },
-            { label: 'الحلقات النشطة', value: '3', icon: BarChart3, color: 'pink' },
+            { label: 'المجموعات النشطة', value: '3', icon: BarChart3, color: 'pink' },
           ].map((stat, idx) => {
             const Icon = stat.icon;
             return (
@@ -80,8 +80,8 @@ export default function ReportsPage() {
               color: 'emerald'
             },
             { 
-              title: 'تقرير الحلقات', 
-              description: 'إحصائيات كل حلقة وأداء الطلاب',
+              title: 'تقرير المجموعات', 
+              description: 'إحصائيات كل مجموعة وأداء الطلاب',
               icon: PieChart,
               color: 'amber'
             },

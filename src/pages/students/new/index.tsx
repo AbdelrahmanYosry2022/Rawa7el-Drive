@@ -154,7 +154,7 @@ export default function NewStudentPage() {
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
                     <BookOpen className="w-4 h-4" />
-                    الحلقة
+                    المجموعة
                   </label>
                   <select
                     name="halaqa"
@@ -163,10 +163,10 @@ export default function NewStudentPage() {
                     required
                     className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
-                    <option value="">اختر الحلقة</option>
-                    <option value="halaqa-1">حلقة الفجر</option>
-                    <option value="halaqa-2">حلقة العصر</option>
-                    <option value="halaqa-3">حلقة المغرب</option>
+                    <option value="">اختر المجموعة</option>
+                    <option value="group-1">المجموعة الأولى</option>
+                    <option value="group-2">المجموعة الثانية</option>
+                    <option value="group-3">المجموعة الثالثة</option>
                   </select>
                 </div>
               </div>

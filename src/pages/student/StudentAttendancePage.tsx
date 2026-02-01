@@ -134,7 +134,7 @@ export default function StudentAttendancePage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">سجل الحضور والغياب</h1>
-          <p className="text-slate-500 font-medium text-lg">تتبع سجل حضورك ونسب الانضباط في الحلقات</p>
+          <p className="text-slate-500 font-medium text-lg">تتبع سجل حضورك ونسب الانضباط في البرنامج</p>
         </div>
       </div>
 
@@ -186,7 +186,7 @@ export default function StudentAttendancePage() {
             <table className="w-full text-right border-collapse">
               <thead>
                 <tr className="bg-slate-50/50">
-                  <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">الجلسة / الحلقة</th>
+                  <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">الجلسة</th>
                   <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">التاريخ</th>
                   <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">الحالة</th>
                   <th className="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">وقت التسجيل</th>

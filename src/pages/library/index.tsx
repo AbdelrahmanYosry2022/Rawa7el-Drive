@@ -63,7 +63,7 @@ const FILE_TYPE_COLORS: Record<string, string> = {
 
 const CATEGORIES = [
   { id: 'all', name: 'جميع المواد', color: '#6366F1' },
-  { id: 'quran', name: 'القرآن الكريم', color: '#10B981' },
+  { id: 'quran', name: 'علوم القرآن', color: '#10B981' },
   { id: 'tajweed', name: 'التجويد', color: '#F59E0B' },
   { id: 'fiqh', name: 'الفقه', color: '#8B5CF6' },
   { id: 'hadith', name: 'الحديث', color: '#EC4899' },

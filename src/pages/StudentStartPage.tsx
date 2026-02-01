@@ -106,7 +106,7 @@ export default function StudentStartPage() {
               <h2 className="text-2xl font-bold text-slate-800 mb-3">بداية الإنطلاق</h2>
               <p className="text-slate-600 leading-relaxed mb-8 flex-1 text-sm md:text-base">
                 <span className="block font-bold mb-2 text-emerald-700">الرسالة:</span>
-                تطبيق طرق التعلم الحديثة للإرتقاء بالمعلمين (معرفيا ومهاريا و وجدانيا) لتطوير منظومة العطاء وإدارة الحلقات العلمية والتربوية بشكل متميز.
+                تطبيق طرق التعلم الحديثة للإرتقاء بالمعلمين (معرفيا ومهاريا ووجدانيا) لتطوير منظومة العطاء وإدارة البرامج التعليمية والتربوية بشكل متميز.
               </p>
               <div className="flex items-center text-emerald-600 font-bold group-hover:translate-x-[-8px] transition-transform">
                 الدخول للبرنامج <ArrowLeft className="mr-2 w-5 h-5" />

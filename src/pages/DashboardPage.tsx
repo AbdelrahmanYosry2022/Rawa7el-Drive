@@ -83,7 +83,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#0f172a' }}>منصة بداية</h1>
-                <p style={{ fontSize: '0.75rem', color: '#64748b' }}>للحلقات القرآنية</p>
+                <p style={{ fontSize: '0.75rem', color: '#64748b' }}>للتأهيل العلمي والتربوي</p>
               </div>
             </div>
 
@@ -110,7 +110,7 @@ export default function DashboardPage() {
           <div style={{ position: 'absolute', bottom: 0, left: 0, width: '12rem', height: '12rem', background: 'rgba(255,255,255,0.1)', borderRadius: '50%', marginLeft: '-6rem', marginBottom: '-6rem' }} />
           <div style={{ position: 'relative' }}>
             <h2 style={{ fontSize: '1.875rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>مرحباً 👋</h2>
-            <p style={{ color: '#d1fae5', fontSize: '1.125rem' }}>أهلاً بك في منصة بداية لإدارة الحلقات القرآنية</p>
+            <p style={{ color: '#d1fae5', fontSize: '1.125rem' }}>أهلاً بك في منصة بداية للتأهيل العلمي والتربوي</p>
           </div>
         </div>
       </section>
@@ -120,7 +120,7 @@ export default function DashboardPage() {
           {[
             { label: 'إجمالي الطلاب', value: '0', icon: Users },
             { label: 'الحضور اليوم', value: '0', icon: ClipboardCheck },
-            { label: 'الحلقات النشطة', value: '0', icon: BookOpen },
+            { label: 'المجموعات النشطة', value: '0', icon: BookOpen },
             { label: 'نسبة الحضور', value: '0%', icon: TrendingUp },
           ].map((stat, idx) => {
             const Icon = stat.icon

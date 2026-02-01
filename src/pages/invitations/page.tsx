@@ -219,7 +219,7 @@ export default function InvitationsPage() {
                     type="text"
                     value={formData.label}
                     onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-                    placeholder="مثال: رابط حلقة الفجر"
+                    placeholder="مثال: رابط المجموعة الأولى"
                     className="rounded-xl"
                   />
                 </div>
