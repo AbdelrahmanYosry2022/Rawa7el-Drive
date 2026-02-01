@@ -10,7 +10,6 @@ import {
   TrendingUp,
   ArrowLeft,
   Bell,
-  User,
   FolderOpen,
   GraduationCap,
   LogOut,

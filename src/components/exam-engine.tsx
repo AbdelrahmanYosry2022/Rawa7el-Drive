@@ -1,8 +1,13 @@
-'use client';
+// 'use client' removed for Vite
 
 import { useState, useEffect } from 'react';
-import { submitExam } from '@/app/actions/submitExam';
-import confetti from 'canvas-confetti';
+// TODO: Implement submitExam action for Vite
+const submitExam = async (_examId: string, _answers: Record<string, string>) => {
+  console.warn('submitExam not implemented');
+  return { passed: false, score: 0, success: false, totalPoints: 0, error: undefined as string | undefined };
+};
+// TODO: Install canvas-confetti package
+const confetti = (_opts?: any) => { console.warn('confetti not implemented'); };
 
 type Question = {
   id: string;

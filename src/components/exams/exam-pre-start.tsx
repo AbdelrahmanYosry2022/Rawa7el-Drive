@@ -1,7 +1,7 @@
-'use client';
+// 'use client' removed for Vite
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   Clock,
@@ -34,12 +34,12 @@ interface ExamPreStartProps {
 }
 
 export function ExamPreStart({ exam, lastAttempt }: ExamPreStartProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isStarting, setIsStarting] = useState(false);
 
   const handleStart = () => {
     setIsStarting(true);
-    router.push(`/exams/${exam.id}/start`);
+    navigate(`/exams/${exam.id}/start`);
   };
 
   const getTimerDescription = () => {

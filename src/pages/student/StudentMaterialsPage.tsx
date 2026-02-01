@@ -10,7 +10,6 @@ import {
   Presentation,
   Download, 
   Search,
-  Filter,
   Grid,
   List,
   Loader2,

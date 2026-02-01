@@ -1,8 +1,8 @@
-'use client';
+// 'use client' removed for Vite
 
 import { Bell, Search, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 export function Header() {
   return (
@@ -10,7 +10,7 @@ export function Header() {
       
       {/* Left Side: User Profile */}
       <div className="flex items-center gap-4">
-        <Link href="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <Link to="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
             <User className="w-5 h-5 text-indigo-600" />
           </div>

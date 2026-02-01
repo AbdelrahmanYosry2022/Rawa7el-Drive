@@ -1,7 +1,7 @@
-'use client';
+// 'use client' removed for Vite
 
 import { ArrowRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface BackButtonProps {
@@ -10,12 +10,12 @@ interface BackButtonProps {
 }
 
 export function BackButton({ className, ariaLabel = 'رجوع' }: BackButtonProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   return (
     <button
       type="button"
-      onClick={() => router.back()}
+      onClick={() => navigate(-1)}
       className={cn(
         'inline-flex items-center justify-center w-8 h-8 rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700 shadow-sm',
         className,

@@ -1,11 +1,12 @@
-'use client';
+// 'use client' removed for Vite
 
-import { useState, useTransition, FormEvent } from 'react';
-import { updateExam } from '@/app/actions/teacher/exams';
+import { useState, FormEvent } from 'react';
+// TODO: Implement updateExam action for Vite
+const updateExam = async (_data: any) => { console.warn('updateExam not implemented'); };
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Pencil, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+// useNavigate removed - not needed
 
 interface Subject {
   id: string;
@@ -33,7 +34,6 @@ export function EditExamModal({
   initialSubjectId,
   subjects,
 }: EditExamModalProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState(initialTitle);
   const [duration, setDuration] = useState(String(initialDurationMinutes));
@@ -41,32 +41,34 @@ export function EditExamModal({
   const [timerMode, setTimerMode] = useState<'NONE' | 'EXAM_TOTAL' | 'PER_QUESTION'>(initialTimerMode);
   const [questionTime, setQuestionTime] = useState(String(initialQuestionTimeSeconds || 60));
   const [subjectId, setSubjectId] = useState(initialSubjectId);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
     const durationMinutes = parseInt(duration || '30', 10);
     const passing = parseInt(passingScore || '60', 10);
 
-    startTransition(async () => {
-      try {
-        const questionTimeSeconds = timerMode === 'PER_QUESTION' ? parseInt(questionTime || '60', 10) : null;
-        await updateExam(examId, {
-          title,
-          durationMinutes: Number.isFinite(durationMinutes) ? durationMinutes : undefined,
-          passingScore: Number.isFinite(passing) ? passing : undefined,
-          timerMode,
-          questionTimeSeconds,
-          subjectId: subjectId !== initialSubjectId ? subjectId : undefined,
-        });
-        setOpen(false);
-        router.refresh();
-      } catch (err) {
-        console.error(err);
-      }
-    });
+    setIsPending(true);
+    try {
+      const questionTimeSeconds = timerMode === 'PER_QUESTION' ? parseInt(questionTime || '60', 10) : null;
+      await updateExam({
+        examId,
+        title,
+        durationMinutes: Number.isFinite(durationMinutes) ? durationMinutes : undefined,
+        passingScore: Number.isFinite(passing) ? passing : undefined,
+        timerMode,
+        questionTimeSeconds,
+        subjectId: subjectId !== initialSubjectId ? subjectId : undefined,
+      });
+      setOpen(false);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (

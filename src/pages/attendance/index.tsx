@@ -118,7 +118,7 @@ export default function AttendancePage() {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+            <Link to="/dashboard" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
               <ArrowRight className="w-5 h-5 text-slate-600" />
             </Link>
             <div className="flex items-center gap-3">
@@ -186,7 +186,7 @@ export default function AttendancePage() {
       {/* Quick Actions */}
       <section className="max-w-4xl mx-auto px-4 md:px-6 pb-4">
         <div className="flex gap-2">
-          <Link href="/attendance/qr">
+          <Link to="/attendance/qr">
             <Button 
               variant="default" 
               size="sm" 
@@ -221,8 +221,7 @@ export default function AttendancePage() {
       <section className="max-w-4xl mx-auto px-4 md:px-6 pb-24">
         <div className="space-y-3">
           {mockStudents.map((student) => {
-            const studentAttendance = attendance.find(a => a.studentId === student.id);
-            
+            // studentAttendance available via: attendance.find(a => a.studentId === student.id)
             return (
               <Card key={student.id} className="bg-white border border-slate-100 rounded-2xl">
                 <CardContent className="p-4">

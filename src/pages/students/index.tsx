@@ -9,7 +9,6 @@ import {
   Users, 
   UserPlus, 
   Search, 
-  MoreVertical,
   Edit,
   Trash2,
   Phone,
@@ -46,7 +45,7 @@ export default function StudentsPage() {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+            <Link to="/dashboard" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
               <ArrowRight className="w-5 h-5 text-slate-600" />
             </Link>
             <div className="flex items-center gap-3">
@@ -81,7 +80,7 @@ export default function StudentsPage() {
               <Filter className="w-4 h-4 ml-2" />
               تصفية
             </Button>
-            <Link href="/students/new">
+            <Link to="/students/new">
               <Button className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl">
                 <UserPlus className="w-4 h-4 ml-2" />
                 إضافة طالب
@@ -99,7 +98,7 @@ export default function StudentsPage() {
               <Users className="w-16 h-16 mx-auto text-slate-300 mb-4" />
               <h3 className="text-lg font-semibold text-slate-900 mb-2">لا يوجد طلاب</h3>
               <p className="text-slate-500 mb-6">ابدأ بإضافة طلاب جدد للحلقة</p>
-              <Link href="/students/new">
+              <Link to="/students/new">
                 <Button className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl">
                   <UserPlus className="w-4 h-4 ml-2" />
                   إضافة أول طالب
@@ -152,7 +151,7 @@ export default function StudentsPage() {
                       </span>
                       
                       <div className="flex items-center gap-1">
-                        <Link href={`/students/${student.id}/edit`}>
+                        <Link to={`/students/${student.id}/edit`}>
                           <Button variant="ghost" size="sm" className="p-2 rounded-lg">
                             <Edit className="w-4 h-4 text-slate-500" />
                           </Button>

@@ -1,65 +1,20 @@
-import { google } from 'googleapis';
-import { Readable } from 'stream';
-
-const SCOPES = ['https://www.googleapis.com/auth/drive.readonly'];
+// TODO: googleapis not available in browser environment - this module is server-side only
+// Original implementation commented out for Vite browser build
 
 /**
- * Authenticates with Google using Service Account credentials
+ * Stub: Fetches a file stream from Google Drive
+ * This functionality requires server-side implementation
  */
-const getDriveService = () => {
-  const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-  if (!clientEmail || !privateKey) {
-    throw new Error('Missing Google Drive credentials. Please check GOOGLE_CLIENT_EMAIL and GOOGLE_PRIVATE_KEY environment variables.');
-  }
-
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: clientEmail,
-      private_key: privateKey,
-    },
-    scopes: SCOPES,
-  });
-
-  return google.drive({ version: 'v3', auth });
+export const getFileStream = async (_fileId: string): Promise<ReadableStream> => {
+  console.warn('getFileStream: googleapis not available in browser environment');
+  throw new Error('Google Drive integration requires server-side implementation');
 };
 
 /**
- * Fetches a file stream from Google Drive
- * @param fileId The Google Drive File ID
- * @returns Readable stream of the file
+ * Stub: Fetches file metadata (name, mimeType, size)
+ * This functionality requires server-side implementation
  */
-export const getFileStream = async (fileId: string): Promise<Readable> => {
-  const drive = getDriveService();
-  
-  try {
-    const response = await drive.files.get(
-      { fileId, alt: 'media' },
-      { responseType: 'stream' }
-    );
-    
-    return response.data as Readable;
-  } catch (error) {
-    console.error('Error fetching file from Drive:', error);
-    throw error;
-  }
-};
-
-/**
- * Fetches file metadata (name, mimeType, size)
- */
-export const getFileMetadata = async (fileId: string) => {
-  const drive = getDriveService();
-  
-  try {
-    const response = await drive.files.get({
-      fileId,
-      fields: 'id, name, mimeType, size',
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching metadata from Drive:', error);
-    throw error;
-  }
+export const getFileMetadata = async (_fileId: string) => {
+  console.warn('getFileMetadata: googleapis not available in browser environment');
+  throw new Error('Google Drive integration requires server-side implementation');
 };

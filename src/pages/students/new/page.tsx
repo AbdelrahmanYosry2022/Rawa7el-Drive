@@ -59,7 +59,7 @@ export default function NewStudentPage() {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link href="/students" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+            <Link to="/students" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
               <ArrowRight className="w-5 h-5 text-slate-600" />
             </Link>
             <div className="flex items-center gap-3">
@@ -188,7 +188,7 @@ export default function NewStudentPage() {
 
               {/* Actions */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <Link href="/students">
+                <Link to="/students">
                   <Button type="button" variant="outline" className="rounded-xl">
                     <X className="w-4 h-4 ml-2" />
                     إلغاء

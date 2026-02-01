@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, NavLink, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -107,7 +107,7 @@ const Sidebar = ({ isOpen, toggle }: { isOpen: boolean, toggle: () => void }) =>
 };
 
 // Main Dashboard Home for Student
-const StudentHome = ({ user }: { user: UserData | null }) => (
+const StudentHome = ({ user: _user }: { user: UserData | null }) => (
   <div className="p-8">
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {[
@@ -137,18 +137,6 @@ import StudentAttendancePage from './student/StudentAttendancePage';
 import StudentMaterialsPage from './student/StudentMaterialsPage';
 import StudentExamsPage from './student/StudentExamsPage';
 
-// Generic Placeholder for pages
-const PlaceholderPage = ({ title }: { title: string }) => (
-  <div className="p-8">
-    <div className="bg-white rounded-[2.5rem] p-12 border border-slate-100 shadow-sm text-center">
-      <div className="w-24 h-24 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-        <Sparkles className="w-12 h-12 text-emerald-600" />
-      </div>
-      <h2 className="text-3xl font-black text-slate-800 mb-3 tracking-tight">{title}</h2>
-      <p className="text-slate-500 font-medium text-lg">هذه الصفحة قيد التطوير حالياً لتقديم تجربة تعليمية استثنائية!</p>
-    </div>
-  </div>
-);
 
 export default function StudentDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

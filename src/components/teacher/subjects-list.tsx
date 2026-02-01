@@ -1,12 +1,13 @@
-'use client';
+// 'use client' removed for Vite
 
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Folder, GraduationCap, Trash2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useTransition } from 'react';
-import { deleteSubject } from '@/app/actions/teacher/subjects';
+// useNavigate removed - not needed
+import { useState } from 'react';
+// TODO: Implement deleteSubject action for Vite
+const deleteSubject = async (_id: string) => { console.warn('deleteSubject not implemented'); };
 import { EditSubjectModal } from '@/components/teacher/edit-subject-modal';
 
 export type TeacherSubjectItem = {
@@ -25,18 +26,18 @@ interface SubjectsListProps {
 }
 
 export function SubjectsList({ subjects }: SubjectsListProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  const handleDelete = (id: string) => {
-    startTransition(async () => {
-      try {
-        await deleteSubject(id);
-        router.refresh();
-      } catch (err) {
-        console.error(err);
-      }
-    });
+  const handleDelete = async (id: string) => {
+    setIsPending(true);
+    try {
+      await deleteSubject(id);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
@@ -48,7 +49,7 @@ export function SubjectsList({ subjects }: SubjectsListProps) {
         >
           <CardContent className="p-5 space-y-3">
             <Link
-              href={`/teacher/subjects/${subject.id}`}
+              to={`/teacher/subjects/${subject.id}`}
               className="block space-y-3 cursor-pointer"
             >
               <div className="flex items-start justify-between gap-2">

@@ -1,8 +1,9 @@
-'use client';
+// 'use client' removed for Vite
 
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { deleteSubmission } from '@/app/actions/teacher/exams';
+// TODO: Implement deleteSubmission action for Vite
+const deleteSubmission = async (_id: string) => { console.warn('deleteSubmission not implemented'); };
 
 interface DeleteSubmissionButtonProps {
   submissionId: string;

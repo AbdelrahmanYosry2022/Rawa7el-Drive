@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { BookOpen, Sparkles, ArrowLeft, LogOut, Loader2, Bell, User as UserIcon } from 'lucide-react';
+import { BookOpen, Sparkles, ArrowLeft, LogOut, Loader2 } from 'lucide-react';
 
 interface UserData {
   id: string;

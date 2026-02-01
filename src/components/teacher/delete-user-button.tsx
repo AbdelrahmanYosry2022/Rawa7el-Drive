@@ -1,7 +1,8 @@
-'use client';
+// 'use client' removed for Vite
 
-import { useTransition } from 'react';
-import { deleteUser } from '@/app/actions/teacher/users';
+import { useState } from 'react';
+// TODO: Implement deleteUser action for Vite
+const deleteUser = async (_id: string) => { console.warn('deleteUser not implemented'); };
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 
@@ -11,21 +12,22 @@ interface DeleteUserButtonProps {
 }
 
 export function DeleteUserButton({ userId, disabled }: DeleteUserButtonProps) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (disabled) return;
 
     const confirmed = window.confirm('هل أنت متأكد من حذف هذا المستخدم وجميع محاولاته؟');
     if (!confirmed) return;
 
-    startTransition(async () => {
-      try {
-        await deleteUser(userId);
-      } catch (error) {
-        console.error(error);
-      }
-    });
+    setIsPending(true);
+    try {
+      await deleteUser(userId);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (

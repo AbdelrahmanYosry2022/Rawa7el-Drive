@@ -1,11 +1,28 @@
-'use client';
+// 'use client' removed for Vite
 
 import { useState, useEffect, useCallback } from 'react';
-import { submitExam, type ExamSubmissionResult } from '@/app/actions/submitExam';
-import confetti from 'canvas-confetti';
+// TODO: Implement submitExam action for Vite
+// import { submitExam, type ExamSubmissionResult } from '@/app/actions/submitExam';
+type ExamSubmissionResult = { 
+  passed: boolean; 
+  score: number; 
+  totalQuestions: number; 
+  correctAnswers: number;
+  success: boolean;
+  percentage: number;
+  totalPoints: number;
+  error?: string;
+  details: Array<{ questionId: string; isCorrect: boolean; userAnswer: string; correctAnswer: string; questionText: string }>;
+};
+const submitExam = async (_examId: string, _answers: Record<string, string>): Promise<ExamSubmissionResult> => {
+  console.warn('submitExam not implemented');
+  return { passed: false, score: 0, totalQuestions: 0, correctAnswers: 0, success: false, percentage: 0, totalPoints: 0, details: [] };
+};
+// TODO: Install canvas-confetti package
+const confetti = (_opts?: any) => { console.warn('confetti not implemented'); };
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Clock, AlertTriangle } from 'lucide-react';
-import Link from 'next/link';
+import { CheckCircle2, XCircle, ArrowRight, ArrowLeft, Clock, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export type ClientQuestion = {
   id: string;
@@ -266,7 +283,7 @@ export function ExamRunner({ exam }: ExamClientProps) {
           </div>
 
           <div className="mt-4 flex flex-col gap-3">
-            <Link href="/">
+            <Link to="/">
               <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium">
                 العودة إلى لوحة التحكم
               </Button>
@@ -296,7 +313,7 @@ export function ExamRunner({ exam }: ExamClientProps) {
                   {index + 1}
                 </div>
                 <div className="flex-1">
-                  <p className="text-slate-900 font-medium text-right">{detail.text}</p>
+                  <p className="text-slate-900 font-medium text-right">{detail.questionText}</p>
                 </div>
                 <div className="flex-shrink-0">
                   {detail.isCorrect ? (

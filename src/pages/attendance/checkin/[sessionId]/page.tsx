@@ -1,6 +1,7 @@
 // 'use client' removed for Vite;
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -55,8 +56,8 @@ function generateVisitorId(): string {
 
 type CheckInStatus = 'loading' | 'registration' | 'checking' | 'success' | 'already' | 'error';
 
-export default function CheckInPage({ params }: { params: Promise<{ sessionId: string }> }) {
-  const { sessionId } = use(params);
+export default function CheckInPage() {
+  const { sessionId } = useParams<{ sessionId: string }>();
   const [status, setStatus] = useState<CheckInStatus>('loading');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

@@ -13,9 +13,7 @@ import {
   Users,
   Loader2,
   ArrowRight,
-  ExternalLink,
-  Clock,
-  Hash
+  Clock
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -169,7 +167,7 @@ export default function InvitationsPage() {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+            <Link to="/dashboard" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
               <ArrowRight className="w-5 h-5 text-slate-600" />
             </Link>
             <div className="flex items-center gap-3">

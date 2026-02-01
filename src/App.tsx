@@ -1,11 +1,9 @@
 import { Routes, Route } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
-import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import StudentStartPage from './pages/StudentStartPage'
 import StudentDashboard from './pages/StudentDashboard'
-import StudentCalendarPage from './student/StudentCalendarPage'
 import StudentsPage from './pages/students'
 import NewStudentPage from './pages/students/new'
 import AttendancePage from './pages/attendance'
@@ -24,7 +22,7 @@ function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      {/* <Route path="/register" element={<RegisterPage />} /> */}
       <Route path="/dashboard/*" element={<DashboardPage />} />
       <Route path="/student" element={<StudentStartPage />} />
       <Route path="/student/*" element={<StudentDashboard />} />

@@ -1,34 +1,35 @@
-'use client';
+// 'use client' removed for Vite
 
-import { useState, FormEvent, useTransition } from 'react';
-import { createSubject } from '@/app/actions/teacher/subjects';
+import { useState, FormEvent } from 'react';
+// TODO: Implement createSubject action for Vite
+const createSubject = async (_data: { title: string; description: string }) => { console.warn('createSubject not implemented'); };
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+// useNavigate removed - not needed
 
 export function CreateSubjectModal() {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [isPending, startTransition] = useTransition();
-  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
-    startTransition(async () => {
-      try {
-        await createSubject({ title, description });
-        setTitle('');
-        setDescription('');
-        setOpen(false);
-        router.refresh();
-      } catch (err) {
-        console.error(err);
-      }
-    });
+    setIsPending(true);
+    try {
+      await createSubject({ title, description });
+      setTitle('');
+      setDescription('');
+      setOpen(false);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (

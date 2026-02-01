@@ -1,8 +1,7 @@
-'use client';
+// 'use client' removed for Vite
 
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   GraduationCap,
@@ -14,7 +13,7 @@ import {
   FileText,
   ClipboardList,
 } from 'lucide-react';
-import Image from 'next/image';
+// Image replaced with standard img tag
 
 type NavItem = {
   title: string;
@@ -50,7 +49,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ subjects, userRole }: SidebarProps) {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const isTeacher = pathname.startsWith('/teacher');
 
   const teacherMainNav: NavItem[] = [
@@ -98,7 +97,7 @@ export function Sidebar({ subjects, userRole }: SidebarProps) {
         const isActive = pathname === item.href;
         const Icon = item.icon;
         return (
-          <Link key={item.href} href={item.href} className="block">
+          <Link key={item.href} to={item.href} className="block">
             <span
               className={cn(
                 'relative flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg border-r-4 transition-all duration-150 cursor-pointer',
@@ -126,14 +125,11 @@ export function Sidebar({ subjects, userRole }: SidebarProps) {
       {/* Logo Area */}
       <div className="px-6 pt-6 pb-4 border-b border-slate-100">
         <div className="flex items-center justify-center">
-          <Link href="/" aria-label="Rawa7el Drive" className="block">
-            <Image
+          <Link to="/" aria-label="Rawa7el Drive" className="block">
+            <img
               src="/logo/Rawa7el-drive-logo-v2.png"
               alt="Rawa7el Drive"
-              width={280}
-              height={64}
               className="h-8 w-auto"
-              priority
             />
           </Link>
         </div>
@@ -163,7 +159,7 @@ export function Sidebar({ subjects, userRole }: SidebarProps) {
 
         <div className="space-y-1 pt-2">
           <p className="px-4 text-[10px] font-semibold tracking-[0.2em] text-slate-400">الحساب</p>
-          <Link href="/profile" className="block">
+          <Link to="/profile" className="block">
             <span className="relative flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg border-r-4 border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-900 cursor-pointer">
               <User className="w-5 h-5 text-slate-400" />
               <span className="truncate">الملف الشخصي</span>
@@ -177,14 +173,14 @@ export function Sidebar({ subjects, userRole }: SidebarProps) {
 {/* زر التبديل بين واجهة الطالب والأدمن - يظهر للأدمن فقط */}
         {userRole === 'ADMIN' && (
           isTeacher ? (
-            <Link href="/">
+            <Link to="/">
               <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors">
                 <LayoutDashboard className="w-5 h-5" />
                 العودة لواجهة الطالب
               </button>
             </Link>
           ) : (
-            <Link href="/teacher">
+            <Link to="/teacher">
               <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors">
                 <LayoutDashboard className="w-5 h-5" />
                 الذهاب إلى لوحة الإدارة
@@ -193,7 +189,7 @@ export function Sidebar({ subjects, userRole }: SidebarProps) {
           )
         )}
 
-        <Link href="/settings">
+        <Link to="/settings">
           <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors">
             <Settings className="w-5 h-5 text-slate-400" />
             الإعدادات
