@@ -106,9 +106,23 @@ export default function InvitationsPage() {
       setShowForm(false)
       setFormData({ label: '', max_uses: '', expires_at: '' })
       fetchInvitations()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating invitation:', err)
-      setError('فشل في إنشاء رابط الدعوة')
+      // Show detailed error message
+      let errorMessage = 'فشل في إنشاء رابط الدعوة'
+      if (err?.message) {
+        errorMessage += `: ${err.message}`
+      }
+      if (err?.code) {
+        errorMessage += ` (${err.code})`
+      }
+      if (err?.details) {
+        errorMessage += ` - ${err.details}`
+      }
+      if (err?.hint) {
+        errorMessage += ` | تلميح: ${err.hint}`
+      }
+      setError(errorMessage)
     } finally {
       setIsCreating(false)
     }
