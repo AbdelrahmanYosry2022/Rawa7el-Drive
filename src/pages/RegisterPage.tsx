@@ -149,6 +149,7 @@ export default function RegisterPage() {
           role: 'STUDENT',
           platform: 'BEDAYA',
           isActive: true,
+          invited_by: inviteToken || null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }, { onConflict: 'id' })

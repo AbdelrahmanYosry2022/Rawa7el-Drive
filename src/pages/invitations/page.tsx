@@ -13,7 +13,8 @@ import {
   Users,
   Loader2,
   ArrowRight,
-  Clock
+  Clock,
+  X
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -144,6 +145,27 @@ export default function InvitationsPage() {
     } catch (err) {
       console.error('Error deactivating invitation:', err)
       setError('فشل في إلغاء تفعيل الرابط')
+    }
+  }
+
+  const deleteInvitation = async (id: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا الرابط نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')) return
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('invitation_links')
+        .delete()
+        .eq('id', id)
+
+      if (deleteError) throw deleteError
+
+      setSuccess('تم حذف الرابط نهائياً')
+      fetchInvitations()
+    } catch (err: any) {
+      console.error('Error deleting invitation:', err)
+      let errorMessage = 'فشل في حذف الرابط'
+      if (err?.message) errorMessage += `: ${err.message}`
+      setError(errorMessage)
     }
   }
 
@@ -326,9 +348,12 @@ export default function InvitationsPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-semibold text-slate-900 truncate">
+                        <Link 
+                          to={`/invitations/${invitation.id}`}
+                          className="font-semibold text-slate-900 truncate hover:text-indigo-600 transition-colors cursor-pointer"
+                        >
                           {invitation.label || 'رابط دعوة'}
-                        </h4>
+                        </Link>
                         {getStatusBadge(invitation)}
                       </div>
 
@@ -376,12 +401,23 @@ export default function InvitationsPage() {
                           </>
                         )}
                       </Button>
-                      {invitation.is_active && (
+                      {invitation.is_active ? (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => deactivateInvitation(invitation.id)}
+                          className="rounded-lg text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                          title="إلغاء التفعيل"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteInvitation(invitation.id)}
                           className="rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50"
+                          title="حذف نهائي"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
