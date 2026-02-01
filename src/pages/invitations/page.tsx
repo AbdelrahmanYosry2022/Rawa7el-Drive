@@ -79,6 +79,12 @@ export default function InvitationsPage() {
     setError(null)
 
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('يجب تسجيل الدخول أولاً')
+      }
+
       // Generate a random token
       const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
       
@@ -90,7 +96,8 @@ export default function InvitationsPage() {
           max_uses: formData.max_uses ? parseInt(formData.max_uses) : null,
           expires_at: formData.expires_at || null,
           is_active: true,
-          uses_count: 0
+          uses_count: 0,
+          created_by: user.id
         })
 
       if (insertError) throw insertError
