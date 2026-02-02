@@ -201,7 +201,7 @@ const [lectures, setLectures] = useState<Lecture[]>([]);
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
               <Link 
-                href="/dashboard" 
+                to="/dashboard" 
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <ArrowRight className="w-5 h-5" />

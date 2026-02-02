@@ -57,7 +57,7 @@ const mockSupabase = {
       return { data: { session: null }, error: null }
     },
     onAuthStateChange: () => {
-      return { data: { subscription: { unsubscribe: () => {} } } }
+      return { data: { subscription: { unsubscribe: () => { } } } }
     }
   },
   from: (table: string) => {
@@ -111,10 +111,10 @@ const mockSupabase = {
           created_at: new Date().toISOString(),
           ...item
         }))
-        
+
         if (!mockStore[table]) mockStore[table] = []
         mockStore[table].push(...newItems)
-        
+
         return { data: newItems, error: null }
       },
       update: (data: any) => {
@@ -133,14 +133,18 @@ const mockSupabase = {
       },
       // Make chain thenable to support await directly
       then: (resolve: any) => {
-        if (currentOp === 'delete') {
-          const idsToDelete = queryData.map((d: any) => d.id)
-          if (mockStore[table]) {
-            mockStore[table] = mockStore[table].filter((d: any) => !idsToDelete.includes(d.id))
+        try {
+          if (currentOp === 'delete') {
+            const idsToDelete = queryData.map((d: any) => d.id)
+            if (mockStore[table]) {
+              mockStore[table] = mockStore[table].filter((d: any) => !idsToDelete.includes(d.id))
+            }
+            resolve({ data: queryData, error: null })
+          } else {
+            resolve({ data: queryData, count: resultCount, error: null })
           }
-          resolve({ data: queryData, error: null })
-        } else {
-          resolve({ data: queryData, count: resultCount, error: null })
+        } catch (error: any) {
+          resolve({ data: null, error: { message: error.message || 'An error occurred' } })
         }
       }
     }

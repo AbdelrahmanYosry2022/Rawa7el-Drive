@@ -70,12 +70,20 @@ export default function CalendarPage() {
   // Mock specific data for the task
   useEffect(() => {
     // Mock events
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+
+    const formatDate = (date: Date) => {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
+
     const mockEvents: CalendarEvent[] = [
       {
         id: '1',
         title: 'نظرية تاليس',
         description: 'درس تفاعلي عن نظرية تاليس الهندسية وتطبيقاتها العملية',
-        date: '2026-02-01',
+        date: formatDate(today),
         startTime: '10:00',
         endTime: '11:30',
         type: 'practical', // Green neon
@@ -92,7 +100,7 @@ export default function CalendarPage() {
         id: '2',
         title: 'جبر متقدم',
         description: 'حل معادلات الدرجة الثانية',
-        date: '2026-02-08',
+        date: formatDate(nextWeek),
         startTime: '09:00',
         endTime: '10:30',
         type: 'regular',
@@ -270,6 +278,10 @@ export default function CalendarPage() {
                   const dayEvents = getEventsForDay(day);
                   const hasEvents = dayEvents.length > 0;
                   const isPractical = dayEvents.some(e => e.type === 'practical');
+                  const today = new Date();
+                  const isToday = day === today.getDate() && 
+                                currentDate.getMonth() === today.getMonth() && 
+                                currentDate.getFullYear() === today.getFullYear();
 
                   return (
                     <button
@@ -277,12 +289,14 @@ export default function CalendarPage() {
                       onClick={() => handleDayClick(day)}
                       className={`
                                     aspect-square rounded-2xl flex items-center justify-center text-sm font-medium transition-all duration-300 relative group
-                                    ${hasEvents
-                          ? isPractical
-                            ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)] hover:shadow-[0_0_25px_rgba(16,185,129,0.6)] hover:scale-105 ring-2 ring-emerald-300 ring-offset-2'
-                            : 'bg-indigo-500 text-white shadow-lg hover:bg-indigo-600'
-                          : 'hover:bg-slate-50 text-slate-700'
-                        }
+                                    ${isToday
+                                      ? 'bg-emerald-600 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] scale-105 ring-2 ring-emerald-400 ring-offset-2 font-bold z-10'
+                                      : hasEvents
+                                        ? isPractical
+                                          ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)] hover:shadow-[0_0_25px_rgba(16,185,129,0.6)] hover:scale-105 ring-2 ring-emerald-300 ring-offset-2'
+                                          : 'bg-indigo-500 text-white shadow-lg hover:bg-indigo-600'
+                                        : 'hover:bg-slate-50 text-slate-700'
+                                    }
                                 `}
                     >
                       {day}
