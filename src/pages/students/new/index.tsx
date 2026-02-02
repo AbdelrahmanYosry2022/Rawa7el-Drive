@@ -3,23 +3,26 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  UserPlus, 
+import {
+  UserPlus,
   ArrowRight,
   User,
   Phone,
   Calendar,
   BookOpen,
   Save,
-  X
+  X,
+  Check
 } from 'lucide-react';
 
 export default function NewStudentPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -34,18 +37,43 @@ export default function NewStudentPage() {
     setIsLoading(true);
 
     try {
-      // TODO: Call API to create student
-      console.log('Creating student:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      navigate('/students');
+      const { error } = await supabase
+        .from('students')
+        .insert([
+          {
+            name: formData.name,
+            phone: formData.phone,
+            guardian_phone: formData.guardianPhone,
+            age: formData.age ? parseInt(formData.age) : null,
+            halaqa: formData.halaqa,
+            notes: formData.notes,
+            status: 'active',
+            join_date: new Date().toISOString().split('T')[0]
+          }
+        ]);
+
+      if (error) throw error;
+
+      setShowToast(true);
+      // Removed automatic navigation to show toast options
     } catch (error) {
       console.error('Error creating student:', error);
+      alert('حدث خطأ أثناء إضافة الطالب. يرجى المحاولة مرة أخرى.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleReset = () => {
+    setFormData({
+      name: '',
+      phone: '',
+      guardianPhone: '',
+      age: '',
+      halaqa: '',
+      notes: '',
+    });
+    setShowToast(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -194,8 +222,8 @@ export default function NewStudentPage() {
                     إلغاء
                   </Button>
                 </Link>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isLoading}
                   className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl"
                 >
@@ -207,6 +235,40 @@ export default function NewStudentPage() {
           </Card>
         </form>
       </section>
+
+      {/* Success Toast */}
+      {showToast && (
+        <div className="fixed bottom-4 right-4 left-4 md:left-auto z-50 bg-white border border-emerald-100 shadow-xl rounded-2xl p-4 animate-in slide-in-from-bottom-5 duration-300">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                <Check className="w-6 h-6 text-emerald-600" />
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900">تمت إضافة الطالب بنجاح!</h4>
+                <p className="text-sm text-slate-500">تم تحديث الإحصائيات في لوحة التحكم تلقائياً</p>
+              </div>
+            </div>
+            <div className="flex gap-2 mr-13">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleReset}
+                className="rounded-lg border-slate-200 hover:bg-slate-50"
+              >
+                <UserPlus className="w-4 h-4 ml-2" />
+                إضافة طالب آخر
+              </Button>
+              <Link to="/dashboard">
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 rounded-lg">
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                  العودة للوحة التحكم
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

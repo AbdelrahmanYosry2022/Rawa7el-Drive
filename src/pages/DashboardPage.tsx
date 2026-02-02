@@ -29,15 +29,68 @@ const quickActions = [
 export default function DashboardPage() {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
+  const [studentCount, setStudentCount] = useState(0)
+  const [isPulsing, setIsPulsing] = useState(false)
 
   useEffect(() => {
     checkUser()
+    fetchStudentCount()
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('students-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'students'
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setStudentCount(prev => {
+              const newCount = prev + 1
+              triggerPulse()
+              return newCount
+            })
+          } else if (payload.eventType === 'DELETE') {
+            setStudentCount(prev => {
+              const newCount = Math.max(0, prev - 1)
+              triggerPulse()
+              return newCount
+            })
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
+
+  const triggerPulse = () => {
+    setIsPulsing(true)
+    setTimeout(() => setIsPulsing(false), 1000)
+  }
+
+  const fetchStudentCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('students')
+        .select('*', { count: 'exact', head: true })
+
+      if (error) throw error
+      if (count !== null) setStudentCount(count)
+    } catch (error) {
+      console.error('Error fetching student count:', error)
+    }
+  }
 
   const checkUser = async () => {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser()
-      
+
       if (!authUser) {
         navigate('/login')
         return
@@ -92,7 +145,7 @@ export default function DashboardPage() {
                 <Bell style={{ width: '1.25rem', height: '1.25rem', color: '#475569' }} />
                 <span style={{ position: 'absolute', top: '0.25rem', right: '0.25rem', width: '0.5rem', height: '0.5rem', background: '#ef4444', borderRadius: '50%' }} />
               </button>
-              <button 
+              <button
                 onClick={handleLogout}
                 style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#475569', transition: 'all 0.2s' }}
                 title="تسجيل الخروج"
@@ -118,12 +171,13 @@ export default function DashboardPage() {
       <section style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1.5rem 2rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
           {[
-            { label: 'إجمالي الطلاب', value: '0', icon: Users },
+            { label: 'إجمالي الطلاب', value: studentCount, icon: Users, isLive: true },
             { label: 'الحضور اليوم', value: '0', icon: ClipboardCheck },
             { label: 'المجموعات النشطة', value: '0', icon: BookOpen },
             { label: 'نسبة الحضور', value: '0%', icon: TrendingUp },
           ].map((stat, idx) => {
             const Icon = stat.icon
+            const isTarget = stat.isLive
             return (
               <div key={idx} style={{ background: 'white', border: '1px solid #f1f5f9', borderRadius: '1rem', padding: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -131,7 +185,16 @@ export default function DashboardPage() {
                     <Icon style={{ width: '1.25rem', height: '1.25rem', color: '#059669' }} />
                   </div>
                   <div>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a' }}>{stat.value}</p>
+                    <p style={{
+                      fontSize: '1.5rem',
+                      fontWeight: 'bold',
+                      color: '#0f172a',
+                      transition: 'all 0.3s ease',
+                      transform: isTarget && isPulsing ? 'scale(1.2)' : 'scale(1)',
+                      color: isTarget && isPulsing ? '#10b981' : '#0f172a'
+                    }}>
+                      {stat.value}
+                    </p>
                     <p style={{ fontSize: '0.75rem', color: '#64748b' }}>{stat.label}</p>
                   </div>
                 </div>
