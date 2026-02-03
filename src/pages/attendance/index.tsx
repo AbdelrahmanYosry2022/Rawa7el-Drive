@@ -1,11 +1,12 @@
 // 'use client' removed for Vite;
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  ClipboardCheck, 
+import {
+  ClipboardCheck,
   ArrowRight,
   Calendar,
   Check,
@@ -18,16 +19,13 @@ import {
   QrCode
 } from 'lucide-react';
 
-// Mock data - will be replaced with real data from database
-const mockStudents = [
-  { id: '1', name: 'أحمد محمد علي', halaqa: 'المجموعة الأولى' },
-  { id: '2', name: 'محمد عبدالله سعيد', halaqa: 'المجموعة الأولى' },
-  { id: '3', name: 'عمر خالد أحمد', halaqa: 'المجموعة الأولى' },
-  { id: '4', name: 'يوسف إبراهيم محمد', halaqa: 'المجموعة الأولى' },
-  { id: '5', name: 'علي حسن عبدالرحمن', halaqa: 'المجموعة الأولى' },
-];
-
 type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused' | null;
+
+interface Student {
+  id: string;
+  name: string;
+  halaqa?: string;
+}
 
 interface AttendanceRecord {
   studentId: string;
@@ -37,10 +35,34 @@ interface AttendanceRecord {
 export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedHalaqa, setSelectedHalaqa] = useState('all');
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>(
-    mockStudents.map(s => ({ studentId: s.id, status: null }))
-  );
+  const [students, setStudents] = useState<Student[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('students')
+        .select('*');
+
+      if (error) throw error;
+
+      if (data) {
+        setStudents(data);
+        // Initialize attendance state for new students
+        setAttendance(data.map((s: any) => ({ studentId: s.id, status: null })));
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('ar-SA', {
@@ -51,6 +73,10 @@ export default function AttendancePage() {
     });
   };
 
+  const getFormattedDateForDB = (date: Date) => {
+    return date.toLocaleDateString('en-CA'); // Returns YYYY-MM-DD in local time
+  };
+
   const changeDate = (days: number) => {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() + days);
@@ -58,10 +84,10 @@ export default function AttendancePage() {
   };
 
   const setStudentAttendance = (studentId: string, status: AttendanceStatus) => {
-    setAttendance(prev => 
-      prev.map(record => 
-        record.studentId === studentId 
-          ? { ...record, status } 
+    setAttendance(prev =>
+      prev.map(record =>
+        record.studentId === studentId
+          ? { ...record, status }
           : record
       )
     );
@@ -73,13 +99,37 @@ export default function AttendancePage() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    const dateStr = getFormattedDateForDB(selectedDate);
+
     try {
-      // TODO: Call API to save attendance
-      console.log('Saving attendance:', { date: selectedDate, attendance });
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 1. Delete existing records for this date
+      await supabase
+        .from('attendance')
+        .delete()
+        .eq('date', dateStr);
+
+      // 2. Insert new records
+      const recordsToInsert = attendance
+        .filter(a => a.status !== null)
+        .map(a => ({
+          student_id: a.studentId,
+          status: a.status,
+          date: dateStr,
+          created_at: new Date().toISOString()
+        }));
+
+      if (recordsToInsert.length > 0) {
+        const { error } = await supabase
+          .from('attendance')
+          .insert(recordsToInsert);
+
+        if (error) throw error;
+      }
+
       alert('تم حفظ الحضور بنجاح');
     } catch (error) {
       console.error('Error saving attendance:', error);
+      alert('حدث خطأ أثناء حفظ الحضور');
     } finally {
       setIsSaving(false);
     }
@@ -88,15 +138,14 @@ export default function AttendancePage() {
   const getStatusButton = (studentId: string, status: AttendanceStatus, icon: React.ReactNode, label: string, color: string) => {
     const currentStatus = attendance.find(a => a.studentId === studentId)?.status;
     const isActive = currentStatus === status;
-    
+
     return (
       <button
         onClick={() => setStudentAttendance(studentId, status)}
-        className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
-          isActive 
-            ? `${color} text-white shadow-lg scale-105` 
+        className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${isActive
+            ? `${color} text-white shadow-lg scale-105`
             : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-        }`}
+          }`}
       >
         {icon}
         <span className="text-[10px] font-medium">{label}</span>
@@ -139,19 +188,19 @@ export default function AttendancePage() {
         <Card className="bg-white border border-slate-100 rounded-2xl">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <button 
+              <button
                 onClick={() => changeDate(-1)}
                 className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
               >
                 <ChevronRight className="w-5 h-5 text-slate-600" />
               </button>
-              
+
               <div className="flex items-center gap-3">
                 <Calendar className="w-5 h-5 text-indigo-600" />
                 <span className="font-semibold text-slate-900">{formatDate(selectedDate)}</span>
               </div>
-              
-              <button 
+
+              <button
                 onClick={() => changeDate(1)}
                 className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
                 disabled={selectedDate >= new Date()}
@@ -187,18 +236,18 @@ export default function AttendancePage() {
       <section className="max-w-4xl mx-auto px-4 md:px-6 pb-4">
         <div className="flex gap-2">
           <Link to="/attendance/qr">
-            <Button 
-              variant="default" 
-              size="sm" 
+            <Button
+              variant="default"
+              size="sm"
               className="rounded-xl text-xs bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white"
             >
               <QrCode className="w-3 h-3 ml-1" />
               تسجيل بـ QR
             </Button>
           </Link>
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={markAllPresent}
             className="rounded-xl text-xs"
           >
@@ -220,7 +269,7 @@ export default function AttendancePage() {
       {/* Students List */}
       <section className="max-w-4xl mx-auto px-4 md:px-6 pb-24">
         <div className="space-y-3">
-          {mockStudents.map((student) => {
+          {students.map((student) => {
             // studentAttendance available via: attendance.find(a => a.studentId === student.id)
             return (
               <Card key={student.id} className="bg-white border border-slate-100 rounded-2xl">
@@ -238,35 +287,35 @@ export default function AttendancePage() {
                         <p className="text-xs text-slate-500">{student.halaqa}</p>
                       </div>
                     </div>
-                    
+
                     {/* Attendance Buttons */}
                     <div className="flex items-center gap-2">
                       {getStatusButton(
-                        student.id, 
-                        'present', 
-                        <Check className="w-4 h-4" />, 
-                        'حاضر', 
+                        student.id,
+                        'present',
+                        <Check className="w-4 h-4" />,
+                        'حاضر',
                         'bg-emerald-500'
                       )}
                       {getStatusButton(
-                        student.id, 
-                        'absent', 
-                        <X className="w-4 h-4" />, 
-                        'غائب', 
+                        student.id,
+                        'absent',
+                        <X className="w-4 h-4" />,
+                        'غائب',
                         'bg-red-500'
                       )}
                       {getStatusButton(
-                        student.id, 
-                        'late', 
-                        <Clock className="w-4 h-4" />, 
-                        'متأخر', 
+                        student.id,
+                        'late',
+                        <Clock className="w-4 h-4" />,
+                        'متأخر',
                         'bg-amber-500'
                       )}
                       {getStatusButton(
-                        student.id, 
-                        'excused', 
-                        <Users className="w-4 h-4" />, 
-                        'معذور', 
+                        student.id,
+                        'excused',
+                        <Users className="w-4 h-4" />,
+                        'معذور',
                         'bg-blue-500'
                       )}
                     </div>
@@ -281,7 +330,7 @@ export default function AttendancePage() {
       {/* Save Button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-slate-200 p-4">
         <div className="max-w-4xl mx-auto">
-          <Button 
+          <Button
             onClick={handleSave}
             disabled={isSaving || stats.unmarked > 0}
             className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl py-6"

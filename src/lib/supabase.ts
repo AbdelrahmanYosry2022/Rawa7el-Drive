@@ -24,10 +24,22 @@ const MOCK_DB_USER = {
   email: 'admin@rawa7el.com'
 }
 
-// Simple in-memory store
-const mockStore: Record<string, any[]> = {
-  students: []
+// Load from local storage if available
+const loadStore = () => {
+  try {
+    const stored = localStorage.getItem('mock-db-store')
+    return stored ? JSON.parse(stored) : { students: [], attendance: [] }
+  } catch {
+    return { students: [], attendance: [] }
+  }
 }
+
+const saveStore = () => {
+  localStorage.setItem('mock-db-store', JSON.stringify(mockStore))
+}
+
+// Simple in-memory store
+const mockStore: Record<string, any[]> = loadStore()
 
 const mockSupabase = {
   auth: {
@@ -61,19 +73,14 @@ const mockSupabase = {
     }
   },
   from: (table: string) => {
-    let queryData = mockStore[table] || []
-    let resultCount: number | null = null
+    let queryData = [...(mockStore[table] || [])]
+    let selectOptions: { count?: string, head?: boolean } | null = null
     let currentOp = 'select'
 
     const chain = {
       select: (columns: any = '*', options?: { count?: string, head?: boolean }) => {
         currentOp = 'select'
-        if (options?.count) {
-          resultCount = queryData.length
-        }
-        if (options?.head) {
-          queryData = []
-        }
+        selectOptions = options || null
         return chain
       },
       eq: (column: string, value: any) => {
@@ -114,16 +121,17 @@ const mockSupabase = {
 
         if (!mockStore[table]) mockStore[table] = []
         mockStore[table].push(...newItems)
+        saveStore()
+
+        // Dispatch event for realtime updates
+        window.dispatchEvent(new CustomEvent('mock-db-change', {
+          detail: { table, eventType: 'INSERT', new: newItems[0] }
+        }))
 
         return { data: newItems, error: null }
       },
       update: (data: any) => {
         currentOp = 'update'
-        // We'll apply the update in 'then'
-        // But for now, since we don't have the update data stored in the chain for 'then',
-        // let's just do a simple hack: update queryData in place and return async result-like object that is also a chain?
-        // No, proper way is to store data.
-        // For simplicity in this fix, we will just support delete properly first.
         return chain
       },
       upsert: async () => ({ data: null, error: null }),
@@ -138,10 +146,27 @@ const mockSupabase = {
             const idsToDelete = queryData.map((d: any) => d.id)
             if (mockStore[table]) {
               mockStore[table] = mockStore[table].filter((d: any) => !idsToDelete.includes(d.id))
+              saveStore()
             }
+
+            // Dispatch event for realtime updates
+            window.dispatchEvent(new CustomEvent('mock-db-change', {
+              detail: { table, eventType: 'DELETE', old: { id: idsToDelete[0] } }
+            }))
+
             resolve({ data: queryData, error: null })
           } else {
-            resolve({ data: queryData, count: resultCount, error: null })
+            let resultCount = null
+            if (selectOptions?.count) {
+              resultCount = queryData.length
+            }
+
+            let resultData = queryData
+            if (selectOptions?.head) {
+              resultData = []
+            }
+
+            resolve({ data: resultData, count: resultCount, error: null })
           }
         } catch (error: any) {
           resolve({ data: null, error: { message: error.message || 'An error occurred' } })
@@ -158,7 +183,15 @@ const mockSupabase = {
   },
   channel: (name: string) => {
     const channelMock = {
-      on: function (type: string, filter: any, callback: (payload: any) => void) { return this },
+      on: function (type: string, filter: any, callback: (payload: any) => void) {
+        // Simple listener for mock events
+        const handler = (e: CustomEvent) => {
+          if (filter.table && e.detail.table !== filter.table) return
+          callback(e.detail)
+        }
+        window.addEventListener('mock-db-change', handler as any)
+        return this
+      },
       subscribe: function () { return this }
     }
     return channelMock

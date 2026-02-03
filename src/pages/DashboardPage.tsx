@@ -32,13 +32,16 @@ export default function DashboardPage() {
   const [studentCount, setStudentCount] = useState(0)
   const [isPulsing, setIsPulsing] = useState(false)
 
+  const [attendanceCount, setAttendanceCount] = useState(0)
+  const [attendanceRate, setAttendanceRate] = useState(0)
+
   useEffect(() => {
     checkUser()
-    fetchStudentCount()
+    fetchStats()
 
     // Subscribe to realtime changes
     const channel = supabase
-      .channel('students-db-changes')
+      .channel('db-changes')
       .on(
         'postgres_changes',
         {
@@ -46,21 +49,16 @@ export default function DashboardPage() {
           schema: 'public',
           table: 'students'
         },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setStudentCount(prev => {
-              const newCount = prev + 1
-              triggerPulse()
-              return newCount
-            })
-          } else if (payload.eventType === 'DELETE') {
-            setStudentCount(prev => {
-              const newCount = Math.max(0, prev - 1)
-              triggerPulse()
-              return newCount
-            })
-          }
-        }
+        () => fetchStats()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attendance'
+        },
+        () => fetchStats()
       )
       .subscribe()
 
@@ -68,6 +66,52 @@ export default function DashboardPage() {
       supabase.removeChannel(channel)
     }
   }, [])
+
+  const fetchStats = async () => {
+    await fetchStudentCount()
+    await fetchAttendanceStats()
+  }
+
+  const fetchAttendanceStats = async () => {
+    try {
+      const today = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local time
+
+      // Get present count for today
+      const { count, error } = await supabase
+        .from('attendance')
+        .select('*', { count: 'exact', head: true })
+        .eq('date', today)
+        .eq('status', 'present')
+
+      if (error) throw error
+
+      const presentCount = count || 0
+      setAttendanceCount(presentCount)
+
+      // Calculate rate
+      // We need total students count to calculate rate correctly
+      // We can use the state 'studentCount' but it might not be ready yet.
+      // So let's fetch total students count again or pass it.
+      // Better to fetch total students count here or wait for fetchStudentCount.
+      // Let's rely on fetchStudentCount updating the state, but state updates are async.
+      // So let's chain the calls or fetch total again.
+
+      const { count: totalStudents, error: studentError } = await supabase
+        .from('students')
+        .select('*', { count: 'exact', head: true })
+
+      if (studentError) throw studentError
+
+      if (totalStudents && totalStudents > 0) {
+        setAttendanceRate(Math.round((presentCount / totalStudents) * 100))
+      } else {
+        setAttendanceRate(0)
+      }
+
+    } catch (error) {
+      console.error('Error fetching attendance stats:', error)
+    }
+  }
 
   const triggerPulse = () => {
     setIsPulsing(true)
@@ -172,9 +216,9 @@ export default function DashboardPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
           {[
             { label: 'إجمالي الطلاب', value: studentCount, icon: Users, isLive: true },
-            { label: 'الحضور اليوم', value: '0', icon: ClipboardCheck },
+            { label: 'الحضور اليوم', value: attendanceCount, icon: ClipboardCheck },
             { label: 'المجموعات النشطة', value: '0', icon: BookOpen },
-            { label: 'نسبة الحضور', value: '0%', icon: TrendingUp },
+            { label: 'نسبة الحضور', value: `${attendanceRate}%`, icon: TrendingUp },
           ].map((stat, idx) => {
             const Icon = stat.icon
             const isTarget = stat.isLive
