@@ -64,7 +64,34 @@ export default function InvitationsPage() {
         .order('created_at', { ascending: false })
       
       if (fetchError) throw fetchError
-      setInvitations(data || [])
+
+      // Fetch actual registered user counts per invitation token from User table
+      if (data && data.length > 0) {
+        const tokens = data.map((inv: InvitationLink) => inv.token)
+        const { data: users, error: usersError } = await supabase
+          .from('User')
+          .select('invited_by')
+          .in('invited_by', tokens)
+
+        if (!usersError && users) {
+          const countMap: Record<string, number> = {}
+          users.forEach((u: any) => {
+            if (u.invited_by) {
+              countMap[u.invited_by] = (countMap[u.invited_by] || 0) + 1
+            }
+          })
+          // Update uses_count with actual count from User table
+          const updatedData = data.map((inv: InvitationLink) => ({
+            ...inv,
+            uses_count: countMap[inv.token] || 0
+          }))
+          setInvitations(updatedData)
+        } else {
+          setInvitations(data || [])
+        }
+      } else {
+        setInvitations(data || [])
+      }
       setError(null)
     } catch (err) {
       console.error('Error fetching invitations:', err)

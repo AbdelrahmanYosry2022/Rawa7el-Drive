@@ -7,9 +7,9 @@ import {
   ChevronLeft,
   Clock,
   MapPin,
-  Users,
-  Sparkles,
-  Loader2
+  FileText,
+  Loader2,
+  Eye
 } from 'lucide-react';
 
 type CalendarEvent = {
@@ -20,7 +20,6 @@ type CalendarEvent = {
   startTime: string | null;
   endTime: string | null;
   location: string | null;
-  speakers: { name: string; topic?: string }[] | null;
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
 };
 
@@ -30,11 +29,18 @@ const MONTHS_AR = [
   'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
 ];
 
+const STATUS_MAP: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  SCHEDULED: { label: 'مجدول', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' },
+  COMPLETED: { label: 'مكتمل', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+  CANCELLED: { label: 'ملغي', color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200' },
+};
+
 export default function StudentCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -43,15 +49,16 @@ export default function StudentCalendarPage() {
   const fetchEvents = async () => {
     setIsLoading(true);
     try {
-      // Get the start and end of the current month
-      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
-      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const startStr = `${startOfMonth.getFullYear()}-${String(startOfMonth.getMonth() + 1).padStart(2, '0')}-01`;
+      const endStr = `${endOfMonth.getFullYear()}-${String(endOfMonth.getMonth() + 1).padStart(2, '0')}-${String(endOfMonth.getDate()).padStart(2, '0')}`;
 
       const { data, error } = await supabase
         .from('CalendarEvent')
         .select('*')
-        .gte('date', startOfMonth.split('T')[0])
-        .lte('date', endOfMonth.split('T')[0])
+        .gte('date', startStr)
+        .lte('date', endStr)
         .order('date', { ascending: true });
 
       if (error) throw error;
@@ -89,30 +96,27 @@ export default function StudentCalendarPage() {
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
-      if (direction === 'prev') {
-        newDate.setMonth(newDate.getMonth() - 1);
-      } else {
-        newDate.setMonth(newDate.getMonth() + 1);
-      }
+      if (direction === 'prev') newDate.setMonth(newDate.getMonth() - 1);
+      else newDate.setMonth(newDate.getMonth() + 1);
       return newDate;
     });
+    setSelectedDate(null);
+    setExpandedEvent(null);
   };
 
   const days = getDaysInMonth(currentDate);
-  const selectedDayEvents = selectedDate
-    ? getEventsForDay(selectedDate.getDate())
-    : [];
+  const selectedDayEvents = selectedDate ? getEventsForDay(selectedDate.getDate()) : [];
 
   return (
     <div className="p-6 md:p-8 space-y-8">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">تقويم الحضور</h1>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">التقويم</h1>
           <p className="text-slate-500 font-medium text-lg">تابع جدول المحاضرات واللقاءات الخاصة بك</p>
         </div>
         <div className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-2xl border border-emerald-100 flex items-center gap-2">
-          <Sparkles className="w-5 h-5" />
+          <Eye className="w-5 h-5" />
           <span className="font-bold">عرض فقط</span>
         </div>
       </div>
@@ -151,48 +155,57 @@ export default function StudentCalendarPage() {
               </div>
 
               {/* Calendar Days */}
-              <div className="grid grid-cols-7 gap-2">
-                {days.map((day, idx) => {
-                  if (day === null) {
-                    return <div key={idx} className="aspect-square" />;
-                  }
+              {isLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-7 gap-2">
+                  {days.map((day, idx) => {
+                    if (day === null) return <div key={idx} className="aspect-square" />;
 
-                  const dayEvents = getEventsForDay(day);
-                  const isSelected = selectedDate?.getDate() === day &&
-                    selectedDate?.getMonth() === currentDate.getMonth() &&
-                    selectedDate?.getFullYear() === currentDate.getFullYear();
-                  const isToday = new Date().getDate() === day &&
-                    new Date().getMonth() === currentDate.getMonth() &&
-                    new Date().getFullYear() === currentDate.getFullYear();
+                    const dayEvents = getEventsForDay(day);
+                    const hasEvents = dayEvents.length > 0;
+                    const isSelected = selectedDate?.getDate() === day &&
+                      selectedDate?.getMonth() === currentDate.getMonth() &&
+                      selectedDate?.getFullYear() === currentDate.getFullYear();
+                    const isToday = new Date().getDate() === day &&
+                      new Date().getMonth() === currentDate.getMonth() &&
+                      new Date().getFullYear() === currentDate.getFullYear();
 
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
-                      className={`
-                        aspect-square rounded-2xl p-2 flex flex-col items-center justify-center
-                        transition-all duration-300 relative group
-                        ${isSelected ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 scale-105' : 'hover:bg-slate-50'}
-                        ${isToday && !isSelected ? 'border-2 border-emerald-500 text-emerald-600 font-black' : ''}
-                      `}
-                    >
-                      <span className={`text-lg font-bold ${isSelected ? 'text-white' : 'text-slate-700'}`}>
-                        {day}
-                      </span>
-                      {dayEvents.length > 0 && (
-                        <div className="flex gap-1 mt-1">
-                          {dayEvents.slice(0, 3).map((_, i) => (
-                            <div
-                              key={i}
-                              className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white/60' : 'bg-emerald-500'}`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
+                          setExpandedEvent(null);
+                        }}
+                        className={`
+                          aspect-square rounded-2xl p-2 flex flex-col items-center justify-center
+                          transition-all duration-300 relative group
+                          ${isSelected ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 scale-105' : 'hover:bg-slate-50'}
+                          ${isToday && !isSelected ? 'border-2 border-emerald-500 text-emerald-600 font-black' : ''}
+                          ${hasEvents && !isSelected ? 'bg-blue-50 border border-blue-200' : ''}
+                        `}
+                      >
+                        <span className={`text-lg font-bold ${isSelected ? 'text-white' : hasEvents ? 'text-blue-700' : 'text-slate-700'}`}>
+                          {day}
+                        </span>
+                        {hasEvents && (
+                          <div className="flex gap-1 mt-1">
+                            {dayEvents.slice(0, 3).map((_, i) => (
+                              <div
+                                key={i}
+                                className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white/60' : 'bg-blue-500'}`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -226,76 +239,69 @@ export default function StudentCalendarPage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {selectedDayEvents.map(event => (
-                        <div
-                          key={event.id}
-                          className={`p-6 rounded-3xl border-2 transition-all ${
-                            event.status === 'COMPLETED'
-                              ? 'bg-green-50/50 border-green-100'
-                              : event.status === 'CANCELLED'
-                              ? 'bg-red-50/50 border-red-100'
-                              : 'bg-slate-50/50 border-slate-100'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between mb-4">
-                            <h4 className="font-black text-slate-800 leading-tight">{event.title}</h4>
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                              event.status === 'COMPLETED'
-                                ? 'bg-green-100 text-green-700'
-                                : event.status === 'CANCELLED'
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-emerald-100 text-emerald-700'
-                            }`}>
-                              {event.status === 'COMPLETED' ? 'تمت' :
-                               event.status === 'CANCELLED' ? 'ملغية' : 'مجدولة'}
-                            </span>
-                          </div>
+                      {selectedDayEvents.map(event => {
+                        const statusInfo = STATUS_MAP[event.status];
+                        const isExpanded = expandedEvent === event.id;
 
-                          {event.description && (
-                            <p className="text-sm text-slate-600 font-medium mb-4 leading-relaxed line-clamp-2">
-                              {event.description}
-                            </p>
-                          )}
-
-                          <div className="space-y-3">
-                            {event.startTime && (
-                              <div className="flex items-center gap-3 text-slate-500">
-                                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm">
-                                  <Clock className="w-4 h-4 text-emerald-600" />
-                                </div>
-                                <span className="text-sm font-bold">
-                                  {event.startTime} {event.endTime && ` - ${event.endTime}`}
+                        return (
+                          <div
+                            key={event.id}
+                            className={`rounded-3xl border-2 transition-all overflow-hidden ${statusInfo.border} ${statusInfo.bg}`}
+                          >
+                            {/* Event Header */}
+                            <div
+                              className="p-5 cursor-pointer"
+                              onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
+                            >
+                              <div className="flex items-start justify-between mb-3">
+                                <h4 className="font-black text-slate-800 leading-tight">{event.title}</h4>
+                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${statusInfo.bg} ${statusInfo.color} border ${statusInfo.border}`}>
+                                  {statusInfo.label}
                                 </span>
                               </div>
-                            )}
 
-                            {event.location && (
-                              <div className="flex items-center gap-3 text-slate-500">
-                                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                              {event.startTime && (
+                                <div className="flex items-center gap-2 text-slate-500 text-sm mb-2">
+                                  <Clock className="w-4 h-4 text-emerald-600" />
+                                  <span className="font-bold">
+                                    {event.startTime}{event.endTime && ` - ${event.endTime}`}
+                                  </span>
+                                </div>
+                              )}
+
+                              {event.location && (
+                                <div className="flex items-center gap-2 text-slate-500 text-sm">
                                   <MapPin className="w-4 h-4 text-emerald-600" />
+                                  <span className="font-bold">{event.location}</span>
                                 </div>
-                                <span className="text-sm font-bold">{event.location}</span>
-                              </div>
-                            )}
+                              )}
 
-                            {event.speakers && event.speakers.length > 0 && (
-                              <div className="mt-4 pt-4 border-t border-slate-100">
-                                <div className="flex items-center gap-2 mb-3">
-                                  <Users className="w-4 h-4 text-slate-400" />
-                                  <span className="text-xs font-black text-slate-400 uppercase tracking-widest">المحاضرون</span>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {event.speakers.map((speaker, idx) => (
-                                    <div key={idx} className="bg-white px-3 py-1.5 rounded-xl border border-slate-100 shadow-sm">
-                                      <span className="text-sm font-bold text-slate-700">{speaker.name}</span>
-                                    </div>
-                                  ))}
+                              {event.description && !isExpanded && (
+                                <p className="text-sm text-slate-600 mt-3 line-clamp-2 leading-relaxed">{event.description}</p>
+                              )}
+
+                              {event.description && (
+                                <p className="text-xs text-emerald-600 font-bold mt-2">
+                                  {isExpanded ? 'إخفاء التفاصيل' : 'عرض التفاصيل الكاملة'}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Expanded Description */}
+                            {isExpanded && event.description && (
+                              <div className="px-5 pb-5">
+                                <div className="bg-white/80 rounded-2xl p-4 border border-slate-100">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <FileText className="w-4 h-4 text-slate-400" />
+                                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">تفاصيل اليوم</span>
+                                  </div>
+                                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{event.description}</p>
                                 </div>
                               </div>
                             )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </>

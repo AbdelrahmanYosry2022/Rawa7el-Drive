@@ -32,9 +32,10 @@ export default function StudentsPage() {
   const fetchStudents = async () => {
     try {
       const { data, error } = await supabase
-        .from('students')
+        .from('User')
         .select('*')
-        .order('created_at', { ascending: false });
+        .eq('role', 'STUDENT')
+        .order('createdAt', { ascending: false });
 
       if (error) throw error;
       setStudents(data || []);
@@ -46,14 +47,14 @@ export default function StudentsPage() {
   };
 
   const filteredStudents = students.filter(student =>
-    student.name.includes(searchQuery) || (student.phone && student.phone.includes(searchQuery))
+    (student.name && student.name.includes(searchQuery)) || (student.phone && student.phone.includes(searchQuery)) || (student.email && student.email.includes(searchQuery))
   );
 
   const handleDelete = async (id: string) => {
     if (confirm('هل أنت متأكد من حذف هذا الطالب؟')) {
       try {
         const { error } = await supabase
-          .from('students')
+          .from('User')
           .delete()
           .eq('id', id);
 
@@ -155,17 +156,19 @@ export default function StudentsPage() {
                       <div>
                         <h4 className="font-semibold text-slate-900">{student.name}</h4>
                         <div className="flex items-center gap-4 mt-1">
-                          <span className="flex items-center gap-1 text-xs text-slate-500">
-                            <Phone className="w-3 h-3" />
-                            {student.phone}
-                          </span>
+                          {student.phone && (
+                            <span className="flex items-center gap-1 text-xs text-slate-500">
+                              <Phone className="w-3 h-3" />
+                              {student.phone}
+                            </span>
+                          )}
                           <span className="flex items-center gap-1 text-xs text-slate-500">
                             <BookOpen className="w-3 h-3" />
-                            {student.halaqa}
+                            {student.email}
                           </span>
                           <span className="flex items-center gap-1 text-xs text-slate-500">
                             <Calendar className="w-3 h-3" />
-                            {student.age} سنة
+                            {new Date(student.createdAt).toLocaleDateString('ar-EG')}
                           </span>
                         </div>
                       </div>
@@ -173,11 +176,11 @@ export default function StudentsPage() {
 
                     {/* Status & Actions */}
                     <div className="flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${student.status === 'active'
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${student.isActive
                           ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-slate-100 text-slate-600'
                         }`}>
-                        {student.status === 'active' ? 'نشط' : 'غير نشط'}
+                        {student.isActive ? 'نشط' : 'غير نشط'}
                       </span>
 
                       <div className="flex items-center gap-1">

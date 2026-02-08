@@ -97,8 +97,9 @@ export default function DashboardPage() {
       // So let's chain the calls or fetch total again.
 
       const { count: totalStudents, error: studentError } = await supabase
-        .from('students')
+        .from('User')
         .select('*', { count: 'exact', head: true })
+        .eq('role', 'STUDENT')
 
       if (studentError) throw studentError
 
@@ -121,8 +122,9 @@ export default function DashboardPage() {
   const fetchStudentCount = async () => {
     try {
       const { count, error } = await supabase
-        .from('students')
+        .from('User')
         .select('*', { count: 'exact', head: true })
+        .eq('role', 'STUDENT')
 
       if (error) throw error
       if (count !== null) setStudentCount(count)

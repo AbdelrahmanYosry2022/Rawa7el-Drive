@@ -36,16 +36,27 @@ export default function LoginPage() {
       }
 
       // Get user role from User table
-      const { data: userData } = await supabase
+      const { data: userData, error: userError } = await supabase
         .from('User')
         .select('role')
         .eq('id', authData.user?.id)
         .single()
 
+      console.log('Auth user ID:', authData.user?.id)
+      console.log('User table query result:', { userData, userError })
+
+      if (userError || !userData) {
+        console.error('Failed to fetch user role:', userError)
+        setError('لم يتم العثور على بيانات المستخدم. تواصل مع الإدارة.')
+        setIsLoading(false)
+        return
+      }
+
       setLoginSuccess(true)
       
       // Redirect based on role
-      const userRole = userData?.role || 'STUDENT'
+      const userRole = userData.role
+      console.log('User role:', userRole)
       setTimeout(() => {
         if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userRole === 'TEACHER') {
           navigate('/dashboard')
