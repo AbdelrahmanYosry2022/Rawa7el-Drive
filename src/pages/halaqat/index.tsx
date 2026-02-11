@@ -1,7 +1,7 @@
 // 'use client' removed for Vite;
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -47,6 +47,7 @@ const mockHalaqat = [
 ];
 
 export default function HalaqatPage() {
+  const navigate = useNavigate();
   const [halaqat] = useState(mockHalaqat);
 
   return (
@@ -56,9 +57,9 @@ export default function HalaqatPage() {
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link to="/dashboard" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+              <button onClick={() => navigate('/dashboard')} className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
                 <ArrowRight className="w-5 h-5 text-slate-600" />
-              </Link>
+              </button>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
                   <BookOpen className="w-6 h-6 text-white" />

@@ -12,6 +12,13 @@ import {
   Eye
 } from 'lucide-react';
 
+const formatTime12h = (time: string) => {
+  const [h, m] = time.split(':').map(Number);
+  const period = h >= 12 ? 'م' : 'ص';
+  const hour12 = h % 12 || 12;
+  return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
+};
+
 type CalendarEvent = {
   id: string;
   title: string;
@@ -264,7 +271,7 @@ export default function StudentCalendarPage() {
                                 <div className="flex items-center gap-2 text-slate-500 text-sm mb-2">
                                   <Clock className="w-4 h-4 text-emerald-600" />
                                   <span className="font-bold">
-                                    {event.startTime}{event.endTime && ` - ${event.endTime}`}
+                                    {formatTime12h(event.startTime)}{event.endTime && ` - ${formatTime12h(event.endTime)}`}
                                   </span>
                                 </div>
                               )}

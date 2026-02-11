@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Plus, 
   BookOpen, 
@@ -56,6 +56,7 @@ interface User {
 }
 
 export default function LecturesPage() {
+  const navigate = useNavigate();
   // supabase is imported from @/lib/supabase
 const [lectures, setLectures] = useState<Lecture[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -200,12 +201,12 @@ const [lectures, setLectures] = useState<Lecture[]>([]);
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Link 
-                to="/dashboard" 
+              <button 
+                onClick={() => navigate('/dashboard')} 
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <ArrowRight className="w-5 h-5" />
-              </Link>
+              </button>
               <div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   إدارة المحاضرات

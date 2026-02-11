@@ -1,7 +1,7 @@
 // 'use client' removed for Vite;
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function StudentsPage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,9 +74,9 @@ export default function StudentsPage() {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+            <button onClick={() => navigate('/dashboard')} className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
               <ArrowRight className="w-5 h-5 text-slate-600" />
-            </Link>
+            </button>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
                 <Users className="w-6 h-6 text-white" />
