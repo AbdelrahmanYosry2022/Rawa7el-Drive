@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import * as tus from 'tus-js-client';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
@@ -105,6 +106,7 @@ export default function MaterialsPage() {
   const [uploadDescription, setUploadDescription] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const tusUploadRef = useRef<tus.Upload|null>(null);
 
   useEffect(() => {
     fetchMaterials();
@@ -157,33 +159,44 @@ export default function MaterialsPage() {
     }
   };
 
-  const uploadWithProgress = (file: File, storagePath: string, token: string): Promise<void> => {
+  const uploadWithTus = (file: File, storagePath: string, token: string): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const url = `${supabaseUrl}/storage/v1/object/bedaya-materials/${storagePath}`;
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', url, true);
-      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      xhr.setRequestHeader('apikey', supabaseKey);
-      xhr.setRequestHeader('cache-control', '3600');
-      xhr.setRequestHeader('x-upsert', 'false');
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const pct = Math.round((event.loaded / event.total) * 85);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+      const projectId = supabaseUrl.replace('https://','').split('.')[0];
+      const upload = new tus.Upload(file, {
+        endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
+        retryDelays: [0, 3000, 5000, 10000, 20000],
+        headers: {
+          authorization: `Bearer ${token}`,
+          'x-upsert': 'false',
+        },
+        uploadDataDuringCreation: true,
+        removeFingerprintOnSuccess: true,
+        metadata: {
+          bucketName: 'bedaya-materials',
+          objectName: storagePath,
+          contentType: file.type,
+          cacheControl: '3600',
+        },
+        chunkSize: 6 * 1024 * 1024,
+        onError: function (error) {
+          tusUploadRef.current = null;
+          reject(error);
+        },
+        onProgress: function (bytesUploaded, bytesTotal) {
+          const pct = Math.round((bytesUploaded / bytesTotal) * 90);
           setUploadProgress(5 + pct);
-        }
-      };
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) resolve();
-        else {
-          try { const err = JSON.parse(xhr.responseText); reject(new Error(err.message || err.error || `Upload failed: ${xhr.status}`)); }
-          catch { reject(new Error(`فشل الرفع - كود: ${xhr.status}`)); }
-        }
-      };
-      xhr.onerror = () => reject(new Error('فشل الاتصال بالسيرفر'));
-      xhr.onabort = () => reject(new Error('تم إلغاء الرفع'));
-      xhr.send(file);
+        },
+        onSuccess: function () {
+          tusUploadRef.current = null;
+          resolve();
+        },
+      });
+      tusUploadRef.current = upload;
+      upload.findPreviousUploads().then((prev) => {
+        if (prev.length) upload.resumeFromPreviousUpload(prev[0]);
+        upload.start();
+      });
     });
   };
 
@@ -193,6 +206,18 @@ export default function MaterialsPage() {
     setUploadDescription('');
     setUploadProgress(0);
   };
+
+  const cancelUpload = () => {
+    if (tusUploadRef.current) {
+      tusUploadRef.current.abort(true);
+      tusUploadRef.current = null;
+    }
+    setIsUploading(false); setUploadProgress(0);
+    setShowUploadModal(false);
+    resetUploadForm();
+  };
+
+  const closeUploadModal = cancelUpload;
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,9 +241,9 @@ export default function MaterialsPage() {
       const safeName = uploadFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       const storagePath = `materials/${user.id}/${timestamp}_${safeName}`;
 
-      // Upload with real progress tracking
-      await uploadWithProgress(uploadFile, storagePath, session.access_token);
-      setUploadProgress(90);
+      // Upload with TUS resumable protocol (supports large files)
+      await uploadWithTus(uploadFile, storagePath, session.access_token);
+      setUploadProgress(95);
 
       // Get public URL
       const { data: urlData } = supabase.storage
@@ -226,7 +251,7 @@ export default function MaterialsPage() {
         .getPublicUrl(storagePath);
 
       const publicUrl = urlData?.publicUrl || null;
-      setUploadProgress(95);
+      setUploadProgress(97);
 
       // Determine file type
       const fileType = getFileType(uploadFile.type, uploadFile.name);
@@ -254,9 +279,12 @@ export default function MaterialsPage() {
       resetUploadForm();
       fetchMaterials();
     } catch (error: any) {
-      console.error('Error uploading:', error);
-      showNotification('error', error?.message || 'حدث خطأ أثناء رفع الملف');
+      if (error?.message !== 'cancelled' && error?.toString?.() !== 'tus: upload has been aborted') {
+        console.error('Error uploading:', error);
+        showNotification('error', error?.message || 'حدث خطأ أثناء رفع الملف');
+      }
     } finally {
+      tusUploadRef.current = null;
       setIsUploading(false);
       setUploadProgress(0);
     }
@@ -570,10 +598,7 @@ export default function MaterialsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-            onClick={() => {
-              setShowUploadModal(false);
-              resetUploadForm();
-            }}
+            onClick={closeUploadModal}
           />
 
           <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -581,10 +606,7 @@ export default function MaterialsPage() {
             <div className="sticky top-0 bg-white rounded-t-3xl border-b border-slate-100 p-6 flex items-center justify-between z-10">
               <h2 className="text-xl font-black text-slate-800">رفع مادة جديدة</h2>
               <button
-                onClick={() => {
-                  setShowUploadModal(false);
-                  resetUploadForm();
-                }}
+                onClick={closeUploadModal}
                 className="p-2 hover:bg-slate-100 rounded-xl transition-all"
               >
                 <X className="w-5 h-5 text-slate-400" />
@@ -685,28 +707,34 @@ export default function MaterialsPage() {
 
               {/* Submit */}
               <div className="flex items-center gap-3 pt-2">
-                <Button
-                  type="submit"
-                  disabled={!uploadFile || !uploadTitle.trim() || isUploading}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-12 font-bold text-base shadow-lg shadow-indigo-200 disabled:opacity-50 gap-2"
-                >
-                  {isUploading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Upload className="w-5 h-5" />
-                  )}
-                  {isUploading ? 'جاري الرفع...' : 'رفع المادة'}
-                </Button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowUploadModal(false);
-                    resetUploadForm();
-                  }}
-                  className="px-6 h-12 rounded-xl border border-slate-200 text-slate-500 font-bold hover:bg-slate-50 transition-all"
-                >
-                  إلغاء
-                </button>
+                {isUploading ? (
+                  <button
+                    type="button"
+                    onClick={cancelUpload}
+                    className="flex-1 h-12 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-base shadow-lg shadow-red-200 transition-all flex items-center justify-center gap-2"
+                  >
+                    <X className="w-5 h-5" />
+                    إلغاء الرفع
+                  </button>
+                ) : (
+                  <>
+                    <Button
+                      type="submit"
+                      disabled={!uploadFile || !uploadTitle.trim()}
+                      className="flex-1 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl font-black text-base shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                    >
+                      <Upload className="w-5 h-5" />
+                      رفع المادة
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={closeUploadModal}
+                      className="px-6 h-12 rounded-xl border border-slate-200 text-slate-500 font-bold hover:bg-slate-50 transition-all"
+                    >
+                      إلغاء
+                    </button>
+                  </>
+                )}
               </div>
             </form>
           </div>

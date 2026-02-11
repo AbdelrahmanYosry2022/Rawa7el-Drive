@@ -1,5 +1,6 @@
 // @ts-nocheck
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import * as tus from 'tus-js-client';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { FolderOpen, FileText, File, Presentation, Search, Grid, List, Tag, Calendar, Download, Eye, ArrowRight, Loader2, BookOpen, Upload, X, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
@@ -48,6 +49,7 @@ export default function LibraryPage() {
   const [upCat, setUpCat] = useState('other');
   const [uploading, setUploading] = useState(false);
   const [upProg, setUpProg] = useState(0);
+  const tusUploadRef = useRef<tus.Upload|null>(null);
 
   useEffect(() => { fetchMaterials(); }, []);
   const notify = (type:'success'|'error', msg:string) => { setNotif({type,msg}); setTimeout(()=>setNotif(null),4000); };
@@ -72,33 +74,56 @@ export default function LibraryPage() {
   };
   const resetForm = () => { setUpFile(null); setUpTitle(''); setUpDesc(''); setUpCat('other'); setUpProg(0); };
 
-  const uploadWithProgress = (file: File, storagePath: string, token: string): Promise<void> => {
+  const cancelUpload = () => {
+    if (tusUploadRef.current) {
+      tusUploadRef.current.abort(true);
+      tusUploadRef.current = null;
+    }
+    setUploading(false); setUpProg(0);
+    setShowModal(false);
+    resetForm();
+  };
+
+  const closeModal = cancelUpload;
+
+  const uploadWithTus = (file: File, storagePath: string, token: string): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const url = `${supabaseUrl}/storage/v1/object/bedaya-materials/${storagePath}`;
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', url, true);
-      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      xhr.setRequestHeader('apikey', supabaseKey);
-      xhr.setRequestHeader('cache-control', '3600');
-      xhr.setRequestHeader('x-upsert', 'false');
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const pct = Math.round((event.loaded / event.total) * 85);
-          setUpProg(5 + pct); // 5-90% for actual upload
-        }
-      };
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) { resolve(); }
-        else {
-          try { const err = JSON.parse(xhr.responseText); reject(new Error(err.message || err.error || `Upload failed: ${xhr.status}`)); }
-          catch { reject(new Error(`\u0641\u0634\u0644 \u0627\u0644\u0631\u0641\u0639 - \u0643\u0648\u062F: ${xhr.status}`)); }
-        }
-      };
-      xhr.onerror = () => reject(new Error('\u0641\u0634\u0644 \u0627\u0644\u0627\u062A\u0635\u0627\u0644 \u0628\u0627\u0644\u0633\u064A\u0631\u0641\u0631'));
-      xhr.onabort = () => reject(new Error('\u062A\u0645 \u0625\u0644\u063A\u0627\u0621 \u0627\u0644\u0631\u0641\u0639'));
-      xhr.send(file);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+      const projectId = supabaseUrl.replace('https://','').split('.')[0];
+      const upload = new tus.Upload(file, {
+        endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
+        retryDelays: [0, 3000, 5000, 10000, 20000],
+        headers: {
+          authorization: `Bearer ${token}`,
+          'x-upsert': 'false',
+        },
+        uploadDataDuringCreation: true,
+        removeFingerprintOnSuccess: true,
+        metadata: {
+          bucketName: 'bedaya-materials',
+          objectName: storagePath,
+          contentType: file.type,
+          cacheControl: '3600',
+        },
+        chunkSize: 6 * 1024 * 1024,
+        onError: function (error) {
+          tusUploadRef.current = null;
+          reject(error);
+        },
+        onProgress: function (bytesUploaded, bytesTotal) {
+          const pct = Math.round((bytesUploaded / bytesTotal) * 90);
+          setUpProg(5 + pct);
+        },
+        onSuccess: function () {
+          tusUploadRef.current = null;
+          resolve();
+        },
+      });
+      tusUploadRef.current = upload;
+      upload.findPreviousUploads().then((prev) => {
+        if (prev.length) upload.resumeFromPreviousUpload(prev[0]);
+        upload.start();
+      });
     });
   };
 
@@ -112,18 +137,17 @@ export default function LibraryPage() {
       setUpProg(5);
       const ts=Date.now(), safe=upFile.name.replace(/[^a-zA-Z0-9._-]/g,'_');
       const path=`materials/${user.id}/${ts}_${safe}`;
-      // Upload with real progress tracking
-      await uploadWithProgress(upFile, path, session.access_token);
-      setUpProg(90);
+      await uploadWithTus(upFile, path, session.access_token);
+      setUpProg(95);
       const {data:ud}=supabase.storage.from('bedaya-materials').getPublicUrl(path);
       const url=ud?.publicUrl||null;
-      setUpProg(95);
+      setUpProg(97);
       const ft=getFileType(upFile.type,upFile.name);
       const {error:ie}=await supabase.from('Material').insert({title:upTitle.trim(),description:upDesc.trim()||null,type:ft,fileName:upFile.name,fileSize:upFile.size,mimeType:upFile.type,storagePath:path,publicUrl:url,category:upCat,uploadedBy:user.id});
       if(ie) throw ie; setUpProg(100);
       notify('success','\u062A\u0645 \u0631\u0641\u0639 \u0627\u0644\u0645\u0627\u062F\u0629 \u0628\u0646\u062C\u0627\u062D');
       setShowModal(false); resetForm(); fetchMaterials();
-    } catch(err:any){ console.error(err); notify('error',err?.message||'\u062D\u062F\u062B \u062E\u0637\u0623 \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u0631\u0641\u0639'); } finally { setUploading(false); setUpProg(0); }
+    } catch(err:any){ if(err?.message !== 'cancelled' && err?.toString?.() !== 'tus: upload has been aborted'){ console.error(err); notify('error',err?.message||'\u062D\u062F\u062B \u062E\u0637\u0623 \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u0631\u0641\u0639'); } } finally { tusUploadRef.current = null; setUploading(false); setUpProg(0); }
   };
 
   const handleDelete = async (m: Material) => {
@@ -277,11 +301,11 @@ export default function LibraryPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={()=>{setShowModal(false);resetForm();}} />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeModal} />
           <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white rounded-t-3xl border-b border-slate-100 p-6 flex items-center justify-between z-10">
               <h2 className="text-xl font-black text-slate-800">{'\u0631\u0641\u0639 \u0645\u0627\u062F\u0629 \u062C\u062F\u064A\u062F\u0629'}</h2>
-              <button onClick={()=>{setShowModal(false);resetForm();}} className="p-2 hover:bg-slate-100 rounded-xl"><X className="w-5 h-5 text-slate-400" /></button>
+              <button onClick={closeModal} className="p-2 hover:bg-slate-100 rounded-xl"><X className="w-5 h-5 text-slate-400" /></button>
             </div>
             <form onSubmit={handleUpload} className="p-6 space-y-5">
               <div className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${upFile?'border-amber-300 bg-amber-50':'border-slate-200 hover:border-amber-300 hover:bg-slate-50'}`} onClick={()=>document.getElementById('lib-file-input')?.click()}>
@@ -316,15 +340,22 @@ export default function LibraryPage() {
                 </select>
               </div>
               {uploading && upProg>0 && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex justify-between text-sm"><span className="text-slate-600">{'\u062C\u0627\u0631\u064A \u0627\u0644\u0631\u0641\u0639...'}</span><span className="font-bold text-amber-600">{upProg}%</span></div>
-                  <div className="w-full bg-slate-100 rounded-full h-2"><div className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all" style={{width:`${upProg}%`}} /></div>
+                  <div className="w-full bg-slate-100 rounded-full h-3"><div className="bg-gradient-to-r from-amber-500 to-orange-500 h-3 rounded-full transition-all" style={{width:`${upProg}%`}} /></div>
                 </div>
               )}
-              <button type="submit" disabled={!upFile||!upTitle.trim()||uploading} className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl font-black text-lg shadow-lg shadow-amber-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
-                {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
-                {uploading ? '\u062C\u0627\u0631\u064A \u0627\u0644\u0631\u0641\u0639...' : '\u0631\u0641\u0639 \u0627\u0644\u0645\u0627\u062F\u0629'}
-              </button>
+              {uploading ? (
+                <button type="button" onClick={cancelUpload} className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-lg shadow-lg shadow-red-200 transition-all flex items-center justify-center gap-2">
+                  <X className="w-5 h-5" />
+                  {'\u0625\u0644\u063A\u0627\u0621 \u0627\u0644\u0631\u0641\u0639'}
+                </button>
+              ) : (
+                <button type="submit" disabled={!upFile||!upTitle.trim()} className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl font-black text-lg shadow-lg shadow-amber-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  {'\u0631\u0641\u0639 \u0627\u0644\u0645\u0627\u062F\u0629'}
+                </button>
+              )}
             </form>
           </div>
         </div>
