@@ -91,35 +91,33 @@ export default function StudentMaterialsPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+    <div className="px-4 py-4 md:p-8 space-y-4 md:space-y-8 animate-in fade-in duration-500">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">المواد التعليمية</h1>
-          <p className="text-slate-500 font-medium text-lg">تصفح وحمل المواد العلمية والمحاضرات الخاصة بك</p>
-        </div>
+      <div>
+        <h1 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight mb-0.5 md:mb-2">المواد التعليمية</h1>
+        <p className="text-slate-500 font-medium text-xs md:text-lg">تصفح وحمل المواد العلمية والمحاضرات</p>
       </div>
 
       {/* Filters & Search */}
-      <Card className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
+      <Card className="bg-white border border-slate-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
+        <CardContent className="p-3 md:p-4">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-slate-400" />
               <input
                 type="text"
                 placeholder="بحث في المواد..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pr-10 pl-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none text-slate-600 font-medium"
+                className="w-full pr-10 pl-4 py-2.5 md:py-3 bg-slate-50 border-none rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none text-slate-600 font-medium text-sm"
               />
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex gap-2 md:gap-4">
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="pr-4 pl-10 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none text-slate-600 font-bold appearance-none min-w-[160px]"
+                className="flex-1 md:flex-none pr-3 pl-8 py-2.5 md:py-3 bg-slate-50 border-none rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none text-slate-600 font-bold appearance-none text-sm md:min-w-[160px]"
               >
                 <option value="">جميع الأنواع</option>
                 <option value="PDF">PDF</option>
@@ -130,7 +128,7 @@ export default function StudentMaterialsPage() {
                 <option value="IMAGE">صور</option>
               </select>
 
-              <div className="flex bg-slate-50 rounded-2xl p-1 shadow-inner">
+              <div className="hidden md:flex bg-slate-50 rounded-2xl p-1 shadow-inner">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
@@ -151,23 +149,23 @@ export default function StudentMaterialsPage() {
 
       {/* Materials Grid/List */}
       {filteredMaterials.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-[2.5rem] border border-slate-100">
-          <div className="w-24 h-24 mx-auto mb-6 bg-slate-50 rounded-full flex items-center justify-center">
-            <File className="w-12 h-12 text-slate-300" />
+        <div className="text-center py-12 md:py-20 bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-100">
+          <div className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 bg-slate-50 rounded-full flex items-center justify-center">
+            <File className="w-8 h-8 md:w-12 md:h-12 text-slate-300" />
           </div>
-          <h3 className="text-xl font-black text-slate-800 mb-2">لا توجد مواد تعليمية</h3>
-          <p className="text-slate-500 font-medium">لم يتم رفع أي مواد في هذا القسم بعد.</p>
+          <h3 className="text-base md:text-xl font-black text-slate-800 mb-1 md:mb-2">لا توجد مواد تعليمية</h3>
+          <p className="text-slate-500 font-medium text-sm">لم يتم رفع أي مواد في هذا القسم بعد.</p>
         </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
           {filteredMaterials.map((material) => {
             const typeConfig = materialTypeConfig[material.type] || materialTypeConfig.OTHER;
             const TypeIcon = typeConfig.icon;
             
             return (
-              <Card key={material.id} className="group bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-emerald-900/5 hover:border-emerald-100 transition-all duration-500">
+              <Card key={material.id} className="group bg-white rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-emerald-900/5 hover:border-emerald-100 transition-all duration-500">
                 <CardContent className="p-0">
-                  <div className={`h-40 ${typeConfig.bgColor} flex items-center justify-center relative group-hover:scale-105 transition-transform duration-500`}>
+                  <div className={`h-28 md:h-40 ${typeConfig.bgColor} flex items-center justify-center relative group-hover:scale-105 transition-transform duration-500`}>
                     {material.type === 'IMAGE' && material.publicUrl ? (
                       <img src={material.publicUrl} alt={material.title} className="w-full h-full object-cover" />
                     ) : (
@@ -199,17 +197,17 @@ export default function StudentMaterialsPage() {
                     </div>
                   </div>
 
-                  <div className="p-6">
-                    <div className="flex items-start gap-3 mb-4">
-                      <div className={`p-2 rounded-xl ${typeConfig.bgColor}`}>
+                  <div className="p-3 md:p-6">
+                    <div className="flex items-start gap-2 md:gap-3 mb-2 md:mb-4">
+                      <div className={`p-1.5 md:p-2 rounded-lg md:rounded-xl ${typeConfig.bgColor} hidden md:block`}>
                         <TypeIcon className={`w-5 h-5 ${typeConfig.color}`} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-black text-slate-800 truncate leading-tight mb-1">{material.title}</h3>
-                        <p className="text-xs font-bold text-slate-400 truncate uppercase tracking-wider">{typeConfig.label}</p>
+                        <h3 className="font-black text-slate-800 truncate leading-tight mb-0.5 text-sm md:text-base">{material.title}</h3>
+                        <p className="text-[10px] md:text-xs font-bold text-slate-400 truncate uppercase tracking-wider">{typeConfig.label}</p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest pt-4 border-t border-slate-50">
+                    <div className="flex items-center justify-between text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest pt-2 md:pt-4 border-t border-slate-50">
                       <span>{formatFileSize(material.fileSize)}</span>
                       <span>{new Date(material.createdAt).toLocaleDateString('ar-EG')}</span>
                     </div>

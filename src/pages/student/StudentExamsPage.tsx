@@ -96,26 +96,24 @@ export default function StudentExamsPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+    <div className="px-4 py-4 md:p-8 space-y-4 md:space-y-8 animate-in fade-in duration-500">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">الاختبارات</h1>
-          <p className="text-slate-500 font-medium text-lg">قيّم مستواك وتابع تقدمك من خلال الاختبارات المتاحة</p>
-        </div>
+      <div>
+        <h1 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight mb-0.5 md:mb-2">الاختبارات</h1>
+        <p className="text-slate-500 font-medium text-xs md:text-lg">قيّم مستواك وتابع تقدمك</p>
       </div>
 
       {/* Search Bar */}
-      <Card className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden">
-        <CardContent className="p-4">
+      <Card className="bg-white border border-slate-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
+        <CardContent className="p-3 md:p-4">
           <div className="relative">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-slate-400" />
             <input
               type="text"
               placeholder="بحث عن اختبار..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pr-10 pl-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none text-slate-600 font-medium"
+              className="w-full pr-10 pl-4 py-2.5 md:py-3 bg-slate-50 border-none rounded-xl md:rounded-2xl focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none text-slate-600 font-medium text-sm"
             />
           </div>
         </CardContent>
@@ -123,26 +121,26 @@ export default function StudentExamsPage() {
 
       {/* Exams Grid */}
       {filteredExams.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-[2.5rem] border border-slate-100">
-          <div className="w-24 h-24 mx-auto mb-6 bg-slate-50 rounded-full flex items-center justify-center">
-            <FileQuestion className="w-12 h-12 text-slate-300" />
+        <div className="text-center py-12 md:py-20 bg-white rounded-2xl md:rounded-[2.5rem] border border-slate-100">
+          <div className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-4 md:mb-6 bg-slate-50 rounded-full flex items-center justify-center">
+            <FileQuestion className="w-8 h-8 md:w-12 md:h-12 text-slate-300" />
           </div>
-          <h3 className="text-xl font-black text-slate-800 mb-2">لا توجد اختبارات حالياً</h3>
-          <p className="text-slate-500 font-medium">سيتم إدراج الاختبارات هنا بمجرد نشرها من قبل المشرف.</p>
+          <h3 className="text-base md:text-xl font-black text-slate-800 mb-1 md:mb-2">لا توجد اختبارات حالياً</h3>
+          <p className="text-slate-500 font-medium text-sm">سيتم إدراج الاختبارات هنا بمجرد نشرها.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {filteredExams.map((exam) => {
             const submission = submissions[exam.id];
             const isCompleted = submission?.status === 'SUBMITTED';
             
             return (
-              <Card key={exam.id} className="group bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-emerald-900/5 hover:border-emerald-100 transition-all duration-500">
+              <Card key={exam.id} className="group bg-white rounded-2xl md:rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-emerald-900/5 hover:border-emerald-100 transition-all duration-500">
                 <CardContent className="p-0">
-                  <div className="p-8">
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform duration-500 shadow-sm shadow-emerald-100">
-                        <GraduationCap className="w-8 h-8" />
+                  <div className="p-5 md:p-8">
+                    <div className="flex items-start justify-between mb-4 md:mb-6">
+                      <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform duration-500 shadow-sm shadow-emerald-100">
+                        <GraduationCap className="w-6 h-6 md:w-8 md:h-8" />
                       </div>
                       {isCompleted ? (
                         <div className={`px-3 py-1 rounded-full flex items-center gap-1.5 border ${submission.passed ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
@@ -157,12 +155,12 @@ export default function StudentExamsPage() {
                       )}
                     </div>
 
-                    <h3 className="text-xl font-black text-slate-800 mb-2 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-1">{exam.title}</h3>
-                    <p className="text-slate-500 font-medium text-sm mb-6 line-clamp-2 leading-relaxed">
+                    <h3 className="text-base md:text-xl font-black text-slate-800 mb-1 md:mb-2 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-1">{exam.title}</h3>
+                    <p className="text-slate-500 font-medium text-xs md:text-sm mb-4 md:mb-6 line-clamp-2 leading-relaxed">
                       {exam.description || 'لا يوجد وصف متاح لهذا الاختبار.'}
                     </p>
 
-                    <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-50 mb-6">
+                    <div className="grid grid-cols-2 gap-3 md:gap-4 py-3 md:py-4 border-y border-slate-50 mb-4 md:mb-6">
                       <div className="flex flex-col">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">المدة</span>
                         <div className="flex items-center gap-1.5 text-slate-700">
@@ -192,7 +190,7 @@ export default function StudentExamsPage() {
                         </div>
                       </div>
                     ) : (
-                      <button className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200 group-hover:scale-[1.02] active:scale-[0.98]">
+                      <button className="w-full py-3 md:py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl md:rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200 active:scale-[0.98] text-sm md:text-base">
                         <PlayCircle className="w-5 h-5" />
                         <span>ابدأ الاختبار الآن</span>
                         <ArrowLeft className="w-4 h-4 mr-1 group-hover:translate-x-[-4px] transition-transform" />

@@ -115,47 +115,47 @@ export default function StudentCalendarPage() {
   const selectedDayEvents = selectedDate ? getEventsForDay(selectedDate.getDate()) : [];
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
+    <div className="px-4 py-4 md:p-8 space-y-4 md:space-y-8">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">التقويم</h1>
-          <p className="text-slate-500 font-medium text-lg">تابع جدول المحاضرات واللقاءات الخاصة بك</p>
+          <h1 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight mb-0.5 md:mb-2">التقويم</h1>
+          <p className="text-slate-500 font-medium text-xs md:text-lg">تابع جدول المحاضرات واللقاءات</p>
         </div>
-        <div className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-2xl border border-emerald-100 flex items-center gap-2">
-          <Eye className="w-5 h-5" />
-          <span className="font-bold">عرض فقط</span>
+        <div className="bg-emerald-50 text-emerald-700 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl border border-emerald-100 flex items-center gap-1.5">
+          <Eye className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="font-bold text-xs md:text-sm">عرض فقط</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
         {/* Calendar Grid */}
         <div className="lg:col-span-2">
-          <Card className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm">
-            <CardContent className="p-8">
+          <Card className="bg-white border border-slate-100 rounded-2xl md:rounded-[2.5rem] overflow-hidden shadow-sm">
+            <CardContent className="p-4 md:p-8">
               {/* Month Navigation */}
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-4 md:mb-8">
                 <button
                   onClick={() => navigateMonth('next')}
-                  className="p-3 rounded-2xl hover:bg-slate-50 text-slate-600 transition-all border border-transparent hover:border-slate-100"
+                  className="p-2 md:p-3 rounded-xl md:rounded-2xl hover:bg-slate-50 text-slate-600 transition-all"
                 >
-                  <ChevronRight className="w-6 h-6" />
+                  <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
-                <h2 className="text-2xl font-black text-slate-800">
+                <h2 className="text-lg md:text-2xl font-black text-slate-800">
                   {MONTHS_AR[currentDate.getMonth()]} {currentDate.getFullYear()}
                 </h2>
                 <button
                   onClick={() => navigateMonth('prev')}
-                  className="p-3 rounded-2xl hover:bg-slate-50 text-slate-600 transition-all border border-transparent hover:border-slate-100"
+                  className="p-2 md:p-3 rounded-xl md:rounded-2xl hover:bg-slate-50 text-slate-600 transition-all"
                 >
-                  <ChevronLeft className="w-6 h-6" />
+                  <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
               </div>
 
               {/* Days Header */}
-              <div className="grid grid-cols-7 gap-2 mb-4">
+              <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2 md:mb-4">
                 {DAYS_AR.map(day => (
-                  <div key={day} className="text-center text-sm font-bold text-slate-400 py-2 uppercase tracking-wider">
+                  <div key={day} className="text-center text-[10px] md:text-sm font-bold text-slate-400 py-1 md:py-2 uppercase tracking-wider">
                     {day}
                   </div>
                 ))}
@@ -167,7 +167,7 @@ export default function StudentCalendarPage() {
                   <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
                 </div>
               ) : (
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1 md:gap-2">
                   {days.map((day, idx) => {
                     if (day === null) return <div key={idx} className="aspect-square" />;
 
@@ -188,14 +188,14 @@ export default function StudentCalendarPage() {
                           setExpandedEvent(null);
                         }}
                         className={`
-                          aspect-square rounded-2xl p-2 flex flex-col items-center justify-center
+                          aspect-square rounded-xl md:rounded-2xl p-1 md:p-2 flex flex-col items-center justify-center
                           transition-all duration-300 relative group
                           ${isSelected ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 scale-105' : 'hover:bg-slate-50'}
                           ${isToday && !isSelected ? 'border-2 border-emerald-500 text-emerald-600 font-black' : ''}
                           ${hasEvents && !isSelected ? 'bg-blue-50 border border-blue-200' : ''}
                         `}
                       >
-                        <span className={`text-lg font-bold ${isSelected ? 'text-white' : hasEvents ? 'text-blue-700' : 'text-slate-700'}`}>
+                        <span className={`text-sm md:text-lg font-bold ${isSelected ? 'text-white' : hasEvents ? 'text-blue-700' : 'text-slate-700'}`}>
                           {day}
                         </span>
                         {hasEvents && (
@@ -218,13 +218,13 @@ export default function StudentCalendarPage() {
         </div>
 
         {/* Details Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="bg-white border border-slate-100 rounded-[2.5rem] shadow-sm sticky top-24">
-            <CardContent className="p-8">
+        <div className="lg:col-span-1 space-y-4 md:space-y-6">
+          <Card className="bg-white border border-slate-100 rounded-2xl md:rounded-[2.5rem] shadow-sm md:sticky md:top-24">
+            <CardContent className="p-5 md:p-8">
               {selectedDate ? (
                 <>
-                  <div className="mb-8 pb-6 border-b border-slate-50">
-                    <h3 className="text-xl font-black text-slate-800 mb-1">
+                  <div className="mb-4 md:mb-8 pb-4 md:pb-6 border-b border-slate-50">
+                    <h3 className="text-lg md:text-xl font-black text-slate-800 mb-1">
                       {DAYS_AR[selectedDate.getDay()]}
                     </h3>
                     <p className="text-slate-500 font-bold">

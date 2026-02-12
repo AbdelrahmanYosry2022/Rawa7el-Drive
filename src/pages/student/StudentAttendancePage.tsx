@@ -129,60 +129,92 @@ export default function StudentAttendancePage() {
   }
 
   return (
-    <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
+    <div className="px-4 py-4 md:p-8 space-y-4 md:space-y-8 animate-in fade-in duration-500">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">سجل الحضور والغياب</h1>
-          <p className="text-slate-500 font-medium text-lg">تتبع سجل حضورك ونسب الانضباط في البرنامج</p>
-        </div>
+      <div>
+        <h1 className="text-xl md:text-3xl font-black text-slate-800 tracking-tight mb-0.5 md:mb-2">سجل الحضور والغياب</h1>
+        <p className="text-slate-500 font-medium text-xs md:text-lg">تتبع سجل حضورك ونسب الانضباط</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
         {[
-          { label: 'نسبة الحضور', value: `${stats.percentage}%`, icon: ClipboardCheck, color: 'emerald' },
-          { label: 'أيام الحضور', value: stats.present, icon: CheckCircle2, color: 'blue' },
-          { label: 'أيام التأخير', value: stats.late, icon: Clock, color: 'amber' },
-          { label: 'أيام الغياب', value: stats.absent, icon: XCircle, color: 'red' },
-        ].map((stat, idx) => (
-          <Card key={idx} className="bg-white border border-slate-100 rounded-3xl shadow-sm hover:shadow-md transition-all group overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-50 flex items-center justify-center text-${stat.color}-600 group-hover:scale-110 transition-transform duration-300`}>
-                  <stat.icon className="w-6 h-6" />
+          { label: 'نسبة الحضور', value: `${stats.percentage}%`, icon: ClipboardCheck, bgClass: 'bg-emerald-50', textClass: 'text-emerald-600' },
+          { label: 'أيام الحضور', value: stats.present, icon: CheckCircle2, bgClass: 'bg-blue-50', textClass: 'text-blue-600' },
+          { label: 'أيام التأخير', value: stats.late, icon: Clock, bgClass: 'bg-amber-50', textClass: 'text-amber-600' },
+          { label: 'أيام الغياب', value: stats.absent, icon: XCircle, bgClass: 'bg-red-50', textClass: 'text-red-600' },
+        ].map((stat, idx) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={idx} className="bg-white border border-slate-100 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                  <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl ${stat.bgClass} flex items-center justify-center ${stat.textClass}`}>
+                    <Icon className="w-5 h-5 md:w-6 md:h-6" />
+                  </div>
+                  <div>
+                    <p className="text-xl md:text-2xl font-black text-slate-800 leading-none mb-0.5">{stat.value}</p>
+                    <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-black text-slate-800 leading-none mb-1">{stat.value}</p>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Attendance Table */}
-      <Card className="bg-white border border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden">
+      {/* Attendance Records */}
+      <Card className="bg-white border border-slate-100 rounded-2xl md:rounded-[2.5rem] shadow-sm overflow-hidden">
         <CardContent className="p-0">
-          <div className="p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h3 className="text-xl font-black text-slate-800 tracking-tight">تفاصيل السجل</h3>
-            <div className="flex items-center gap-3">
-              <div className="relative">
+          <div className="p-4 md:p-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <h3 className="text-base md:text-xl font-black text-slate-800 tracking-tight">تفاصيل السجل</h3>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
                 <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
                 <input 
                   type="text" 
-                  placeholder="بحث في الجلسات..." 
-                  className="bg-slate-50 border-none rounded-xl py-2 pr-10 pl-4 text-sm font-medium text-slate-600 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none w-full md:w-64"
+                  placeholder="بحث..." 
+                  className="bg-slate-50 border-none rounded-xl py-2 pr-10 pl-4 text-sm font-medium text-slate-600 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none w-full"
                 />
               </div>
-              <button className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-emerald-600 transition-colors">
+              <button className="p-2 bg-slate-50 rounded-xl text-slate-400 hover:text-emerald-600 transition-colors flex-shrink-0">
                 <Filter className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile: Card list */}
+          <div className="md:hidden">
+            {records.length === 0 ? (
+              <div className="px-4 py-12 text-center text-slate-400 font-medium text-sm">
+                لا يوجد سجل حضور مسجل حتى الآن
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-50">
+                {records.map((record) => (
+                  <div key={record.id} className="px-4 py-3.5 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                      <ClipboardCheck className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-slate-700 text-sm truncate">{record.session.title}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[11px] text-slate-400 font-medium">{new Date(record.session.date).toLocaleDateString('ar-EG')}</span>
+                        <span className="text-slate-200">·</span>
+                        <span className="text-[11px] text-slate-400 font-medium">{new Date(record.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      {getStatusBadge(record.status)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop: Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-right border-collapse">
               <thead>
                 <tr className="bg-slate-50/50">

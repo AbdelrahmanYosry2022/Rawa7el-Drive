@@ -16,7 +16,8 @@ import {
   Copy,
   ExternalLink,
   Loader2,
-  Wifi
+  Wifi,
+  Hash
 } from 'lucide-react';
 
 interface Attendee {
@@ -30,6 +31,7 @@ interface SessionData {
   id: string;
   title: string;
   createdAt: string;
+  pinCode: string;
 }
 
 export default function QRAttendancePage() {
@@ -40,7 +42,13 @@ export default function QRAttendancePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedPin, setCopiedPin] = useState(false);
   const channelRef = useRef<any>(null);
+
+  // Generate a random 4-digit PIN
+  const generatePin = (): string => {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+  };
 
   // Cleanup realtime subscription on unmount
   useEffect(() => {
@@ -73,6 +81,7 @@ export default function QRAttendancePage() {
       const sessionId = crypto.randomUUID();
       const now = new Date();
       const title = `جلسة حضور ${now.toLocaleDateString('ar-SA')}`;
+      const pinCode = generatePin();
 
       const { error: insertError } = await supabase
         .from('AttendanceSession')
@@ -81,6 +90,7 @@ export default function QRAttendancePage() {
           title,
           date: now.toISOString(),
           platform: 'BEDAYA',
+          pinCode,
           createdAt: now.toISOString(),
         });
 
@@ -104,7 +114,7 @@ export default function QRAttendancePage() {
         },
       });
 
-      setSession({ id: sessionId, title, createdAt: now.toISOString() });
+      setSession({ id: sessionId, title, createdAt: now.toISOString(), pinCode });
       setAttendees([]);
       setQrCodeDataUrl(qrDataUrl);
 
@@ -313,6 +323,28 @@ export default function QRAttendancePage() {
                       />
                     </div>
                   )}
+
+                  {/* PIN Code Display */}
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-dashed border-amber-300 rounded-2xl p-4 mb-4">
+                    <p className="text-xs font-medium text-amber-700 mb-2 flex items-center justify-center gap-1">
+                      <Hash className="w-3 h-3" />
+                      كود الحضور الرقمي
+                    </p>
+                    <div className="text-4xl font-black text-amber-800 tracking-[0.3em] font-mono">
+                      {session.pinCode}
+                    </div>
+                    <p className="text-[10px] text-amber-600 mt-1">يمكن للطلاب إدخال هذا الكود بدل مسح الـ QR</p>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(session.pinCode);
+                        setCopiedPin(true);
+                        setTimeout(() => setCopiedPin(false), 2000);
+                      }}
+                      className="mt-2 text-xs text-amber-700 hover:text-amber-900 underline"
+                    >
+                      {copiedPin ? 'تم النسخ ✓' : 'نسخ الكود'}
+                    </button>
+                  </div>
 
                   <div className="flex items-center justify-center gap-2 text-sm text-slate-500 mb-4">
                     <Clock className="w-4 h-4" />
