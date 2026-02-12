@@ -9,6 +9,7 @@ import StudentsPage from './pages/students'
 import NewStudentPage from './pages/students/new'
 import AttendancePage from './pages/attendance'
 import AttendanceQRPage from './pages/attendance/qr'
+import CheckInPage from './pages/attendance/checkin/[sessionId]/page'
 import CalendarPage from './pages/calendar'
 import HalaqatPage from './pages/halaqat'
 import InvitationsPage from './pages/invitations'
@@ -32,6 +33,7 @@ function App() {
       <Route path="/students/new" element={<NewStudentPage />} />
       <Route path="/attendance" element={<AttendancePage />} />
       <Route path="/attendance/qr" element={<AttendanceQRPage />} />
+      <Route path="/attendance/checkin/:sessionId" element={<CheckInPage />} />
       <Route path="/calendar" element={<CalendarPage />} />
       <Route path="/halaqat" element={<HalaqatPage />} />
       <Route path="/invitations" element={<InvitationsPage />} />

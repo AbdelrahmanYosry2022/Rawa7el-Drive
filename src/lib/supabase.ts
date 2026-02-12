@@ -87,6 +87,18 @@ const mockSupabase = {
         queryData = queryData.filter((item: any) => item[column] === value)
         return chain
       },
+      gte: (column: string, value: any) => {
+        queryData = queryData.filter((item: any) => item[column] >= value)
+        return chain
+      },
+      lte: (column: string, value: any) => {
+        queryData = queryData.filter((item: any) => item[column] <= value)
+        return chain
+      },
+      in: (column: string, values: any[]) => {
+        queryData = queryData.filter((item: any) => values.includes(item[column]))
+        return chain
+      },
       order: (column: string, { ascending = true } = {}) => {
         queryData = [...queryData].sort((a: any, b: any) => {
           if (a[column] < b[column]) return ascending ? -1 : 1

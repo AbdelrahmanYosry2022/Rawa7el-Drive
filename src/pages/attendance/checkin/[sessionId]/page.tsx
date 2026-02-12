@@ -2,59 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  CheckCircle2, 
+import {
+  CheckCircle2,
   Loader2,
   User,
   Mail,
   AlertCircle
 } from 'lucide-react';
 
-// Generate a unique visitor ID based on browser fingerprint
-function generateVisitorId(): string {
-  // Try to get from localStorage first
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('visitor_id');
-    if (stored) return stored;
-    
-    // Generate new ID based on various browser properties
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial';
-      ctx.fillText('fingerprint', 2, 2);
-    }
-    
-    const fingerprint = [
-      navigator.userAgent,
-      navigator.language,
-      screen.width,
-      screen.height,
-      screen.colorDepth,
-      new Date().getTimezoneOffset(),
-      canvas.toDataURL(),
-    ].join('|');
-    
-    // Simple hash function
-    let hash = 0;
-    for (let i = 0; i < fingerprint.length; i++) {
-      const char = fingerprint.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    
-    const visitorId = Math.abs(hash).toString(36) + Date.now().toString(36);
-    localStorage.setItem('visitor_id', visitorId);
-    return visitorId;
-  }
-  
-  return crypto.randomUUID();
-}
-
-type CheckInStatus = 'loading' | 'registration' | 'checking' | 'success' | 'already' | 'error';
+type CheckInStatus = 'loading' | 'registration' | 'checking' | 'success' | 'already' | 'error' | 'invalid';
 
 export default function CheckInPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -62,51 +21,106 @@ export default function CheckInPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [visitorId, setVisitorId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {
-    const id = generateVisitorId();
-    setVisitorId(id);
-    
-    // Try to auto check-in (for returning visitors)
-    tryAutoCheckIn(id);
+    if (sessionId) {
+      checkSessionAndAutoCheckIn();
+    } else {
+      setStatus('invalid');
+    }
   }, [sessionId]);
 
-  const tryAutoCheckIn = async (vid: string) => {
+  const checkSessionAndAutoCheckIn = async () => {
     try {
-      const response = await fetch('/api/attendance/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          visitorId: vid,
-        }),
-      });
+      // 1. Verify session exists
+      const { data: sessionData, error: sessError } = await supabase
+        .from('AttendanceSession')
+        .select('id, title')
+        .eq('id', sessionId!)
+        .single();
 
-      const data = await response.json();
+      if (sessError || !sessionData) {
+        setError('جلسة الحضور غير موجودة أو منتهية');
+        setStatus('invalid');
+        return;
+      }
 
-      if (response.ok) {
-        if (data.alreadyCheckedIn) {
-          setStatus('already');
-        } else {
-          setStatus('success');
-        }
-      } else if (data.requiresRegistration) {
-        // First time - need to register
-        setStatus('registration');
+      // 2. Check if user is logged in
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        // Logged-in user — auto check-in
+        await performCheckIn(user.id);
       } else {
-        setError(data.error || 'حدث خطأ');
-        setStatus('error');
+        // Not logged in — show registration form
+        setStatus('registration');
       }
     } catch (err) {
+      console.error('Error during check-in:', err);
       setError('حدث خطأ في الاتصال');
       setStatus('error');
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const performCheckIn = async (userId: string) => {
+    try {
+      // Check if already checked in
+      const { data: existing } = await supabase
+        .from('Attendance')
+        .select('id')
+        .eq('sessionId', sessionId!)
+        .eq('userId', userId)
+        .maybeSingle();
+
+      if (existing) {
+        // Get user name for display
+        const { data: userData } = await supabase
+          .from('User')
+          .select('name')
+          .eq('id', userId)
+          .single();
+        setUserName(userData?.name || null);
+        setStatus('already');
+        return;
+      }
+
+      // Insert attendance record
+      const now = new Date().toISOString();
+      const { error: insertError } = await supabase
+        .from('Attendance')
+        .insert({
+          id: crypto.randomUUID(),
+          sessionId: sessionId!,
+          userId,
+          status: 'PRESENT',
+          createdAt: now,
+          updatedAt: now,
+        });
+
+      if (insertError) {
+        console.error('Error inserting attendance:', insertError);
+        throw new Error('فشل في تسجيل الحضور');
+      }
+
+      // Get user name for display
+      const { data: userData } = await supabase
+        .from('User')
+        .select('name')
+        .eq('id', userId)
+        .single();
+      setUserName(userData?.name || null);
+      setStatus('success');
+    } catch (err) {
+      console.error('Error performing check-in:', err);
+      setError(err instanceof Error ? err.message : 'حدث خطأ');
+      setStatus('error');
+    }
+  };
+
+  const handleGuestRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim() || !email.trim()) {
       setError('يرجى إدخال الاسم والبريد الإلكتروني');
       return;
@@ -116,27 +130,55 @@ export default function CheckInPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/attendance/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          visitorId,
-          name: name.trim(),
-          email: email.trim().toLowerCase(),
-        }),
-      });
+      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedName = name.trim();
 
-      const data = await response.json();
+      // Check if user exists by email
+      const { data: existingUser } = await supabase
+        .from('User')
+        .select('id, name')
+        .eq('email', trimmedEmail)
+        .maybeSingle();
 
-      if (response.ok) {
-        setStatus('success');
+      let userId: string;
+
+      if (existingUser) {
+        userId = existingUser.id;
+        // Update name if different
+        if (trimmedName !== existingUser.name) {
+          await supabase
+            .from('User')
+            .update({ name: trimmedName, updatedAt: new Date().toISOString() })
+            .eq('id', userId);
+        }
       } else {
-        setError(data.error || 'حدث خطأ');
-        setStatus('registration');
+        // Create new user
+        userId = crypto.randomUUID();
+        const now = new Date().toISOString();
+        const { error: createError } = await supabase
+          .from('User')
+          .insert({
+            id: userId,
+            name: trimmedName,
+            email: trimmedEmail,
+            role: 'STUDENT',
+            platform: 'BEDAYA',
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+          });
+
+        if (createError) {
+          console.error('Error creating user:', createError);
+          throw new Error('فشل في إنشاء الحساب');
+        }
       }
+
+      // Now perform check-in
+      await performCheckIn(userId);
     } catch (err) {
-      setError('حدث خطأ في الاتصال');
+      console.error('Error in guest registration:', err);
+      setError(err instanceof Error ? err.message : 'حدث خطأ');
       setStatus('registration');
     }
   };
@@ -169,7 +211,7 @@ export default function CheckInPage() {
                 <p className="text-slate-500">أدخل بياناتك لتسجيل الحضور</p>
               </div>
 
-              <form onSubmit={handleRegister} className="space-y-4">
+              <form onSubmit={handleGuestRegister} className="space-y-4">
                 <div className="space-y-2">
                   <label htmlFor="name" className="block text-sm font-medium text-slate-700">
                     الاسم الكامل
@@ -201,7 +243,8 @@ export default function CheckInPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="example@email.com"
                       required
-                      className="w-full pr-11 pl-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-left dir-ltr"
+                      className="w-full pr-11 pl-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-left"
+                      dir="ltr"
                     />
                   </div>
                 </div>
@@ -229,6 +272,7 @@ export default function CheckInPage() {
                 <CheckCircle2 className="w-14 h-14 text-emerald-600" />
               </div>
               <h1 className="text-2xl font-bold text-slate-900 mb-2">تم تسجيل حضورك!</h1>
+              {userName && <p className="text-emerald-600 font-medium mb-1">مرحباً {userName}</p>}
               <p className="text-slate-500">شكراً لك، تم تسجيل حضورك بنجاح</p>
             </div>
           )}
@@ -239,7 +283,18 @@ export default function CheckInPage() {
                 <CheckCircle2 className="w-14 h-14 text-blue-600" />
               </div>
               <h1 className="text-2xl font-bold text-slate-900 mb-2">تم تسجيلك مسبقاً</h1>
+              {userName && <p className="text-blue-600 font-medium mb-1">مرحباً {userName}</p>}
               <p className="text-slate-500">لقد سجلت حضورك في هذه الجلسة من قبل</p>
+            </div>
+          )}
+
+          {status === 'invalid' && (
+            <div className="text-center py-8">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                <AlertCircle className="w-14 h-14 text-amber-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">جلسة غير صالحة</h1>
+              <p className="text-slate-500 mb-4">{error || 'رابط الحضور غير صالح أو منتهي'}</p>
             </div>
           )}
 

@@ -13,7 +13,8 @@ import {
   FolderOpen,
   GraduationCap,
   LogOut,
-  Loader2
+  Loader2,
+  QrCode
 } from 'lucide-react'
 
 const quickActions = [
@@ -64,9 +65,37 @@ export default function DashboardPage() {
   }
 
   const fetchAttendanceStats = async () => {
-    // Attendance table does not exist yet - set defaults
-    setAttendanceCount(0)
-    setAttendanceRate(0)
+    try {
+      const today = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD
+      // Find today's sessions
+      const { data: sessions } = await supabase
+        .from('AttendanceSession')
+        .select('id')
+        .gte('date', `${today}T00:00:00`)
+        .lte('date', `${today}T23:59:59`)
+
+      if (sessions && sessions.length > 0) {
+        const sessionIds = sessions.map((s: any) => s.id)
+        const { data: records } = await supabase
+          .from('Attendance')
+          .select('id, status')
+          .in('sessionId', sessionIds)
+
+        if (records) {
+          setAttendanceCount(records.filter((r: any) => r.status === 'PRESENT' || r.status === 'LATE').length)
+          const total = records.length
+          const present = records.filter((r: any) => r.status === 'PRESENT' || r.status === 'LATE').length
+          setAttendanceRate(total > 0 ? Math.round((present / total) * 100) : 0)
+        }
+      } else {
+        setAttendanceCount(0)
+        setAttendanceRate(0)
+      }
+    } catch (error) {
+      console.error('Error fetching attendance stats:', error)
+      setAttendanceCount(0)
+      setAttendanceRate(0)
+    }
   }
 
   const fetchStudentCount = async () => {
@@ -162,6 +191,35 @@ export default function DashboardPage() {
             <p style={{ color: '#d1fae5', fontSize: '1.125rem' }}>أهلاً بك في منصة بداية للتأهيل العلمي والتربوي</p>
           </div>
         </div>
+      </section>
+
+      {/* QR Attendance Banner */}
+      <section style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1.5rem 1.5rem' }}>
+        <Link to="/attendance/qr" style={{ textDecoration: 'none' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899)',
+            borderRadius: '1.25rem',
+            padding: '1.25rem 1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            color: 'white',
+            boxShadow: '0 10px 25px -5px rgba(99,102,241,0.3)',
+            cursor: 'pointer',
+            transition: 'all 0.3s',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ width: '3rem', height: '3rem', borderRadius: '0.75rem', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <QrCode style={{ width: '1.75rem', height: '1.75rem' }} />
+              </div>
+              <div>
+                <h3 style={{ fontWeight: 'bold', fontSize: '1.125rem', marginBottom: '0.125rem' }}>تسجيل الحضور بـ QR Code</h3>
+                <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)' }}>أنشئ جلسة واعرض الكود للطلاب لتسجيل حضورهم فوراً</p>
+              </div>
+            </div>
+            <ArrowLeft style={{ width: '1.25rem', height: '1.25rem' }} />
+          </div>
+        </Link>
       </section>
 
       <section style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1.5rem 2rem' }}>
