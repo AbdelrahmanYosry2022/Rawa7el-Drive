@@ -74,9 +74,9 @@ export default function StudentAttendancePage() {
 
       // Calculate Stats
       const total = formattedData.length;
-      const present = formattedData.filter(r => r.status === 'PRESENT').length;
-      const late = formattedData.filter(r => r.status === 'LATE').length;
-      const absent = formattedData.filter(r => r.status === 'ABSENT').length;
+      const present = formattedData.filter((r: any) => r.status === 'PRESENT').length;
+      const late = formattedData.filter((r: any) => r.status === 'LATE').length;
+      const absent = formattedData.filter((r: any) => r.status === 'ABSENT').length;
       const percentage = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
 
       setStats({ total, present, late, absent, percentage });

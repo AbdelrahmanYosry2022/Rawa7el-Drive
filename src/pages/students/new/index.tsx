@@ -1,7 +1,6 @@
 // 'use client' removed for Vite;
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,7 +19,6 @@ import {
 } from 'lucide-react';
 
 export default function NewStudentPage() {
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [formData, setFormData] = useState({

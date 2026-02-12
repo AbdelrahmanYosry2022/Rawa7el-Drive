@@ -78,7 +78,7 @@ const mockSupabase = {
     let currentOp = 'select'
 
     const chain = {
-      select: (columns: any = '*', options?: { count?: string, head?: boolean }) => {
+      select: (_columns: any = '*', options?: { count?: string, head?: boolean }) => {
         currentOp = 'select'
         selectOptions = options || null
         return chain
@@ -130,7 +130,7 @@ const mockSupabase = {
 
         return { data: newItems, error: null }
       },
-      update: (data: any) => {
+      update: (_data: any) => {
         currentOp = 'update'
         return chain
       },
@@ -181,9 +181,9 @@ const mockSupabase = {
       upload: async () => ({ data: null, error: null })
     })
   },
-  channel: (name: string) => {
+  channel: (_name: string) => {
     const channelMock = {
-      on: function (type: string, filter: any, callback: (payload: any) => void) {
+      on: function (_type: string, filter: any, callback: (payload: any) => void) {
         // Simple listener for mock events
         const handler = (e: CustomEvent) => {
           if (filter.table && e.detail.table !== filter.table) return
@@ -196,7 +196,7 @@ const mockSupabase = {
     }
     return channelMock
   },
-  removeChannel: (channel: any) => { }
+  removeChannel: (_channel: any) => { }
 }
 
 export const supabase = isMock ? (mockSupabase as any) : createSupabaseClient(supabaseUrl, supabaseAnonKey)

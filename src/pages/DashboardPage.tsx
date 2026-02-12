@@ -30,7 +30,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
   const [studentCount, setStudentCount] = useState(0)
-  const [isPulsing, setIsPulsing] = useState(false)
+  const isPulsing = false
 
   const [attendanceCount, setAttendanceCount] = useState(0)
   const [attendanceRate, setAttendanceRate] = useState(0)
@@ -67,11 +67,6 @@ export default function DashboardPage() {
     // Attendance table does not exist yet - set defaults
     setAttendanceCount(0)
     setAttendanceRate(0)
-  }
-
-  const triggerPulse = () => {
-    setIsPulsing(true)
-    setTimeout(() => setIsPulsing(false), 1000)
   }
 
   const fetchStudentCount = async () => {
@@ -189,7 +184,6 @@ export default function DashboardPage() {
                     <p style={{
                       fontSize: '1.5rem',
                       fontWeight: 'bold',
-                      color: '#0f172a',
                       transition: 'all 0.3s ease',
                       transform: isTarget && isPulsing ? 'scale(1.2)' : 'scale(1)',
                       color: isTarget && isPulsing ? '#10b981' : '#0f172a'

@@ -70,7 +70,7 @@ export default function StudentExamsPage() {
       if (subsError) throw subsError;
       
       const subsMap: Record<string, Submission> = {};
-      subsData?.forEach(sub => {
+      subsData?.forEach((sub: any) => {
         subsMap[sub.examId] = sub;
       });
       setSubmissions(subsMap);
