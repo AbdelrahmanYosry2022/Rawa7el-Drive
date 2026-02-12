@@ -1,6 +1,4 @@
 // @ts-nocheck
-// 'use client' removed for Vite;
-
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
@@ -20,7 +18,23 @@ import {
   Edit,
   Trash2,
   Check,
+  PlayCircle,
+  Trophy,
+  Gift,
+  Gamepad2,
+  Timer
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+
+// Mock Data for Feb 2026
+const SPECIAL_LECTURE_DATE = '2026-02-01';
+
+type LectureContent = {
+  theory: string;
+  videoUrl: string;
+  gameUrl: string;
+  puzzle: string;
+};
 
 type CalendarEvent = {
   id: string;
@@ -29,10 +43,11 @@ type CalendarEvent = {
   date: string;
   startTime: string | null;
   endTime: string | null;
-  location: string | null;
-  speakers: { name: string; topic?: string }[] | null;
+  type: 'regular' | 'practical' | 'special'; // Added types
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
-  creator?: { id: string; name: string };
+  content?: LectureContent;
+  points: number;
+  isCompleted?: boolean;
 };
 
 const DAYS_AR = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
@@ -42,50 +57,70 @@ const MONTHS_AR = [
 ];
 
 export default function CalendarPage() {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // Initialize to February 2026 as requested
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 1, 1)); // Feb is month 1 (0-indexed)
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  // supabase is imported from @/lib/supabase
-const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    date: '',
-    startTime: '',
-    endTime: '',
-    location: '',
-    speakers: [{ name: '', topic: '' }],
-  });
+  const [selectedLecture, setSelectedLecture] = useState<CalendarEvent | null>(null);
+  const [showLectureSidebar, setShowLectureSidebar] = useState(false);
+  const [userPoints, setUserPoints] = useState(0);
+  const [countdown, setCountdown] = useState<string>('');
 
+  // Mock specific data for the task
   useEffect(() => {
-    checkUserRole();
-    fetchEvents();
-  }, [currentDate]);
+    // Mock events
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
 
-  const checkUserRole = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      // Development mode: allow all users to manage calendar
-      setIsAdmin(true);
-    }
-  };
+    const formatDate = (date: Date) => {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
 
-  const fetchEvents = async () => {
-    setIsLoading(true);
-    const month = currentDate.getMonth() + 1;
-    const year = currentDate.getFullYear();
-
-    const res = await fetch(`/api/calendar?month=${month}&year=${year}`);
-    const data = await res.json();
-
-    if (data.events) {
-      setEvents(data.events);
-    }
+    const mockEvents: CalendarEvent[] = [
+      {
+        id: '1',
+        title: 'نظرية تاليس',
+        description: 'درس تفاعلي عن نظرية تاليس الهندسية وتطبيقاتها العملية',
+        date: formatDate(today),
+        startTime: '10:00',
+        endTime: '11:30',
+        type: 'practical', // Green neon
+        status: 'SCHEDULED',
+        points: 50,
+        content: {
+          theory: 'إذا قطع مستقيمان عدة مستقيمات متوازية، فإن أطوال القطع المقابلة على أحد القاطعين تكون متناسبة مع أطوال القطع المقابلة على القاطع الآخر.',
+          videoUrl: 'https://example.com/thales-video',
+          gameUrl: '/games/interior-designer',
+          puzzle: 'س = 80'
+        }
+      },
+      {
+        id: '2',
+        title: 'جبر متقدم',
+        description: 'حل معادلات الدرجة الثانية',
+        date: formatDate(nextWeek),
+        startTime: '09:00',
+        endTime: '10:30',
+        type: 'regular',
+        status: 'SCHEDULED',
+        points: 30
+      }
+    ];
+    setEvents(mockEvents);
     setIsLoading(false);
-  };
+
+    // Countdown Timer Logic (Mocking time relative to Feb 1st 2026 or just a visual timer)
+    const timer = setInterval(() => {
+      const now = new Date();
+      // For demo purposes, let's just show a static countdown or a real one to a future date
+      // If we are testing "today", let's make it look active.
+      setCountdown('00:45:30');
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [currentDate]);
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -122,538 +157,267 @@ const [formData, setFormData] = useState({
     });
   };
 
-  const openCreateModal = (date?: Date) => {
-    setEditingEvent(null);
-    const targetDate = date || new Date();
-    setFormData({
-      title: '',
-      description: '',
-      date: targetDate.toISOString().split('T')[0],
-      startTime: '',
-      endTime: '',
-      location: '',
-      speakers: [{ name: '', topic: '' }],
-    });
-    setIsModalOpen(true);
+  const handleDayClick = (day: number) => {
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dayEvents = events.filter(e => e.date === dateStr);
+
+    if (dayEvents.length > 0) {
+      setSelectedLecture(dayEvents[0]);
+      setShowLectureSidebar(true);
+    }
+
+    setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
   };
 
-  const openEditModal = (event: CalendarEvent) => {
-    setEditingEvent(event);
-    setFormData({
-      title: event.title,
-      description: event.description || '',
-      date: event.date,
-      startTime: event.startTime || '',
-      endTime: event.endTime || '',
-      location: event.location || '',
-      speakers: event.speakers || [{ name: '', topic: '' }],
-    });
-    setIsModalOpen(true);
+  const handleJoinLecture = () => {
+    // XP Logic
+    setUserPoints(prev => prev + 20); // Immediate XP for joining
+    alert('تم تسجيل حضورك! حصلت على 20 نقطة XP 🌟');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const payload = {
-      ...formData,
-      speakers: formData.speakers.filter(s => s.name.trim()),
-    };
-
-    const url = editingEvent ? `/api/calendar/${editingEvent.id}` : '/api/calendar';
-    const method = editingEvent ? 'PUT' : 'POST';
-
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    if (res.ok) {
-      setIsModalOpen(false);
-      fetchEvents();
+  const handleCompletePuzzle = () => {
+    // Reward Logic
+    if (selectedLecture && !selectedLecture.isCompleted) {
+      setUserPoints(prev => prev + 50); // Lumina coins value
+      const updatedEvents = events.map(e =>
+        e.id === selectedLecture.id ? { ...e, isCompleted: true } : e
+      );
+      setEvents(updatedEvents);
+      setSelectedLecture(prev => prev ? { ...prev, isCompleted: true } : null);
+      alert('🎉 مبروك! حللت اللغز وحصلت على عملات لومينا!');
     }
   };
-
-  const handleDelete = async (eventId: string) => {
-    if (!confirm('هل أنت متأكد من حذف هذا الحدث؟')) return;
-
-    const res = await fetch(`/api/calendar/${eventId}`, { method: 'DELETE' });
-    if (res.ok) {
-      fetchEvents();
-      setSelectedDate(null);
-    }
-  };
-
-  const handleStatusChange = async (eventId: string, status: 'COMPLETED' | 'CANCELLED') => {
-    const res = await fetch(`/api/calendar/${eventId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-    if (res.ok) {
-      fetchEvents();
-    }
-  };
-
-  const addSpeaker = () => {
-    setFormData(prev => ({
-      ...prev,
-      speakers: [...prev.speakers, { name: '', topic: '' }],
-    }));
-  };
-
-  const removeSpeaker = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      speakers: prev.speakers.filter((_, i) => i !== index),
-    }));
-  };
-
-  const updateSpeaker = (index: number, field: 'name' | 'topic', value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      speakers: prev.speakers.map((s, i) => i === index ? { ...s, [field]: value } : s),
-    }));
-  };
-
-  const days = getDaysInMonth(currentDate);
-  const selectedDayEvents = selectedDate
-    ? getEventsForDay(selectedDate.getDate())
-    : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
+    <div className="min-h-screen bg-slate-50 p-6 font-[Cairo]" dir="rtl">
       {/* Header */}
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Link href="/dashboard" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
-                <ArrowRight className="w-5 h-5 text-slate-600" />
-              </Link>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
-                <CalendarIcon className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-900">تقويم المحاضرات</h1>
-                <p className="text-xs text-slate-500">جدول محاضرات مشروع بداية</p>
-              </div>
-            </div>
-
-            <Link
-                href="/lectures"
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg transition-all"
-              >
-                <BookOpen className="w-4 h-4" />
-                إدارة المحاضرات
-              </Link>
+      <div className="max-w-7xl mx-auto mb-8 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link to="/dashboard" className="p-3 bg-white rounded-xl shadow-sm border border-slate-200 hover:bg-slate-50 transition-all group">
+            <ArrowRight className="w-6 h-6 text-slate-600 group-hover:text-emerald-600" />
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
+              <CalendarIcon className="w-8 h-8 text-emerald-600" />
+              تقويم المحاضرات 2026
+            </h1>
+            <p className="text-slate-500 mt-1">جدول محاضرات مشروع بداية</p>
           </div>
         </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Calendar Grid */}
-          <div className="lg:col-span-2">
-            <Card className="bg-white border border-slate-100 rounded-2xl overflow-hidden">
-              <CardContent className="p-6">
-                {/* Month Navigation */}
-                <div className="flex items-center justify-between mb-6">
-                  <button
-                    onClick={() => navigateMonth('next')}
-                    className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5 text-slate-600" />
-                  </button>
-                  <h2 className="text-xl font-bold text-slate-900">
-                    {MONTHS_AR[currentDate.getMonth()]} {currentDate.getFullYear()}
-                  </h2>
-                  <button
-                    onClick={() => navigateMonth('prev')}
-                    className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-slate-600" />
-                  </button>
-                </div>
-
-                {/* Days Header */}
-                <div className="grid grid-cols-7 gap-1 mb-2">
-                  {DAYS_AR.map(day => (
-                    <div key={day} className="text-center text-sm font-medium text-slate-500 py-2">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Calendar Days */}
-                <div className="grid grid-cols-7 gap-1">
-                  {days.map((day, idx) => {
-                    if (day === null) {
-                      return <div key={idx} className="aspect-square" />;
-                    }
-
-                    const dayEvents = getEventsForDay(day);
-                    const isSelected = selectedDate?.getDate() === day &&
-                      selectedDate?.getMonth() === currentDate.getMonth();
-                    const isToday = new Date().getDate() === day &&
-                      new Date().getMonth() === currentDate.getMonth() &&
-                      new Date().getFullYear() === currentDate.getFullYear();
-
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
-                        className={`
-                          aspect-square rounded-xl p-1 flex flex-col items-center justify-start
-                          transition-all hover:bg-slate-50
-                          ${isSelected ? 'bg-emerald-50 ring-2 ring-emerald-500' : ''}
-                          ${isToday ? 'bg-emerald-500 text-white hover:bg-emerald-600' : ''}
-                        `}
-                      >
-                        <span className={`text-sm font-medium ${isToday ? 'text-white' : ''}`}>
-                          {day}
-                        </span>
-                        {dayEvents.length > 0 && (
-                          <div className="flex gap-0.5 mt-1">
-                            {dayEvents.slice(0, 3).map((_, i) => (
-                              <div
-                                key={i}
-                                className={`w-1.5 h-1.5 rounded-full ${isToday ? 'bg-white' : 'bg-emerald-500'}`}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Upcoming Events List */}
-            <Card className="bg-white border border-slate-100 rounded-2xl mt-6">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">المحاضرات القادمة</h3>
-                {isLoading ? (
-                  <div className="text-center py-8 text-slate-500">جاري التحميل...</div>
-                ) : events.filter(e => e.status === 'SCHEDULED').length === 0 ? (
-                  <div className="text-center py-8 text-slate-500">لا توجد محاضرات مجدولة</div>
-                ) : (
-                  <div className="space-y-4">
-                    {events
-                      .filter(e => e.status === 'SCHEDULED')
-                      .slice(0, 5)
-                      .map(event => (
-                        <div
-                          key={event.id}
-                          className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
-                          onClick={() => {
-                            const eventDate = new Date(event.date);
-                            setSelectedDate(eventDate);
-                            setCurrentDate(eventDate);
-                          }}
-                        >
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex flex-col items-center justify-center text-white">
-                            <span className="text-xs">{MONTHS_AR[new Date(event.date).getMonth()].slice(0, 3)}</span>
-                            <span className="text-lg font-bold">{new Date(event.date).getDate()}</span>
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-slate-900">{event.title}</h4>
-                            {event.startTime && (
-                              <p className="text-sm text-slate-500 flex items-center gap-1 mt-1">
-                                <Clock className="w-3 h-3" />
-                                {event.startTime}
-                                {event.endTime && ` - ${event.endTime}`}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+        <div className="flex items-center gap-4">
+          <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200 flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-yellow-500" />
+            <span className="font-bold text-slate-700">{userPoints} XP</span>
           </div>
-
-          {/* Selected Day Details */}
-          <div className="lg:col-span-1">
-            <Card className="bg-white border border-slate-100 rounded-2xl sticky top-24">
-              <CardContent className="p-6">
-                {selectedDate ? (
-                  <>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-slate-900">
-                        {DAYS_AR[selectedDate.getDay()]}، {selectedDate.getDate()} {MONTHS_AR[selectedDate.getMonth()]}
-                      </h3>
-                    </div>
-
-                    {selectedDayEvents.length === 0 ? (
-                      <div className="text-center py-12 text-slate-500">
-                        <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-                        <p>لا توجد محاضرات في هذا اليوم</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {selectedDayEvents.map(event => (
-                          <div
-                            key={event.id}
-                            className={`p-4 rounded-xl border-2 ${
-                              event.status === 'COMPLETED'
-                                ? 'bg-green-50 border-green-200'
-                                : event.status === 'CANCELLED'
-                                ? 'bg-red-50 border-red-200'
-                                : 'bg-slate-50 border-slate-200'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <h4 className="font-semibold text-slate-900">{event.title}</h4>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                event.status === 'COMPLETED'
-                                  ? 'bg-green-100 text-green-700'
-                                  : event.status === 'CANCELLED'
-                                  ? 'bg-red-100 text-red-700'
-                                  : 'bg-blue-100 text-blue-700'
-                              }`}>
-                                {event.status === 'COMPLETED' ? 'مكتملة' :
-                                 event.status === 'CANCELLED' ? 'ملغية' : 'مجدولة'}
-                              </span>
-                            </div>
-
-                            {event.description && (
-                              <p className="text-sm text-slate-600 mb-3">{event.description}</p>
-                            )}
-
-                            <div className="space-y-2 text-sm">
-                              {event.startTime && (
-                                <div className="flex items-center gap-2 text-slate-500">
-                                  <Clock className="w-4 h-4" />
-                                  <span>
-                                    {event.startTime}
-                                    {event.endTime && ` - ${event.endTime}`}
-                                  </span>
-                                </div>
-                              )}
-
-                              {event.location && (
-                                <div className="flex items-center gap-2 text-slate-500">
-                                  <MapPin className="w-4 h-4" />
-                                  <span>{event.location}</span>
-                                </div>
-                              )}
-
-                              {event.speakers && event.speakers.length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-slate-200">
-                                  <p className="font-medium text-slate-700 mb-2 flex items-center gap-1">
-                                    <Users className="w-4 h-4" />
-                                    المحاضرون
-                                  </p>
-                                  <div className="space-y-1">
-                                    {event.speakers.map((speaker, idx) => (
-                                      <div key={idx} className="text-slate-600">
-                                        <span className="font-medium">{speaker.name}</span>
-                                        {speaker.topic && (
-                                          <span className="text-slate-400"> - {speaker.topic}</span>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* View only - no action buttons */}
-                            {event.status === 'SCHEDULED' && (
-                              <div className="mt-4 pt-3 border-t border-slate-200">
-                                <Link
-                                  href="/lectures"
-                                  className="flex items-center justify-center gap-2 w-full py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                >
-                                  <BookOpen className="w-4 h-4" />
-                                  إدارة من صفحة المحاضرات
-                                </Link>
-                              </div>
-                            )}
-
-                            {event.status !== 'SCHEDULED' && (
-                              <div className={`mt-3 text-center text-sm font-medium ${
-                                event.status === 'COMPLETED' ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {event.status === 'COMPLETED' ? '✓ تمت المحاضرة' : '✗ تم الإلغاء'}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-center py-12 text-slate-500">
-                    <CalendarIcon className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-                    <p>اختر يوماً لعرض المحاضرات</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <Link to="/lectures">
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+              <BookOpen className="w-4 h-4" />
+              إدارة المحاضرات
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {/* Create/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">
-                {editingEvent ? 'تعديل المحاضرة' : 'إضافة محاضرة جديدة'}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Sidebar Info */}
+        <div className="lg:col-span-1 space-y-6">
+          <Card className="border-none shadow-lg bg-white overflow-hidden">
+            <CardContent className="p-6 text-center">
+              <CalendarIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 mb-2">اختر يوماً لعرض المحاضرات</h3>
+              <p className="text-sm text-slate-500">انقر على الأيام الملونة في التقويم</p>
+            </CardContent>
+          </Card>
+
+          {/* Upcoming Lectures Countdown */}
+          <Card className="border-none shadow-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
+            <CardContent className="p-6">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                المحاضرات القادمة
+              </h3>
+              <div className="text-center py-4">
+                <div className="text-4xl font-mono font-bold tracking-wider mb-2">{countdown}</div>
+                <p className="text-indigo-200 text-sm">متبقي على بدء الحصة</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Calendar Grid */}
+        <div className="lg:col-span-3">
+          <Card className="border-none shadow-xl bg-white overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <button onClick={() => navigateMonth('prev')} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                <ChevronRight className="w-5 h-5 text-slate-600" />
+              </button>
+              <h2 className="text-xl font-bold text-slate-800">
+                {MONTHS_AR[currentDate.getMonth()]} {currentDate.getFullYear()}
               </h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 rounded-lg hover:bg-slate-100"
-              >
-                <X className="w-5 h-5 text-slate-500" />
+              <button onClick={() => navigateMonth('next')} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                <ChevronLeft className="w-5 h-5 text-slate-600" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <div className="p-6">
+              {/* Days Header */}
+              <div className="grid grid-cols-7 mb-4 text-center">
+                {DAYS_AR.map(day => (
+                  <div key={day} className="text-sm font-medium text-slate-500 py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Days Grid */}
+              <div className="grid grid-cols-7 gap-2">
+                {getDaysInMonth(currentDate).map((day, index) => {
+                  if (!day) return <div key={`empty-${index}`} className="aspect-square" />;
+
+                  const dayEvents = getEventsForDay(day);
+                  const hasEvents = dayEvents.length > 0;
+                  const isPractical = dayEvents.some(e => e.type === 'practical');
+                  const today = new Date();
+                  const isToday = day === today.getDate() && 
+                                currentDate.getMonth() === today.getMonth() && 
+                                currentDate.getFullYear() === today.getFullYear();
+
+                  return (
+                    <button
+                      key={day}
+                      onClick={() => handleDayClick(day)}
+                      className={`
+                                    aspect-square rounded-2xl flex items-center justify-center text-sm font-medium transition-all duration-300 relative group
+                                    ${isToday
+                                      ? 'bg-emerald-600 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] scale-105 ring-2 ring-emerald-400 ring-offset-2 font-bold z-10'
+                                      : hasEvents
+                                        ? isPractical
+                                          ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)] hover:shadow-[0_0_25px_rgba(16,185,129,0.6)] hover:scale-105 ring-2 ring-emerald-300 ring-offset-2'
+                                          : 'bg-indigo-500 text-white shadow-lg hover:bg-indigo-600'
+                                        : 'hover:bg-slate-50 text-slate-700'
+                                    }
+                                `}
+                    >
+                      {day}
+                      {hasEvents && (
+                        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full"></span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* Lecture Sidebar */}
+      {showLectureSidebar && selectedLecture && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setShowLectureSidebar(false)} />
+
+          <div className="relative w-full max-w-md bg-white h-full shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-left duration-300">
+            <button
+              onClick={() => setShowLectureSidebar(false)}
+              className="absolute top-4 left-4 p-2 hover:bg-slate-100 rounded-full"
+            >
+              <X className="w-6 h-6 text-slate-500" />
+            </button>
+
+            <div className="mt-8 space-y-8">
+              {/* Header */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  عنوان المحاضرة *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="مثال: محاضرة في أصول الفقه"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  الوصف
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  rows={3}
-                  placeholder="وصف مختصر للمحاضرة..."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    التاريخ *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.date}
-                    onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    المكان
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    onChange={e => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    placeholder="مثال: قاعة المحاضرات"
-                  />
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-3
+                            ${selectedLecture.type === 'practical' ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-100 text-indigo-700'}
+                        `}>
+                  {selectedLecture.type === 'practical' ? 'محاضرة تفاعلية' : 'محاضرة نظرية'}
+                </span>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">{selectedLecture.title}</h2>
+                <div className="flex items-center text-slate-500 text-sm gap-4">
+                  <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {selectedLecture.startTime}</span>
+                  <span className="flex items-center gap-1"><CalendarIcon className="w-4 h-4" /> {selectedLecture.date}</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    وقت البداية
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.startTime}
-                    onChange={e => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    وقت النهاية
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.endTime}
-                    onChange={e => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                </div>
-              </div>
+              {/* Join Button */}
+              <Button
+                onClick={handleJoinLecture}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-6 text-lg shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all transform hover:-translate-y-1"
+              >
+                دخول المحاضرة الآن
+                <ArrowRight className="mr-2 w-5 h-5" />
+              </Button>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-slate-700">
-                    المحاضرون
-                  </label>
-                  <button
-                    type="button"
-                    onClick={addSpeaker}
-                    className="text-sm text-emerald-600 hover:text-emerald-700"
-                  >
-                    + إضافة محاضر
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {formData.speakers.map((speaker, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={speaker.name}
-                        onChange={e => updateSpeaker(idx, 'name', e.target.value)}
-                        className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                        placeholder="اسم المحاضر"
-                      />
-                      <input
-                        type="text"
-                        value={speaker.topic}
-                        onChange={e => updateSpeaker(idx, 'topic', e.target.value)}
-                        className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                        placeholder="موضوع المحاضرة"
-                      />
-                      {formData.speakers.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeSpeaker(idx)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
+              {/* Content Flow */}
+              {selectedLecture.content && (
+                <div className="space-y-6 relative before:absolute before:right-3.5 before:top-4 before:bottom-4 before:w-0.5 before:bg-slate-200">
+
+                  {/* Step 1: Theory */}
+                  <div className="relative pr-10">
+                    <div className="absolute right-0 top-0 w-8 h-8 rounded-full bg-white border-2 border-indigo-500 flex items-center justify-center z-10">
+                      <BookOpen className="w-4 h-4 text-indigo-500" />
+                    </div>
+                    <h4 className="font-bold text-slate-900 mb-2">نص النظرية</h4>
+                    <p className="text-slate-600 text-sm leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100">
+                      {selectedLecture.content.theory}
+                    </p>
+                  </div>
+
+                  {/* Step 2: Video */}
+                  <div className="relative pr-10">
+                    <div className="absolute right-0 top-0 w-8 h-8 rounded-full bg-white border-2 border-indigo-500 flex items-center justify-center z-10">
+                      <PlayCircle className="w-4 h-4 text-indigo-500" />
+                    </div>
+                    <h4 className="font-bold text-slate-900 mb-2">فيديو الشرح</h4>
+                    <div className="aspect-video bg-slate-900 rounded-lg flex items-center justify-center cursor-pointer group">
+                      <PlayCircle className="w-12 h-12 text-white/50 group-hover:text-white transition-colors" />
+                    </div>
+                  </div>
+
+                  {/* Step 3: Game */}
+                  <div className="relative pr-10">
+                    <div className="absolute right-0 top-0 w-8 h-8 rounded-full bg-white border-2 border-emerald-500 flex items-center justify-center z-10">
+                      <Gamepad2 className="w-4 h-4 text-emerald-500" />
+                    </div>
+                    <h4 className="font-bold text-slate-900 mb-2">لعبة "مهندس الديكور"</h4>
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
+                      <p className="text-sm text-emerald-800 mb-3">طبق النظرية في تصميم غرفة حقيقية!</p>
+                      <Button variant="outline" className="w-full border-emerald-200 text-emerald-700 hover:bg-emerald-100">
+                        بدء اللعبة
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Step 4: Puzzle & Reward */}
+                  <div className="relative pr-10">
+                    <div className="absolute right-0 top-0 w-8 h-8 rounded-full bg-white border-2 border-yellow-500 flex items-center justify-center z-10">
+                      <Gift className="w-4 h-4 text-yellow-500" />
+                    </div>
+                    <h4 className="font-bold text-slate-900 mb-2">تحدي {selectedLecture.content.puzzle}</h4>
+                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-100 rounded-lg p-4 text-center">
+                      {!selectedLecture.isCompleted ? (
+                        <>
+                          <p className="text-sm text-yellow-800 mb-3">أوجد قيمة س للحصول على المكافأة</p>
+                          <Button onClick={handleCompletePuzzle} className="w-full bg-yellow-500 hover:bg-yellow-600 text-white border-none">
+                            حل اللغز واستلام الهدية
+                          </Button>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2 animate-in zoom-in duration-300">
+                          <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <Check className="w-6 h-6 text-yellow-600" />
+                          </div>
+                          <p className="font-bold text-yellow-700">تم استلام المكافأة!</p>
+                          <p className="text-xs text-yellow-600">+50 عملة لومينا</p>
+                        </div>
                       )}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
 
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
-                >
-                  {editingEvent ? 'حفظ التعديلات' : 'إضافة المحاضرة'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  إلغاء
-                </Button>
-              </div>
-            </form>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

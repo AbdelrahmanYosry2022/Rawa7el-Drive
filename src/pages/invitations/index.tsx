@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { 
   Link2, 
   Plus, 
@@ -36,6 +36,7 @@ interface InvitationLink {
 }
 
 export default function InvitationsPage() {
+  const navigate = useNavigate()
   const [invitations, setInvitations] = useState<InvitationLink[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
@@ -64,7 +65,34 @@ export default function InvitationsPage() {
         .order('created_at', { ascending: false })
       
       if (fetchError) throw fetchError
-      setInvitations(data || [])
+
+      // Fetch actual registered user counts per invitation token from User table
+      if (data && data.length > 0) {
+        const tokens = data.map((inv: InvitationLink) => inv.token)
+        const { data: users, error: usersError } = await supabase
+          .from('User')
+          .select('invited_by')
+          .in('invited_by', tokens)
+
+        if (!usersError && users) {
+          const countMap: Record<string, number> = {}
+          users.forEach((u: any) => {
+            if (u.invited_by) {
+              countMap[u.invited_by] = (countMap[u.invited_by] || 0) + 1
+            }
+          })
+          // Update uses_count with actual count from User table
+          const updatedData = data.map((inv: InvitationLink) => ({
+            ...inv,
+            uses_count: countMap[inv.token] || 0
+          }))
+          setInvitations(updatedData)
+        } else {
+          setInvitations(data || [])
+        }
+      } else {
+        setInvitations(data || [])
+      }
       setError(null)
     } catch (err) {
       console.error('Error fetching invitations:', err)
@@ -210,9 +238,9 @@ export default function InvitationsPage() {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+            <button onClick={() => navigate('/dashboard')} className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
               <ArrowRight className="w-5 h-5 text-slate-600" />
-            </Link>
+            </button>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
                 <Link2 className="w-6 h-6 text-white" />

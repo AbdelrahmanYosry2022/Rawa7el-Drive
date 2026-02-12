@@ -1,41 +1,70 @@
 // 'use client' removed for Vite;
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Users, 
-  UserPlus, 
-  Search, 
+import {
+  Users,
+  UserPlus,
+  Search,
   Edit,
   Trash2,
   Phone,
   Calendar,
   ArrowRight,
   BookOpen,
-  Filter
+  Filter,
+  Loader2
 } from 'lucide-react';
 
-// Mock data - will be replaced with real data from database
-const mockStudents = [
-  { id: '1', name: 'أحمد محمد علي', phone: '0501234567', age: 12, halaqa: 'المجموعة الأولى', joinDate: '2024-01-15', status: 'active' },
-  { id: '2', name: 'محمد عبدالله سعيد', phone: '0507654321', age: 10, halaqa: 'المجموعة الثانية', joinDate: '2024-02-20', status: 'active' },
-  { id: '3', name: 'عمر خالد أحمد', phone: '0509876543', age: 14, halaqa: 'المجموعة الأولى', joinDate: '2024-03-10', status: 'inactive' },
-];
-
 export default function StudentsPage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [students, setStudents] = useState(mockStudents);
+  const [students, setStudents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('User')
+        .select('*')
+        .eq('role', 'STUDENT')
+        .order('createdAt', { ascending: false });
+
+      if (error) throw error;
+      setStudents(data || []);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredStudents = students.filter(student =>
-    student.name.includes(searchQuery) || student.phone.includes(searchQuery)
+    (student.name && student.name.includes(searchQuery)) || (student.phone && student.phone.includes(searchQuery)) || (student.email && student.email.includes(searchQuery))
   );
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('هل أنت متأكد من حذف هذا الطالب؟')) {
-      setStudents(students.filter(s => s.id !== id));
+      try {
+        const { error } = await supabase
+          .from('User')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+        setStudents(students.filter(s => s.id !== id));
+      } catch (error) {
+        console.error('Error deleting student:', error);
+        alert('حدث خطأ أثناء الحذف');
+      }
     }
   };
 
@@ -45,9 +74,9 @@ export default function StudentsPage() {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+            <button onClick={() => navigate('/dashboard')} className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
               <ArrowRight className="w-5 h-5 text-slate-600" />
-            </Link>
+            </button>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
                 <Users className="w-6 h-6 text-white" />
@@ -74,7 +103,7 @@ export default function StudentsPage() {
               className="pr-10 bg-white border-slate-200 rounded-xl"
             />
           </div>
-          
+
           <div className="flex gap-3">
             <Button variant="outline" className="rounded-xl">
               <Filter className="w-4 h-4 ml-2" />
@@ -92,7 +121,11 @@ export default function StudentsPage() {
 
       {/* Students List */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 pb-12">
-        {filteredStudents.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+          </div>
+        ) : filteredStudents.length === 0 ? (
           <Card className="bg-white border border-slate-100 rounded-2xl">
             <CardContent className="p-12 text-center">
               <Users className="w-16 h-16 mx-auto text-slate-300 mb-4" />
@@ -119,46 +152,47 @@ export default function StudentsPage() {
                           {student.name.charAt(0)}
                         </span>
                       </div>
-                      
+
                       {/* Info */}
                       <div>
                         <h4 className="font-semibold text-slate-900">{student.name}</h4>
                         <div className="flex items-center gap-4 mt-1">
-                          <span className="flex items-center gap-1 text-xs text-slate-500">
-                            <Phone className="w-3 h-3" />
-                            {student.phone}
-                          </span>
+                          {student.phone && (
+                            <span className="flex items-center gap-1 text-xs text-slate-500">
+                              <Phone className="w-3 h-3" />
+                              {student.phone}
+                            </span>
+                          )}
                           <span className="flex items-center gap-1 text-xs text-slate-500">
                             <BookOpen className="w-3 h-3" />
-                            {student.halaqa}
+                            {student.email}
                           </span>
                           <span className="flex items-center gap-1 text-xs text-slate-500">
                             <Calendar className="w-3 h-3" />
-                            {student.age} سنة
+                            {new Date(student.createdAt).toLocaleDateString('ar-EG')}
                           </span>
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Status & Actions */}
                     <div className="flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        student.status === 'active' 
-                          ? 'bg-emerald-100 text-emerald-700' 
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${student.isActive
+                          ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        {student.status === 'active' ? 'نشط' : 'غير نشط'}
+                        }`}>
+                        {student.isActive ? 'نشط' : 'غير نشط'}
                       </span>
-                      
+
                       <div className="flex items-center gap-1">
                         <Link to={`/students/${student.id}/edit`}>
                           <Button variant="ghost" size="sm" className="p-2 rounded-lg">
                             <Edit className="w-4 h-4 text-slate-500" />
                           </Button>
                         </Link>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="p-2 rounded-lg hover:bg-red-50"
                           onClick={() => handleDelete(student.id)}
                         >
