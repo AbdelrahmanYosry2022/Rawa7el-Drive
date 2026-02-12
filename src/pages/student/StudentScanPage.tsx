@@ -114,41 +114,6 @@ export default function StudentScanPage() {
     isProcessingRef.current = false;
   };
 
-  const handlePinSubmit = async () => {
-    const pin = pinDigits.join('');
-    if (pin.length !== 4) {
-      setError('يرجى إدخال الكود المكون من 4 أرقام');
-      return;
-    }
-
-    setStatus('processing');
-    setError(null);
-
-    try {
-      // Find session by PIN code
-      const { data: sessionData, error: sessError } = await supabase
-        .from('AttendanceSession')
-        .select('id')
-        .eq('pinCode', pin)
-        .order('createdAt', { ascending: false })
-        .limit(1);
-
-      if (sessError || !sessionData || sessionData.length === 0) {
-        setError('الكود غير صحيح أو الجلسة منتهية');
-        setStatus('idle');
-        setPinDigits(['', '', '', '']);
-        pinInputRefs.current[0]?.focus();
-        return;
-      }
-
-      await performCheckIn(sessionData[0].id);
-    } catch (err) {
-      console.error('PIN check-in error:', err);
-      setError('حدث خطأ أثناء تسجيل الحضور');
-      setStatus('error');
-    }
-  };
-
   const performCheckIn = async (sessionId: string) => {
     try {
       // Verify session exists
@@ -229,15 +194,47 @@ export default function StudentScanPage() {
     const newDigits = [...pinDigits];
     newDigits[index] = value.slice(-1); // Only last char
     setPinDigits(newDigits);
+    setError(null);
 
     // Auto-focus next input
     if (value && index < 3) {
       pinInputRefs.current[index + 1]?.focus();
     }
 
-    // Auto-submit when all 4 digits entered
-    if (value && index === 3 && newDigits.every(d => d !== '')) {
-      setTimeout(() => handlePinSubmit(), 100);
+    // Auto-verify immediately when all 4 digits entered
+    if (value && newDigits.every(d => d !== '')) {
+      // Use the digits directly (don't rely on state which hasn't updated yet)
+      const pin = newDigits.join('');
+      autoVerifyPin(pin);
+    }
+  };
+
+  const autoVerifyPin = async (pin: string) => {
+    setStatus('processing');
+    setError(null);
+
+    try {
+      const { data: sessionData, error: sessError } = await supabase
+        .from('AttendanceSession')
+        .select('id')
+        .eq('pinCode', pin)
+        .order('createdAt', { ascending: false })
+        .limit(1);
+
+      if (sessError || !sessionData || sessionData.length === 0) {
+        setError('الكود غير صحيح أو منتهي الصلاحية');
+        setStatus('idle');
+        setPinDigits(['', '', '', '']);
+        setTimeout(() => pinInputRefs.current[0]?.focus(), 100);
+        return;
+      }
+
+      await performCheckIn(sessionData[0].id);
+    } catch (err) {
+      console.error('PIN auto-verify error:', err);
+      setError('حدث خطأ أثناء التحقق');
+      setStatus('idle');
+      setPinDigits(['', '', '', '']);
     }
   };
 
@@ -246,7 +243,10 @@ export default function StudentScanPage() {
       pinInputRefs.current[index - 1]?.focus();
     }
     if (e.key === 'Enter') {
-      handlePinSubmit();
+      const pin = pinDigits.join('');
+      if (pin.length === 4) {
+        autoVerifyPin(pin);
+      }
     }
   };
 
@@ -445,13 +445,9 @@ export default function StudentScanPage() {
             </div>
           )}
 
-          <button
-            onClick={handlePinSubmit}
-            disabled={pinDigits.some(d => d === '')}
-            className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:from-slate-300 disabled:to-slate-400 text-white rounded-2xl font-bold text-lg transition-all shadow-lg shadow-emerald-200 disabled:shadow-none"
-          >
-            تسجيل الحضور
-          </button>
+          <p className="text-center text-xs text-slate-400">
+            أدخل الأرقام الأربعة وسيتم التحقق تلقائياً
+          </p>
 
           {/* Clear button */}
           {pinDigits.some(d => d !== '') && (
