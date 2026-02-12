@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<h2>Right-click each image → Save As to public/ folder</h2>
+<div style="display:flex;gap:20px;flex-wrap:wrap;padding:20px;">
+  <div>
+    <h3>icon-192.png</h3>
+    <canvas id="c192" width="192" height="192"></canvas>
+  </div>
+  <div>
+    <h3>icon-512.png</h3>
+    <canvas id="c512" width="512" height="512"></canvas>
+  </div>
+  <div>
+    <h3>icon-maskable-192.png (with padding)</h3>
+    <canvas id="cm192" width="192" height="192"></canvas>
+  </div>
+  <div>
+    <h3>icon-maskable-512.png (with padding)</h3>
+    <canvas id="cm512" width="512" height="512"></canvas>
+  </div>
+</div>
+<script>
+function drawIcon(canvas, size, maskable) {
+  const ctx = canvas.getContext('2d');
+  const s = size;
+
+  // Background — indigo to purple gradient
+  const grad = ctx.createLinearGradient(0, 0, s, s);
+  grad.addColorStop(0, '#4f46e5');   // indigo-600
+  grad.addColorStop(0.5, '#7c3aed'); // violet-600
+  grad.addColorStop(1, '#9333ea');   // purple-600
+
+  // Rounded rect background
+  const r = s * 0.18;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.lineTo(s - r, 0);
+  ctx.quadraticCurveTo(s, 0, s, r);
+  ctx.lineTo(s, s - r);
+  ctx.quadraticCurveTo(s, s, s - r, s);
+  ctx.lineTo(r, s);
+  ctx.quadraticCurveTo(0, s, 0, s - r);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Subtle pattern overlay
+  ctx.globalAlpha = 0.08;
+  for (let i = 0; i < s; i += s * 0.06) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(0, i);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Icon area
+  const pad = maskable ? s * 0.2 : s * 0.15;
+  const iconSize = s - pad * 2;
+  const cx = s / 2;
+  const cy = s / 2;
+
+  // Draw open book icon
+  const bw = iconSize * 0.85;  // book width
+  const bh = iconSize * 0.7;   // book height
+  const bx = cx - bw / 2;
+  const by = cy - bh / 2 + iconSize * 0.02;
+
+  // Shadow
+  ctx.globalAlpha = 0.15;
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(cx, by + bh + iconSize * 0.04, bw * 0.4, iconSize * 0.03, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Left page
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(cx, by + bh * 0.08);
+  ctx.quadraticCurveTo(cx - bw * 0.15, by, bx, by + bh * 0.05);
+  ctx.lineTo(bx, by + bh);
+  ctx.quadraticCurveTo(cx - bw * 0.1, by + bh - bh * 0.03, cx, by + bh - bh * 0.01);
+  ctx.closePath();
+  ctx.fill();
+
+  // Right page
+  ctx.beginPath();
+  ctx.moveTo(cx, by + bh * 0.08);
+  ctx.quadraticCurveTo(cx + bw * 0.15, by, bx + bw, by + bh * 0.05);
+  ctx.lineTo(bx + bw, by + bh);
+  ctx.quadraticCurveTo(cx + bw * 0.1, by + bh - bh * 0.03, cx, by + bh - bh * 0.01);
+  ctx.closePath();
+  ctx.fill();
+
+  // Page lines — left
+  ctx.strokeStyle = 'rgba(79, 70, 229, 0.15)';
+  ctx.lineWidth = Math.max(1, s * 0.004);
+  const lineCount = 5;
+  for (let i = 1; i <= lineCount; i++) {
+    const ly = by + bh * 0.2 + (bh * 0.55) * (i / (lineCount + 1));
+    const lx1 = bx + bw * 0.06;
+    const lx2 = cx - bw * 0.04;
+    ctx.beginPath();
+    ctx.moveTo(lx1, ly);
+    ctx.lineTo(lx2, ly);
+    ctx.stroke();
+  }
+
+  // Page lines — right
+  for (let i = 1; i <= lineCount; i++) {
+    const ly = by + bh * 0.2 + (bh * 0.55) * (i / (lineCount + 1));
+    const lx1 = cx + bw * 0.04;
+    const lx2 = bx + bw - bw * 0.06;
+    ctx.beginPath();
+    ctx.moveTo(lx1, ly);
+    ctx.lineTo(lx2, ly);
+    ctx.stroke();
+  }
+
+  // Spine line
+  ctx.strokeStyle = 'rgba(79, 70, 229, 0.25)';
+  ctx.lineWidth = Math.max(1.5, s * 0.006);
+  ctx.beginPath();
+  ctx.moveTo(cx, by + bh * 0.06);
+  ctx.lineTo(cx, by + bh);
+  ctx.stroke();
+
+  // Small star/sparkle accent top-right
+  const sx = cx + bw * 0.3;
+  const sy = by - iconSize * 0.02;
+  const ss = iconSize * 0.06;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  ctx.beginPath();
+  ctx.moveTo(sx, sy - ss);
+  ctx.lineTo(sx + ss * 0.3, sy - ss * 0.3);
+  ctx.lineTo(sx + ss, sy);
+  ctx.lineTo(sx + ss * 0.3, sy + ss * 0.3);
+  ctx.lineTo(sx, sy + ss);
+  ctx.lineTo(sx - ss * 0.3, sy + ss * 0.3);
+  ctx.lineTo(sx - ss, sy);
+  ctx.lineTo(sx - ss * 0.3, sy - ss * 0.3);
+  ctx.closePath();
+  ctx.fill();
+
+  // Small dot accents
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.beginPath();
+  ctx.arc(bx + bw * 0.1, by - iconSize * 0.04, iconSize * 0.015, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx + bw * 0.42, by + bh * 0.15, iconSize * 0.012, 0, Math.PI * 2);
+  ctx.fill();
+
+  // "بداية" text at bottom
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+  ctx.font = `bold ${iconSize * 0.14}px "Cairo", "Segoe UI", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText('بداية', cx, by + bh + iconSize * 0.06);
+}
+
+drawIcon(document.getElementById('c192'), 192, false);
+drawIcon(document.getElementById('c512'), 512, false);
+drawIcon(document.getElementById('cm192'), 192, true);
+drawIcon(document.getElementById('cm512'), 512, true);
+
+// Auto-download all
+function downloadCanvas(canvasId, filename) {
+  const canvas = document.getElementById(canvasId);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// Add download buttons
+document.querySelectorAll('canvas').forEach(c => {
+  const btn = document.createElement('button');
+  btn.textContent = 'Download ' + c.id;
+  btn.style.cssText = 'display:block;margin-top:8px;padding:8px 16px;cursor:pointer;';
+  btn.onclick = () => downloadCanvas(c.id, c.id.replace('c', 'icon-').replace('cm', 'icon-maskable-') + '.png');
+  c.parentElement.appendChild(btn);
+});
+</script>
+</body>
+</html>

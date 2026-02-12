@@ -234,12 +234,19 @@ export default function QRAttendancePage() {
         if (!user) { setIsRestoring(false); return; }
 
         // Find the most recent active session (isActive = true)
-        const { data: activeSessions } = await supabase
+        const { data: activeSessions, error: restoreErr } = await supabase
           .from('AttendanceSession')
           .select('id, title, createdAt, pinCode, isActive')
           .eq('isActive', true)
           .order('createdAt', { ascending: false })
           .limit(1);
+
+        // If isActive column doesn't exist yet, skip restore gracefully
+        if (restoreErr) {
+          console.warn('Could not query active sessions (isActive column may not exist yet):', restoreErr.message);
+          setIsRestoring(false);
+          return;
+        }
 
         if (activeSessions && activeSessions.length > 0) {
           const s = activeSessions[0];
