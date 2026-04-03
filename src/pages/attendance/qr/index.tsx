@@ -296,9 +296,12 @@ export default function QRAttendancePage() {
           id: sessionId,
           title,
           date: now.toISOString(),
+          startTime: now.toISOString(),
           platform: 'BEDAYA',
           pinCode,
           isActive: true,
+          lateThresholdMinutes: 15,
+          maxDurationMinutes: 120,
           createdAt: now.toISOString(),
         });
 
@@ -326,6 +329,14 @@ export default function QRAttendancePage() {
     setIsEnding(true);
 
     try {
+      // Mark absent students before closing (if session is linked to a halaqa)
+      try {
+        await supabase.rpc('mark_absent_students', { p_session_id: session.id });
+      } catch (rpcErr) {
+        // The function may not exist yet if migration hasn't run — log and continue
+        console.warn('mark_absent_students RPC failed (migration may not be applied yet):', rpcErr);
+      }
+
       await supabase
         .from('AttendanceSession')
         .update({ isActive: false, endedAt: new Date().toISOString(), pinCode: null })

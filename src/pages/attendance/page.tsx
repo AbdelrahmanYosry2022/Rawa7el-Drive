@@ -27,7 +27,7 @@ const mockStudents = [
   { id: '5', name: 'علي حسن عبدالرحمن', halaqa: 'المجموعة الأولى' },
 ];
 
-type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused' | null;
+type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED' | null;
 
 interface AttendanceRecord {
   studentId: string;
@@ -68,7 +68,7 @@ export default function AttendancePage() {
   };
 
   const markAllPresent = () => {
-    setAttendance(prev => prev.map(record => ({ ...record, status: 'present' })));
+    setAttendance(prev => prev.map(record => ({ ...record, status: 'PRESENT' })));
   };
 
   const handleSave = async () => {
@@ -105,10 +105,10 @@ export default function AttendancePage() {
   };
 
   const stats = {
-    present: attendance.filter(a => a.status === 'present').length,
-    absent: attendance.filter(a => a.status === 'absent').length,
-    late: attendance.filter(a => a.status === 'late').length,
-    excused: attendance.filter(a => a.status === 'excused').length,
+    present: attendance.filter(a => a.status === 'PRESENT').length,
+    absent: attendance.filter(a => a.status === 'ABSENT').length,
+    late: attendance.filter(a => a.status === 'LATE').length,
+    excused: attendance.filter(a => a.status === 'EXCUSED').length,
     unmarked: attendance.filter(a => a.status === null).length,
   };
 
@@ -243,28 +243,28 @@ export default function AttendancePage() {
                     <div className="flex items-center gap-2">
                       {getStatusButton(
                         student.id, 
-                        'present', 
+                        'PRESENT', 
                         <Check className="w-4 h-4" />, 
                         'حاضر', 
                         'bg-emerald-500'
                       )}
                       {getStatusButton(
                         student.id, 
-                        'absent', 
+                        'ABSENT', 
                         <X className="w-4 h-4" />, 
                         'غائب', 
                         'bg-red-500'
                       )}
                       {getStatusButton(
                         student.id, 
-                        'late', 
+                        'LATE', 
                         <Clock className="w-4 h-4" />, 
                         'متأخر', 
                         'bg-amber-500'
                       )}
                       {getStatusButton(
                         student.id, 
-                        'excused', 
+                        'EXCUSED', 
                         <Users className="w-4 h-4" />, 
                         'معذور', 
                         'bg-blue-500'

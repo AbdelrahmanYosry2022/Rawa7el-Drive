@@ -8,9 +8,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    alias: [
+      { find: /^@rawa7el\/attendance-logic\/utils$/, replacement: path.resolve(__dirname, './packages/attendance-logic/src/utils/index.ts') },
+      { find: /^@rawa7el\/attendance-logic$/, replacement: path.resolve(__dirname, './packages/attendance-logic/src/index.ts') },
+      { find: /^@\//, replacement: path.resolve(__dirname, './src') + '/' },
+    ],
   },
   server: {
     port: 3000,

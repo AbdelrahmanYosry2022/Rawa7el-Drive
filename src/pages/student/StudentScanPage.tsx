@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
 import { supabase } from '@/lib/supabase';
 import {
+  determineAttendanceStatus,
+  validateSessionForCheckIn,
+  getSessionStartTime,
+} from '@rawa7el/attendance-logic/utils';
+import {
   Camera,
   Hash,
   CheckCircle2,
@@ -11,10 +16,11 @@ import {
   ArrowRight,
   ScanLine,
   Keyboard,
-  X
+  X,
+  Clock
 } from 'lucide-react';
 
-type ScanStatus = 'idle' | 'scanning' | 'processing' | 'success' | 'already' | 'error' | 'invalid';
+type ScanStatus = 'idle' | 'scanning' | 'processing' | 'success' | 'already' | 'error' | 'invalid' | 'late';
 type InputMode = 'scan' | 'pin';
 
 export default function StudentScanPage() {
@@ -24,6 +30,7 @@ export default function StudentScanPage() {
   const [pinDigits, setPinDigits] = useState(['', '', '', '']);
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [attendanceResult, setAttendanceResult] = useState<'PRESENT' | 'LATE' | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -116,15 +123,33 @@ export default function StudentScanPage() {
 
   const performCheckIn = async (sessionId: string) => {
     try {
-      // Verify session exists
+      // Verify session exists and get full details for validation
       const { data: sessionData, error: sessError } = await supabase
         .from('AttendanceSession')
-        .select('id')
+        .select('id, date, startTime, endTime, endedAt, isActive, lateThresholdMinutes, maxDurationMinutes, createdAt')
         .eq('id', sessionId)
         .single();
 
       if (sessError || !sessionData) {
         setError('جلسة الحضور غير موجودة أو منتهية');
+        setStatus('invalid');
+        return;
+      }
+
+      // Validate session is accepting check-ins
+      const validation = validateSessionForCheckIn({
+        id: sessionData.id,
+        isActive: sessionData.isActive,
+        date: sessionData.date,
+        startTime: sessionData.startTime,
+        endTime: sessionData.endTime,
+        endedAt: sessionData.endedAt,
+        maxDurationMinutes: sessionData.maxDurationMinutes,
+        createdAt: sessionData.createdAt,
+      });
+
+      if (!validation.valid) {
+        setError(validation.message || 'جلسة الحضور غير متاحة');
         setStatus('invalid');
         return;
       }
@@ -140,7 +165,7 @@ export default function StudentScanPage() {
       // Check if already checked in
       const { data: existing } = await supabase
         .from('Attendance')
-        .select('id')
+        .select('id, status')
         .eq('sessionId', sessionId)
         .eq('userId', user.id)
         .maybeSingle();
@@ -152,21 +177,32 @@ export default function StudentScanPage() {
           .eq('id', user.id)
           .single();
         setUserName(userData?.name || null);
+        setAttendanceResult(existing.status as 'PRESENT' | 'LATE');
         setStatus('already');
         return;
       }
 
+      // Determine attendance status (PRESENT vs LATE)
+      const now = new Date();
+      const sessionStartTime = getSessionStartTime(sessionData);
+      const attStatus = determineAttendanceStatus({
+        sessionStartTime,
+        checkInTime: now,
+        lateThresholdMinutes: sessionData.lateThresholdMinutes ?? 15,
+      }) as 'PRESENT' | 'LATE';
+
       // Insert attendance
-      const now = new Date().toISOString();
+      const nowIso = now.toISOString();
       const { error: insertError } = await supabase
         .from('Attendance')
         .insert({
           id: crypto.randomUUID(),
           sessionId,
           userId: user.id,
-          status: 'PRESENT',
-          createdAt: now,
-          updatedAt: now,
+          status: attStatus,
+          checkInTime: nowIso,
+          createdAt: nowIso,
+          updatedAt: nowIso,
         });
 
       if (insertError) {
@@ -180,7 +216,8 @@ export default function StudentScanPage() {
         .eq('id', user.id)
         .single();
       setUserName(userData?.name || null);
-      setStatus('success');
+      setAttendanceResult(attStatus);
+      setStatus(attStatus === 'LATE' ? 'late' : 'success');
     } catch (err) {
       console.error('Check-in error:', err);
       setError(err instanceof Error ? err.message : 'حدث خطأ');
@@ -214,10 +251,12 @@ export default function StudentScanPage() {
     setError(null);
 
     try {
+      // Only look up active sessions with this PIN
       const { data: sessionData, error: sessError } = await supabase
         .from('AttendanceSession')
         .select('id')
         .eq('pinCode', pin)
+        .eq('isActive', true)
         .order('createdAt', { ascending: false })
         .limit(1);
 
@@ -254,11 +293,12 @@ export default function StudentScanPage() {
     setStatus('idle');
     setError(null);
     setPinDigits(['', '', '', '']);
+    setAttendanceResult(null);
     isProcessingRef.current = false;
   };
 
   // Result screens
-  if (status === 'success' || status === 'already' || status === 'invalid' || status === 'error') {
+  if (status === 'success' || status === 'late' || status === 'already' || status === 'invalid' || status === 'error') {
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-6">
         <div className="w-full max-w-sm text-center">
@@ -273,6 +313,18 @@ export default function StudentScanPage() {
             </>
           )}
 
+          {status === 'late' && (
+            <>
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                <Clock className="w-14 h-14 text-amber-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">تم تسجيل حضورك</h1>
+              {userName && <p className="text-amber-600 font-medium mb-1">مرحباً {userName}</p>}
+              <p className="text-amber-600 font-medium text-sm">تم تسجيلك متأخراً</p>
+              <p className="text-slate-400 text-xs mt-1">يرجى الحرص على الحضور في الموعد المحدد</p>
+            </>
+          )}
+
           {status === 'already' && (
             <>
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
@@ -281,6 +333,9 @@ export default function StudentScanPage() {
               <h1 className="text-2xl font-bold text-slate-900 mb-2">تم تسجيلك مسبقاً</h1>
               {userName && <p className="text-blue-600 font-medium mb-1">مرحباً {userName}</p>}
               <p className="text-slate-500 text-sm">لقد سجلت حضورك في هذه الجلسة من قبل</p>
+              {attendanceResult === 'LATE' && (
+                <p className="text-amber-600 text-xs mt-1">الحالة: متأخر</p>
+              )}
             </>
           )}
 

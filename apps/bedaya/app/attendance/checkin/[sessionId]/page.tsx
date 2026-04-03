@@ -8,7 +8,8 @@ import {
   Loader2,
   User,
   Mail,
-  AlertCircle
+  AlertCircle,
+  Clock
 } from 'lucide-react';
 
 // Generate a unique visitor ID based on browser fingerprint
@@ -53,7 +54,7 @@ function generateVisitorId(): string {
   return crypto.randomUUID();
 }
 
-type CheckInStatus = 'loading' | 'registration' | 'checking' | 'success' | 'already' | 'error';
+type CheckInStatus = 'loading' | 'registration' | 'checking' | 'success' | 'already' | 'error' | 'late' | 'expired';
 
 export default function CheckInPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const { sessionId } = use(params);
@@ -87,12 +88,18 @@ export default function CheckInPage({ params }: { params: Promise<{ sessionId: s
       if (response.ok) {
         if (data.alreadyCheckedIn) {
           setStatus('already');
+        } else if (data.status === 'LATE') {
+          setStatus('late');
         } else {
           setStatus('success');
         }
       } else if (data.requiresRegistration) {
         // First time - need to register
         setStatus('registration');
+      } else if (response.status === 410) {
+        // Session expired/ended
+        setError(data.error || 'جلسة الحضور منتهية');
+        setStatus('expired');
       } else {
         setError(data.error || 'حدث خطأ');
         setStatus('error');
@@ -129,7 +136,14 @@ export default function CheckInPage({ params }: { params: Promise<{ sessionId: s
       const data = await response.json();
 
       if (response.ok) {
-        setStatus('success');
+        if (data.status === 'LATE') {
+          setStatus('late');
+        } else {
+          setStatus('success');
+        }
+      } else if (response.status === 410) {
+        setError(data.error || 'جلسة الحضور منتهية');
+        setStatus('expired');
       } else {
         setError(data.error || 'حدث خطأ');
         setStatus('registration');
@@ -232,6 +246,17 @@ export default function CheckInPage({ params }: { params: Promise<{ sessionId: s
             </div>
           )}
 
+          {status === 'late' && (
+            <div className="text-center py-8">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                <Clock className="w-14 h-14 text-amber-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">تم تسجيل حضورك</h1>
+              <p className="text-amber-600 font-medium">تم تسجيلك متأخراً</p>
+              <p className="text-slate-500 text-sm mt-1">يرجى الحرص على الحضور في الموعد المحدد</p>
+            </div>
+          )}
+
           {status === 'already' && (
             <div className="text-center py-8">
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
@@ -239,6 +264,16 @@ export default function CheckInPage({ params }: { params: Promise<{ sessionId: s
               </div>
               <h1 className="text-2xl font-bold text-slate-900 mb-2">تم تسجيلك مسبقاً</h1>
               <p className="text-slate-500">لقد سجلت حضورك في هذه الجلسة من قبل</p>
+            </div>
+          )}
+
+          {status === 'expired' && (
+            <div className="text-center py-8">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                <AlertCircle className="w-14 h-14 text-amber-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">جلسة منتهية</h1>
+              <p className="text-slate-500 mb-4">{error || 'انتهت صلاحية هذه الجلسة'}</p>
             </div>
           )}
 

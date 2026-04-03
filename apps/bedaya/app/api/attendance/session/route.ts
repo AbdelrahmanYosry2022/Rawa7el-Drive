@@ -1,8 +1,10 @@
-// @ts-nocheck
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { createClient as createServerClient } from '@rawa7el/supabase/server';
+import type { Database } from '@rawa7el/supabase';
 import QRCode from 'qrcode';
+
+type AttendanceSessionRow = Database['public']['Tables']['AttendanceSession']['Row'];
 
 export async function POST(request: Request) {
   try {
@@ -13,21 +15,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // End any previously active sessions
+    await (supabase as any)
+      .from('AttendanceSession')
+      .update({ isActive: false, endedAt: new Date().toISOString() })
+      .eq('isActive', true);
+
     // Create a new attendance session
     const sessionId = crypto.randomUUID();
-    const now = new Date().toISOString();
+    const now = new Date();
+    const pinCode = Math.floor(1000 + Math.random() * 9000).toString();
 
     const { data: session, error } = await (supabase as any)
       .from('AttendanceSession')
       .insert({
         id: sessionId,
-        title: `جلسة حضور ${new Date().toLocaleDateString('ar-SA')}`,
-        date: now,
+        title: `جلسة حضور ${now.toLocaleDateString('ar-SA')}`,
+        date: now.toISOString(),
+        startTime: now.toISOString(),
+        isActive: true,
+        pinCode,
+        lateThresholdMinutes: 15,
+        maxDurationMinutes: 120,
         platform: 'BEDAYA',
-        createdAt: now,
+        createdAt: now.toISOString(),
       })
       .select()
-      .single();
+      .single() as { data: AttendanceSessionRow | null; error: any };
 
     if (error) {
       console.error('Error creating session:', error);
@@ -51,8 +65,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       session: {
-        id: session.id,
-        createdAt: session.createdAt,
+        id: session!.id,
+        createdAt: session!.createdAt,
+        pinCode: session!.pinCode,
+        isActive: session!.isActive,
         attendees: [],
       },
       qrCodeUrl,

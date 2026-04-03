@@ -335,6 +335,7 @@ export default function AttendancePage() {
           id: sessionId,
           title,
           date: now.toISOString(),
+          startTime: now.toISOString(),
           platform: 'BEDAYA',
           halaqaId: selectedHalaqa !== 'all' ? selectedHalaqa : null,
           isActive: false,

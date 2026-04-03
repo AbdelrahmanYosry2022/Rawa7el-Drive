@@ -251,6 +251,7 @@ export type Database = {
           sessionId: string
           userId: string
           status: AttendanceStatus
+          checkInTime: string | null
           notes: string | null
           createdAt: string
           updatedAt: string
@@ -260,6 +261,7 @@ export type Database = {
           sessionId: string
           userId: string
           status?: AttendanceStatus
+          checkInTime?: string | null
           notes?: string | null
           createdAt?: string
           updatedAt?: string
@@ -269,6 +271,7 @@ export type Database = {
           sessionId?: string
           userId?: string
           status?: AttendanceStatus
+          checkInTime?: string | null
           notes?: string | null
           createdAt?: string
           updatedAt?: string
@@ -282,6 +285,13 @@ export type Database = {
           date: string
           halaqaId: string | null
           platform: Platform
+          startTime: string | null
+          endTime: string | null
+          endedAt: string | null
+          isActive: boolean
+          pinCode: string | null
+          lateThresholdMinutes: number
+          maxDurationMinutes: number
           createdAt: string
         }
         Insert: {
@@ -290,6 +300,13 @@ export type Database = {
           date?: string
           halaqaId?: string | null
           platform?: Platform
+          startTime?: string | null
+          endTime?: string | null
+          endedAt?: string | null
+          isActive?: boolean
+          pinCode?: string | null
+          lateThresholdMinutes?: number
+          maxDurationMinutes?: number
           createdAt?: string
         }
         Update: {
@@ -298,6 +315,13 @@ export type Database = {
           date?: string
           halaqaId?: string | null
           platform?: Platform
+          startTime?: string | null
+          endTime?: string | null
+          endedAt?: string | null
+          isActive?: boolean
+          pinCode?: string | null
+          lateThresholdMinutes?: number
+          maxDurationMinutes?: number
           createdAt?: string
         }
         Relationships: []
@@ -738,6 +762,8 @@ export type Database = {
     Functions: {
       get_user_role: { Args: Record<string, never>; Returns: string }
       is_admin: { Args: Record<string, never>; Returns: boolean }
+      close_stale_sessions: { Args: Record<string, never>; Returns: number }
+      mark_absent_students: { Args: { p_session_id: string }; Returns: number }
     }
     Enums: {
       Role: Role

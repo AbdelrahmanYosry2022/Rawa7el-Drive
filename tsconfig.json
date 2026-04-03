@@ -17,7 +17,10 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@rawa7el/attendance-logic/utils": ["./packages/attendance-logic/src/utils/index.ts"],
+      "@rawa7el/attendance-logic/*": ["./packages/attendance-logic/src/*"],
+      "@rawa7el/attendance-logic": ["./packages/attendance-logic/src/index.ts"]
     }
   },
   "include": ["src"],

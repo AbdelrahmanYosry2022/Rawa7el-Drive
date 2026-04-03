@@ -10,10 +10,16 @@ import {
   Loader2,
   User,
   Mail,
-  AlertCircle
+  AlertCircle,
+  Clock
 } from 'lucide-react';
+import {
+  determineAttendanceStatus,
+  validateSessionForCheckIn,
+  getSessionStartTime,
+} from '@rawa7el/attendance-logic/utils';
 
-type CheckInStatus = 'loading' | 'registration' | 'checking' | 'success' | 'already' | 'error' | 'invalid';
+type CheckInStatus = 'loading' | 'registration' | 'checking' | 'success' | 'already' | 'error' | 'invalid' | 'late';
 
 export default function CheckInPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -22,6 +28,7 @@ export default function CheckInPage() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [attendanceResult, setAttendanceResult] = useState<'PRESENT' | 'LATE' | null>(null);
 
   useEffect(() => {
     if (sessionId) {
@@ -33,10 +40,10 @@ export default function CheckInPage() {
 
   const checkSessionAndAutoCheckIn = async () => {
     try {
-      // 1. Verify session exists
+      // 1. Verify session exists and get full details for validation
       const { data: sessionData, error: sessError } = await supabase
         .from('AttendanceSession')
-        .select('id, title')
+        .select('id, title, date, startTime, endTime, endedAt, isActive, lateThresholdMinutes, maxDurationMinutes, createdAt')
         .eq('id', sessionId!)
         .single();
 
@@ -46,12 +53,30 @@ export default function CheckInPage() {
         return;
       }
 
-      // 2. Check if user is logged in
+      // 2. Validate session is accepting check-ins
+      const validation = validateSessionForCheckIn({
+        id: sessionData.id,
+        isActive: sessionData.isActive,
+        date: sessionData.date,
+        startTime: sessionData.startTime,
+        endTime: sessionData.endTime,
+        endedAt: sessionData.endedAt,
+        maxDurationMinutes: sessionData.maxDurationMinutes,
+        createdAt: sessionData.createdAt,
+      });
+
+      if (!validation.valid) {
+        setError(validation.message || 'جلسة الحضور غير متاحة');
+        setStatus('invalid');
+        return;
+      }
+
+      // 3. Check if user is logged in
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
         // Logged-in user — auto check-in
-        await performCheckIn(user.id);
+        await performCheckIn(user.id, sessionData);
       } else {
         // Not logged in — show registration form
         setStatus('registration');
@@ -63,12 +88,22 @@ export default function CheckInPage() {
     }
   };
 
-  const performCheckIn = async (userId: string) => {
+  const performCheckIn = async (userId: string, sessionData?: any) => {
     try {
+      // If sessionData not passed, fetch it
+      if (!sessionData) {
+        const { data: sd } = await supabase
+          .from('AttendanceSession')
+          .select('id, title, date, startTime, endTime, endedAt, isActive, lateThresholdMinutes, maxDurationMinutes, createdAt')
+          .eq('id', sessionId!)
+          .single();
+        sessionData = sd;
+      }
+
       // Check if already checked in
       const { data: existing } = await supabase
         .from('Attendance')
-        .select('id')
+        .select('id, status')
         .eq('sessionId', sessionId!)
         .eq('userId', userId)
         .maybeSingle();
@@ -81,21 +116,35 @@ export default function CheckInPage() {
           .eq('id', userId)
           .single();
         setUserName(userData?.name || null);
+        setAttendanceResult(existing.status as 'PRESENT' | 'LATE');
         setStatus('already');
         return;
       }
 
+      // Determine attendance status (PRESENT vs LATE)
+      const now = new Date();
+      let attStatus: 'PRESENT' | 'LATE' = 'PRESENT';
+      if (sessionData) {
+        const sessionStartTime = getSessionStartTime(sessionData);
+        attStatus = determineAttendanceStatus({
+          sessionStartTime,
+          checkInTime: now,
+          lateThresholdMinutes: sessionData.lateThresholdMinutes ?? 15,
+        }) as 'PRESENT' | 'LATE';
+      }
+
       // Insert attendance record
-      const now = new Date().toISOString();
+      const nowIso = now.toISOString();
       const { error: insertError } = await supabase
         .from('Attendance')
         .insert({
           id: crypto.randomUUID(),
           sessionId: sessionId!,
           userId,
-          status: 'PRESENT',
-          createdAt: now,
-          updatedAt: now,
+          status: attStatus,
+          checkInTime: nowIso,
+          createdAt: nowIso,
+          updatedAt: nowIso,
         });
 
       if (insertError) {
@@ -110,7 +159,8 @@ export default function CheckInPage() {
         .eq('id', userId)
         .single();
       setUserName(userData?.name || null);
-      setStatus('success');
+      setAttendanceResult(attStatus);
+      setStatus(attStatus === 'LATE' ? 'late' : 'success');
     } catch (err) {
       console.error('Error performing check-in:', err);
       setError(err instanceof Error ? err.message : 'حدث خطأ');
@@ -277,6 +327,18 @@ export default function CheckInPage() {
             </div>
           )}
 
+          {status === 'late' && (
+            <div className="text-center py-8">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                <Clock className="w-14 h-14 text-amber-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">تم تسجيل حضورك</h1>
+              {userName && <p className="text-amber-600 font-medium mb-1">مرحباً {userName}</p>}
+              <p className="text-amber-600 font-medium">تم تسجيلك متأخراً</p>
+              <p className="text-slate-500 text-sm mt-1">يرجى الحرص على الحضور في الموعد المحدد</p>
+            </div>
+          )}
+
           {status === 'already' && (
             <div className="text-center py-8">
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
@@ -285,6 +347,9 @@ export default function CheckInPage() {
               <h1 className="text-2xl font-bold text-slate-900 mb-2">تم تسجيلك مسبقاً</h1>
               {userName && <p className="text-blue-600 font-medium mb-1">مرحباً {userName}</p>}
               <p className="text-slate-500">لقد سجلت حضورك في هذه الجلسة من قبل</p>
+              {attendanceResult === 'LATE' && (
+                <p className="text-amber-600 text-sm mt-1">الحالة: متأخر</p>
+              )}
             </div>
           )}
 
