@@ -53,7 +53,9 @@ function useElapsedTime(startTime: string | null) {
 
   useEffect(() => {
     if (!startTime) return;
-    const start = new Date(startTime).getTime();
+    // Supabase returns timestamps without timezone suffix — treat as UTC
+    const normalized = startTime.includes('Z') || startTime.includes('+') ? startTime : `${startTime}Z`;
+    const start = new Date(normalized).getTime();
 
     const tick = () => {
       const diff = Math.floor((Date.now() - start) / 1000);
@@ -408,7 +410,9 @@ export default function QRAttendancePage() {
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('ar-SA', {
+    // Supabase returns timestamps without timezone suffix — treat as UTC
+    const normalized = dateString.includes('Z') || dateString.includes('+') ? dateString : `${dateString}Z`;
+    return new Date(normalized).toLocaleTimeString('ar-SA', {
       hour: '2-digit',
       minute: '2-digit',
     });
