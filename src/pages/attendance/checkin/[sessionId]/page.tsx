@@ -54,6 +54,10 @@ export default function CheckInPage() {
       }
 
       // 2. Validate session is accepting check-ins
+      // DEBUG: Log raw session data from DB to diagnose validation failures
+      console.log('[CHECK-IN DEBUG] Raw session data from DB:', JSON.stringify(sessionData, null, 2));
+      console.log('[CHECK-IN DEBUG] Browser now:', new Date().toISOString());
+
       const validation = validateSessionForCheckIn({
         id: sessionData.id,
         isActive: sessionData.isActive,
@@ -64,6 +68,8 @@ export default function CheckInPage() {
         maxDurationMinutes: sessionData.maxDurationMinutes,
         createdAt: sessionData.createdAt,
       });
+
+      console.log('[CHECK-IN DEBUG] Validation result:', JSON.stringify(validation));
 
       if (!validation.valid) {
         setError(validation.message || 'جلسة الحضور غير متاحة');
