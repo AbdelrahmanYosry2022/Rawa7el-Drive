@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         startTime: now.toISOString(),
         isActive: true,
         pinCode,
-        lateThresholdMinutes: 15,
+        lateThresholdMinutes: 30,
         maxDurationMinutes: 120,
         platform: 'BEDAYA',
         createdAt: now.toISOString(),

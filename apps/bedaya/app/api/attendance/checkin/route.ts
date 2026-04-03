@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     const attendanceStatus = determineAttendanceStatus({
       sessionStartTime,
       checkInTime: now,
-      lateThresholdMinutes: session.lateThresholdMinutes ?? 15,
+      lateThresholdMinutes: session.lateThresholdMinutes ?? 30,
     });
 
     // Check if this visitor already checked in (by visitorId)

@@ -18,7 +18,7 @@ export interface AttendanceStatusInput {
   sessionStartTime: string | Date;
   /** The time the student is checking in (ISO string or Date) */
   checkInTime: string | Date;
-  /** Minutes after start time before a student is marked LATE (default: 15) */
+  /** Minutes after start time before a student is marked LATE (default: 30) */
   lateThresholdMinutes?: number;
 }
 
@@ -60,7 +60,7 @@ export function parseSessionDate(value: string | Date | null | undefined): Date 
  * @returns 'PRESENT' if on time, 'LATE' if past threshold
  */
 export function determineAttendanceStatus(input: AttendanceStatusInput): AttendanceStatusResult {
-  const threshold = input.lateThresholdMinutes ?? 15;
+  const threshold = input.lateThresholdMinutes ?? 30;
   const sessionStart = parseSessionDate(input.sessionStartTime)?.getTime() ?? NaN;
   const checkIn = parseSessionDate(input.checkInTime)?.getTime() ?? NaN;
 

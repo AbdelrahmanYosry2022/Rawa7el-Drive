@@ -335,7 +335,7 @@ export default function QRAttendancePage() {
           platform: 'BEDAYA',
           pinCode,
           isActive: true,
-          lateThresholdMinutes: 15,
+          lateThresholdMinutes: 30,
           maxDurationMinutes: 120,
           createdAt: now.toISOString(),
         });

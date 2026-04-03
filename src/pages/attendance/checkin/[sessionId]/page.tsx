@@ -129,7 +129,7 @@ export default function CheckInPage() {
         attStatus = determineAttendanceStatus({
           sessionStartTime,
           checkInTime: now,
-          lateThresholdMinutes: sessionData.lateThresholdMinutes ?? 15,
+          lateThresholdMinutes: sessionData.lateThresholdMinutes ?? 30,
         }) as 'PRESENT' | 'LATE';
       }
 
