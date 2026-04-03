@@ -23,6 +23,10 @@ interface AttendanceRecord {
   };
 }
 
+// Supabase may return timestamps without timezone suffix — ensure UTC parsing
+const normalizeTimestamp = (ts: string) =>
+  ts.includes('Z') || ts.includes('+') ? ts : `${ts}Z`;
+
 export default function StudentAttendancePage() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -199,9 +203,9 @@ export default function StudentAttendancePage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-slate-700 text-sm truncate">{record.session.title}</p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[11px] text-slate-400 font-medium">{new Date(record.session.date).toLocaleDateString('ar-EG')}</span>
+                        <span className="text-[11px] text-slate-400 font-medium">{new Date(normalizeTimestamp(record.session.date)).toLocaleDateString('ar-EG')}</span>
                         <span className="text-slate-200">·</span>
-                        <span className="text-[11px] text-slate-400 font-medium">{new Date(record.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="text-[11px] text-slate-400 font-medium">{new Date(normalizeTimestamp(record.createdAt)).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                     </div>
                     <div className="flex-shrink-0">
@@ -245,14 +249,14 @@ export default function StudentAttendancePage() {
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-2 text-slate-500 font-bold">
                           <Calendar className="w-4 h-4" />
-                          <span>{new Date(record.session.date).toLocaleDateString('ar-EG')}</span>
+                          <span>{new Date(normalizeTimestamp(record.session.date)).toLocaleDateString('ar-EG')}</span>
                         </div>
                       </td>
                       <td className="px-8 py-5">
                         {getStatusBadge(record.status)}
                       </td>
                       <td className="px-8 py-5 text-slate-400 font-medium tabular-nums">
-                        {new Date(record.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(normalizeTimestamp(record.createdAt)).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
                       </td>
                     </tr>
                   ))

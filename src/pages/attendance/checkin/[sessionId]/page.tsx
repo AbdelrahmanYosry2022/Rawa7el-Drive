@@ -65,8 +65,6 @@ export default function CheckInPage() {
         createdAt: sessionData.createdAt,
       });
 
-      console.log('[CHECK-IN DEBUG] Validation result:', JSON.stringify(validation));
-
       if (!validation.valid) {
         setError(validation.message || 'جلسة الحضور غير متاحة');
         setStatus('invalid');

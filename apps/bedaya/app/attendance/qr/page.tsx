@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@rawa7el/ui/card';
 import { Button } from '@rawa7el/ui/button';
+import { parseSessionDate } from '@rawa7el/attendance-logic/utils';
 import { 
   QrCode, 
   ArrowRight,
@@ -73,7 +74,7 @@ export default function QRAttendancePage() {
   }, [session?.id]);
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('ar-SA', {
+    return (parseSessionDate(dateString) ?? new Date(dateString)).toLocaleTimeString('ar-SA', {
       hour: '2-digit',
       minute: '2-digit',
     });

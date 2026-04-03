@@ -33,7 +33,12 @@ export interface SessionForValidation {
   createdAt: string;
 }
 
-function parseSessionDate(value: string | Date | null | undefined): Date | null {
+/**
+ * Parse a date value from Supabase, normalizing timestamps that lack a timezone
+ * suffix (Supabase often returns `"2026-04-03 06:10:00"` without `Z`).
+ * Without normalization, `new Date(...)` treats such strings as local time.
+ */
+export function parseSessionDate(value: string | Date | null | undefined): Date | null {
   if (!value) return null;
 
   if (value instanceof Date) {

@@ -1,4 +1,5 @@
 export {
+  parseSessionDate,
   determineAttendanceStatus,
   validateSessionForCheckIn,
   getSessionStartTime,

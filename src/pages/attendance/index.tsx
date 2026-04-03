@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { parseSessionDate } from '@rawa7el/attendance-logic/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -80,7 +81,7 @@ function SessionDetailModal({ session, onClose }: { session: SessionRecord; onCl
             name: userMap[d.userId]?.name || 'طالب',
             email: userMap[d.userId]?.email || '',
             status: d.status,
-            time: new Date(d.createdAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
+            time: (parseSessionDate(d.createdAt) ?? new Date(d.createdAt)).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
           })));
         }
       } catch (err) {
@@ -104,8 +105,8 @@ function SessionDetailModal({ session, onClose }: { session: SessionRecord; onCl
 
   const duration = () => {
     if (!session.endedAt) return session.isActive ? 'جارية الآن' : '—';
-    const start = new Date(session.createdAt).getTime();
-    const end = new Date(session.endedAt).getTime();
+    const start = (parseSessionDate(session.createdAt) ?? new Date(session.createdAt)).getTime();
+    const end = (parseSessionDate(session.endedAt) ?? new Date(session.endedAt)).getTime();
     const mins = Math.round((end - start) / 60000);
     if (mins < 60) return `${mins} دقيقة`;
     return `${Math.floor(mins / 60)} ساعة ${mins % 60} دقيقة`;
@@ -128,11 +129,11 @@ function SessionDetailModal({ session, onClose }: { session: SessionRecord; onCl
           <div className="flex flex-wrap gap-3 text-xs text-slate-500">
             <span className="flex items-center gap-1">
               <CalendarDays className="w-3.5 h-3.5" />
-              {new Date(session.date).toLocaleDateString('ar-SA', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+              {(parseSessionDate(session.date) ?? new Date(session.date)).toLocaleDateString('ar-SA', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              {new Date(session.createdAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+              {(parseSessionDate(session.createdAt) ?? new Date(session.createdAt)).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
             </span>
             <span className="flex items-center gap-1">
               <Timer className="w-3.5 h-3.5" />
@@ -392,7 +393,7 @@ export default function AttendancePage() {
   // ─── Session duration helper ───
   const getSessionDuration = (s: SessionRecord) => {
     if (!s.endedAt) return s.isActive ? 'جارية' : '—';
-    const mins = Math.round((new Date(s.endedAt).getTime() - new Date(s.createdAt).getTime()) / 60000);
+    const mins = Math.round(((parseSessionDate(s.endedAt) ?? new Date(s.endedAt)).getTime() - (parseSessionDate(s.createdAt) ?? new Date(s.createdAt)).getTime()) / 60000);
     if (mins < 1) return 'أقل من دقيقة';
     if (mins < 60) return `${mins} د`;
     return `${Math.floor(mins / 60)} س ${mins % 60} د`;
@@ -559,11 +560,11 @@ export default function AttendancePage() {
                           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-400">
                             <span className="flex items-center gap-1">
                               <CalendarDays className="w-3 h-3" />
-                              {new Date(s.date).toLocaleDateString('ar-SA', { month: 'short', day: 'numeric', weekday: 'short' })}
+                              {(parseSessionDate(s.date) ?? new Date(s.date)).toLocaleDateString('ar-SA', { month: 'short', day: 'numeric', weekday: 'short' })}
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              {new Date(s.createdAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+                              {(parseSessionDate(s.createdAt) ?? new Date(s.createdAt)).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                             <span className="flex items-center gap-1">
                               <Timer className="w-3 h-3" />
