@@ -33,6 +33,21 @@ export interface SessionForValidation {
   createdAt: string;
 }
 
+function parseSessionDate(value: string | Date | null | undefined): Date | null {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? null : value;
+  }
+
+  const normalized = value.includes(' ') ? value.replace(' ', 'T') : value;
+  const hasTimezone = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(normalized);
+  const candidate = hasTimezone ? normalized : `${normalized}Z`;
+  const parsed = new Date(candidate);
+
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
 /**
  * Determine whether a check-in should be marked as PRESENT or LATE
  * based on the session start time and the configured threshold.
@@ -41,8 +56,8 @@ export interface SessionForValidation {
  */
 export function determineAttendanceStatus(input: AttendanceStatusInput): AttendanceStatusResult {
   const threshold = input.lateThresholdMinutes ?? 15;
-  const sessionStart = new Date(input.sessionStartTime).getTime();
-  const checkIn = new Date(input.checkInTime).getTime();
+  const sessionStart = parseSessionDate(input.sessionStartTime)?.getTime() ?? NaN;
+  const checkIn = parseSessionDate(input.checkInTime)?.getTime() ?? NaN;
 
   if (isNaN(sessionStart) || isNaN(checkIn)) {
     // If we can't parse dates, default to PRESENT to avoid false negatives
@@ -94,8 +109,8 @@ export function validateSessionForCheckIn(
 
   // Check 2: Session must not have exceeded max duration
   if (session.maxDurationMinutes) {
-    const createdAt = new Date(session.createdAt).getTime();
-    const maxEnd = createdAt + session.maxDurationMinutes * 60 * 1000;
+    const sessionStart = getSessionStartTime(session).getTime();
+    const maxEnd = sessionStart + session.maxDurationMinutes * 60 * 1000;
     if (now.getTime() > maxEnd) {
       return {
         valid: false,
@@ -107,14 +122,14 @@ export function validateSessionForCheckIn(
 
   // Check 3: Session date should be today (with some tolerance)
   // Allow sessions from the same calendar day
-  const sessionDate = new Date(session.date);
+  const sessionDate = parseSessionDate(session.date);
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
   const todayEnd = new Date(now);
   todayEnd.setHours(23, 59, 59, 999);
 
   // Only enforce date check if we have a valid date
-  if (!isNaN(sessionDate.getTime())) {
+  if (sessionDate) {
     const sessionDateNormalized = new Date(sessionDate);
     sessionDateNormalized.setHours(0, 0, 0, 0);
     const todayNormalized = new Date(todayStart);
@@ -144,10 +159,11 @@ export function getSessionStartTime(session: {
   createdAt: string;
 }): Date {
   if (session.startTime) {
-    const parsed = new Date(session.startTime);
-    if (!isNaN(parsed.getTime())) {
+    const parsed = parseSessionDate(session.startTime);
+    if (parsed) {
       return parsed;
     }
   }
-  return new Date(session.createdAt);
+
+  return parseSessionDate(session.createdAt) ?? new Date(session.createdAt);
 }
