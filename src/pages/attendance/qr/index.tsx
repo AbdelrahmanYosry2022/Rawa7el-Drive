@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { supabase } from '@/lib/supabase';
+import { validateSessionForCheckIn } from '@rawa7el/attendance-logic/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,6 +36,15 @@ interface SessionData {
   createdAt: string;
   pinCode: string;
   isActive: boolean;
+}
+
+interface RestorableSessionData extends SessionData {
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+  endedAt: string | null;
+  lateThresholdMinutes: number;
+  maxDurationMinutes: number;
 }
 
 // ─── Elapsed timer hook ───
@@ -236,7 +246,7 @@ export default function QRAttendancePage() {
         // Find the most recent active session (isActive = true)
         const { data: activeSessions, error: restoreErr } = await supabase
           .from('AttendanceSession')
-          .select('id, title, createdAt, pinCode, isActive')
+          .select('id, title, date, startTime, endTime, endedAt, createdAt, pinCode, isActive, lateThresholdMinutes, maxDurationMinutes')
           .eq('isActive', true)
           .order('createdAt', { ascending: false })
           .limit(1);
@@ -249,7 +259,30 @@ export default function QRAttendancePage() {
         }
 
         if (activeSessions && activeSessions.length > 0) {
-          const s = activeSessions[0];
+          const s = activeSessions[0] as RestorableSessionData;
+
+          const validation = validateSessionForCheckIn({
+            id: s.id,
+            isActive: s.isActive,
+            date: s.date,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            endedAt: s.endedAt,
+            maxDurationMinutes: s.maxDurationMinutes,
+            createdAt: s.createdAt,
+          });
+
+          // If a stale session was left active in the database, close it silently.
+          if (!validation.valid) {
+            await supabase
+              .from('AttendanceSession')
+              .update({ isActive: false, endedAt: new Date().toISOString(), pinCode: null })
+              .eq('id', s.id);
+
+            setIsRestoring(false);
+            return;
+          }
+
           setSession({ id: s.id, title: s.title || '', createdAt: s.createdAt, pinCode: s.pinCode || '', isActive: true });
 
           await generateQrCode(s.id);
